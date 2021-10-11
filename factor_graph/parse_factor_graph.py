@@ -135,8 +135,13 @@ def parse_factor_graph_file(filepath: str) -> FactorGraphData:
                 # measurements list
                 if "SE2R2RangeGaussianLikelihoodFactor" in line:
                     raise NotImplementedError("Need to parse for these measurement")
+
+                # if it is a pose measurement then add to ambiguous pose
+                # measurements list
                 elif "SE2RelativeGaussianLikelihoodFactor" in line:
                     raise NotImplementedError("Need to parse for these measurement")
+
+                # this is a case that we haven't planned for yet
                 else:
                     raise NotImplementedError(
                         f"Unknown measurement type in ambiguous measurement: {line}"
