@@ -1,8 +1,9 @@
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 import numpy as np
 import attr
 import os
 import pickle
+import pathlib
 
 from factor_graph.variables import PoseVariable, LandmarkVariable
 from factor_graph.measurements import (
@@ -359,27 +360,27 @@ class FactorGraphData:
 
         return range_idx
 
-    def save_to_file(self, data_dir: str, format: str):
+    def save_to_file(self, filepath: str):
         """
         Save the factor graph in the EFG format
 
         Args:
-            file_name (str): the name of the file to write to
+            filepath (str): the path of the file to write to
         """
-
-        format_options = ["efg", "pickle"]
+        # TODO need to check that directory exists!
+        # check is valid file type
+        file_extension = pathlib.Path(filepath).suffix.strip(".")
+        format_options = ["fg", "pickle"]
         assert (
-            format in format_options
-        ), f"Save format: {format} not available, must be one of {format_options}"
+            file_extension in format_options
+        ), f"File extension: {file_extension} not available, must be one of {format_options}"
 
-        if format == "efg":
-            filepath = os.path.join(data_dir, "factor_graph.fg")
+        if file_extension == "fg":
             self._save_to_efg_format(filepath)
-        elif format == "pickle":
-            filepath = os.path.join(data_dir, "factor_graph.pkl")
+        elif file_extension == "pickle":
             self._save_to_pickle_format(filepath)
         else:
-            raise ValueError(f"Unknown format: {format}")
+            raise ValueError(f"Unknown format: {file_extension}")
 
         print(f"Saved data to {filepath}")
 

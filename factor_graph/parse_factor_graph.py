@@ -1,7 +1,7 @@
-from typing import Tuple, List, Dict
-from os import listdir, mkdir
-from os.path import isfile, isdir, join, expanduser, dirname
+from typing import List
+from os.path import isfile
 import numpy as np
+import pickle
 
 from factor_graph.variables import PoseVariable, LandmarkVariable
 from factor_graph.measurements import (
@@ -44,7 +44,7 @@ def _get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
     return covar_matrix
 
 
-def parse_factor_graph_file(filepath: str) -> FactorGraphData:
+def parse_efg_file(filepath: str) -> FactorGraphData:
     """
     Parse a factor graph file to extract the factors and variables.
 
@@ -55,6 +55,7 @@ def parse_factor_graph_file(filepath: str) -> FactorGraphData:
         FactorGraphData: The factor graph data.
     """
     assert isfile(filepath), f"{filepath} is not a file"
+    assert filepath.endswith(".fg"), f"{filepath} is not an efg file"
 
     pose_var_header = "Variable Pose SE2"
     landmark_var_header = "Variable Landmark R2"
@@ -158,3 +159,21 @@ def parse_factor_graph_file(filepath: str) -> FactorGraphData:
         landmark_priors,
         2,
     )
+
+
+def parse_pickle_file(filepath: str) -> FactorGraphData:
+    """
+    Parse a factor graph file to extract the factors and variables.
+
+    Args:
+        filepath: The path to the factor graph file.
+
+    Returns:
+        FactorGraphData: The factor graph data.
+    """
+    assert isfile(filepath), f"{filepath} is not a file"
+    assert filepath.endswith(".pickle"), f"{filepath} is not a pickle file"
+
+    with open(filepath, "rb") as f:
+        data = pickle.load(f)
+        return data
