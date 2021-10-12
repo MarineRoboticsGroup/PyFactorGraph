@@ -157,19 +157,53 @@ class FGRangeMeasurement:
 
     @association.validator
     def check_association(self, attribute, value):
+        """Validates the association attribute
+
+        Args:
+            attribute ([type]): [description]
+            value (Tuple[str, str]): the true_association attribute
+
+        Raises:
+            ValueError: is not a 2-tuple
+            ValueError: the associations are identical
+            ValueError: the first association is not a valid pose key
+            ValueError: the second association is not a valid landmark key
+        """
+        print(attribute)
+        print(type(attribute))
         if len(value) != 2:
             raise ValueError(
                 "Range measurements must have exactly two variables associated with."
             )
-        if len(value) != len(set(value)):
+        if value[0] == value[1]:
             raise ValueError("Range measurements must have unique variables.")
+        if value[0].startswith("L"):
+            raise ValueError("First association must be a pose - cannot start with L")
+        if not value[1].startswith("L"):
+            raise ValueError(
+                "Second association must be a Landmark - must start with L"
+            )
 
     @property
-    def weight(self):
+    def weight(self) -> float:
         """
         Get the weight of the measurement
         """
         return 1 / (self.stddev ** 2)
+
+    @property
+    def pose_key(self) -> str:
+        """
+        Get the pose key from the association
+        """
+        return self.association[0]
+
+    @property
+    def landmark_key(self) -> str:
+        """
+        Get the landmark key from the association
+        """
+        return self.association[1]
 
 
 @attr.s(frozen=True)
@@ -189,7 +223,17 @@ class AmbiguousFGRangeMeasurement:
     stddev: float = attr.ib()
 
     @true_association.validator
-    def check_true_association(self, attribute, value):
+    def check_true_association(self, attribute, value: Tuple[str, str]):
+        """Validates the true_association attribute
+
+        Args:
+            attribute ([type]): [description]
+            value (Tuple[str, str]): the true_association attribute
+
+        Raises:
+            ValueError: is not a 2-tuple
+            ValueError: the associations are identical
+        """
         if len(value) != 2:
             raise ValueError(
                 "Range measurements must have exactly two variables associated with."

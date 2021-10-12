@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>factor_graph API documentation</title>
-<meta name="description" content="Initialize factor graph package." />
+<title>data_utils API documentation</title>
+<meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,53 +19,100 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Package <code>factor_graph</code></h1>
+<h1 class="title">Module <code>data_utils</code></h1>
 </header>
 <section id="section-intro">
-<p>Initialize factor graph package.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;Initialize factor graph package.&#34;&#34;&#34;</code></pre>
+<pre><code class="python">import numpy as np
+from typing import List
+
+
+def get_covariance_matrix_from_list(covar_list: List) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Converts a list of floats to a covariance matrix.
+
+    Args:
+        covar_list (List): a list of floats representing the covariance matrix
+
+    Returns:
+        np.ndarray: the covariance matrix
+    &#34;&#34;&#34;
+    assert len(covar_list) == 3 * 3, f&#34;{len(covar_list)} != 3x3&#34;
+    assert all(isinstance(val, float) for val in covar_list)
+    covar_matrix = np.array(
+        [
+            [covar_list[0], covar_list[1], covar_list[2]],
+            [covar_list[3], covar_list[4], covar_list[5]],
+            [covar_list[6], covar_list[7], covar_list[8]],
+        ]
+    )
+
+    assert np.allclose(
+        covar_matrix, covar_matrix.T
+    ), &#34;Covariance matrix must be symmetric&#34;
+    assert covar_matrix.shape == (3, 3), &#34;Covariance matrix must be 3x3&#34;
+
+    return covar_matrix</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt><code class="name"><a title="factor_graph.factor_graph" href="factor_graph.html">factor_graph.factor_graph</a></code></dt>
+<dt id="data_utils.get_covariance_matrix_from_list"><code class="name flex">
+<span>def <span class="ident">get_covariance_matrix_from_list</span></span>(<span>covar_list: List) ‑> numpy.ndarray</span>
+</code></dt>
 <dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.measurements" href="measurements.html">factor_graph.measurements</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.name_utils" href="name_utils.html">factor_graph.name_utils</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.parse_factor_graph" href="parse_factor_graph.html">factor_graph.parse_factor_graph</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.priors" href="priors.html">factor_graph.priors</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.utils" href="utils/index.html">factor_graph.utils</a></code></dt>
-<dd>
-<div class="desc"><p>Directory for utils files</p></div>
-</dd>
-<dt><code class="name"><a title="factor_graph.variables" href="variables.html">factor_graph.variables</a></code></dt>
-<dd>
-<div class="desc"></div>
+<div class="desc"><p>Converts a list of floats to a covariance matrix.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>covar_list</code></strong> :&ensp;<code>List</code></dt>
+<dd>a list of floats representing the covariance matrix</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>the covariance matrix</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_covariance_matrix_from_list(covar_list: List) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Converts a list of floats to a covariance matrix.
+
+    Args:
+        covar_list (List): a list of floats representing the covariance matrix
+
+    Returns:
+        np.ndarray: the covariance matrix
+    &#34;&#34;&#34;
+    assert len(covar_list) == 3 * 3, f&#34;{len(covar_list)} != 3x3&#34;
+    assert all(isinstance(val, float) for val in covar_list)
+    covar_matrix = np.array(
+        [
+            [covar_list[0], covar_list[1], covar_list[2]],
+            [covar_list[3], covar_list[4], covar_list[5]],
+            [covar_list[6], covar_list[7], covar_list[8]],
+        ]
+    )
+
+    assert np.allclose(
+        covar_matrix, covar_matrix.T
+    ), &#34;Covariance matrix must be symmetric&#34;
+    assert covar_matrix.shape == (3, 3), &#34;Covariance matrix must be 3x3&#34;
+
+    return covar_matrix</code></pre>
+</details>
 </dd>
 </dl>
-</section>
-<section>
-</section>
-<section>
 </section>
 <section>
 </section>
@@ -76,15 +123,9 @@
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="factor_graph.factor_graph" href="factor_graph.html">factor_graph.factor_graph</a></code></li>
-<li><code><a title="factor_graph.measurements" href="measurements.html">factor_graph.measurements</a></code></li>
-<li><code><a title="factor_graph.name_utils" href="name_utils.html">factor_graph.name_utils</a></code></li>
-<li><code><a title="factor_graph.parse_factor_graph" href="parse_factor_graph.html">factor_graph.parse_factor_graph</a></code></li>
-<li><code><a title="factor_graph.priors" href="priors.html">factor_graph.priors</a></code></li>
-<li><code><a title="factor_graph.utils" href="utils/index.html">factor_graph.utils</a></code></li>
-<li><code><a title="factor_graph.variables" href="variables.html">factor_graph.variables</a></code></li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="data_utils.get_covariance_matrix_from_list" href="#data_utils.get_covariance_matrix_from_list">get_covariance_matrix_from_list</a></code></li>
 </ul>
 </li>
 </ul>

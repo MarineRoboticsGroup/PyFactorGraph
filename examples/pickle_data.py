@@ -17,7 +17,6 @@ def main():
 
     # write factor graph data
     write_file = os.path.join(data_dir, "factor_graph_out.pickle")
-    write_file = os.path.join(data_dir, "factor_graph.fg")
     factor_graph.save_to_file(write_file)
 
 

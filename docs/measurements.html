@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>factor_graph.measurements API documentation</title>
+<title>measurements API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>factor_graph.measurements</code></h1>
+<h1 class="title">Module <code>measurements</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
@@ -295,7 +295,7 @@ class AmbiguousFGRangeMeasurement:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement"><code class="flex name class">
+<dt id="measurements.AmbiguousFGRangeMeasurement"><code class="flex name class">
 <span>class <span class="ident">AmbiguousFGRangeMeasurement</span></span>
 <span>(</span><span>true_association: Tuple[str, str], measured_association: Tuple[str, str], dist: float, stddev: float)</span>
 </code></dt>
@@ -364,26 +364,26 @@ class AmbiguousFGRangeMeasurement:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.dist"><code class="name">var <span class="ident">dist</span> : float</code></dt>
+<dt id="measurements.AmbiguousFGRangeMeasurement.dist"><code class="name">var <span class="ident">dist</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.measured_association"><code class="name">var <span class="ident">measured_association</span> : Tuple[str, str]</code></dt>
+<dt id="measurements.AmbiguousFGRangeMeasurement.measured_association"><code class="name">var <span class="ident">measured_association</span> : Tuple[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.stddev"><code class="name">var <span class="ident">stddev</span> : float</code></dt>
+<dt id="measurements.AmbiguousFGRangeMeasurement.stddev"><code class="name">var <span class="ident">stddev</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.true_association"><code class="name">var <span class="ident">true_association</span> : Tuple[str, str]</code></dt>
+<dt id="measurements.AmbiguousFGRangeMeasurement.true_association"><code class="name">var <span class="ident">true_association</span> : Tuple[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.weight"><code class="name">var <span class="ident">weight</span></code></dt>
+<dt id="measurements.AmbiguousFGRangeMeasurement.weight"><code class="name">var <span class="ident">weight</span></code></dt>
 <dd>
 <div class="desc"><p>Get the weight of the measurement</p></div>
 <details class="source">
@@ -401,7 +401,7 @@ def weight(self):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.check_measured_association"><code class="name flex">
+<dt id="measurements.AmbiguousFGRangeMeasurement.check_measured_association"><code class="name flex">
 <span>def <span class="ident">check_measured_association</span></span>(<span>self, attribute, value)</span>
 </code></dt>
 <dd>
@@ -420,7 +420,7 @@ def check_measured_association(self, attribute, value):
         raise ValueError(&#34;Range measurements must have unique variables.&#34;)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousFGRangeMeasurement.check_true_association"><code class="name flex">
+<dt id="measurements.AmbiguousFGRangeMeasurement.check_true_association"><code class="name flex">
 <span>def <span class="ident">check_true_association</span></span>(<span>self, attribute, value: Tuple[str, str])</span>
 </code></dt>
 <dd>
@@ -465,7 +465,7 @@ def check_true_association(self, attribute, value: Tuple[str, str]):
 </dd>
 </dl>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement"><code class="flex name class">
+<dt id="measurements.AmbiguousPoseMeasurement"><code class="flex name class">
 <span>class <span class="ident">AmbiguousPoseMeasurement</span></span>
 <span>(</span><span>base_pose: str, measured_to_pose: str, true_to_pose: str, x: float, y: float, theta: float, translation_weight: float, rotation_weight: float)</span>
 </code></dt>
@@ -555,42 +555,42 @@ class AmbiguousPoseMeasurement:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.base_pose"><code class="name">var <span class="ident">base_pose</span> : str</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.base_pose"><code class="name">var <span class="ident">base_pose</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.measured_to_pose"><code class="name">var <span class="ident">measured_to_pose</span> : str</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.measured_to_pose"><code class="name">var <span class="ident">measured_to_pose</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.rotation_weight"><code class="name">var <span class="ident">rotation_weight</span> : float</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.rotation_weight"><code class="name">var <span class="ident">rotation_weight</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.translation_weight"><code class="name">var <span class="ident">translation_weight</span> : float</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.translation_weight"><code class="name">var <span class="ident">translation_weight</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.true_to_pose"><code class="name">var <span class="ident">true_to_pose</span> : str</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.true_to_pose"><code class="name">var <span class="ident">true_to_pose</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.x"><code class="name">var <span class="ident">x</span> : float</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.x"><code class="name">var <span class="ident">x</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.y"><code class="name">var <span class="ident">y</span> : float</code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.y"><code class="name">var <span class="ident">y</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.covariance"><code class="name">var <span class="ident">covariance</span></code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.covariance"><code class="name">var <span class="ident">covariance</span></code></dt>
 <dd>
 <div class="desc"><p>Get the covariance matrix</p></div>
 <details class="source">
@@ -611,7 +611,7 @@ def covariance(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.rotation_matrix"><code class="name">var <span class="ident">rotation_matrix</span></code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.rotation_matrix"><code class="name">var <span class="ident">rotation_matrix</span></code></dt>
 <dd>
 <div class="desc"><p>Get the rotation matrix for the measurement</p></div>
 <details class="source">
@@ -631,7 +631,7 @@ def rotation_matrix(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.transformation_matrix"><code class="name">var <span class="ident">transformation_matrix</span></code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.transformation_matrix"><code class="name">var <span class="ident">transformation_matrix</span></code></dt>
 <dd>
 <div class="desc"><p>Get the transformation matrix</p></div>
 <details class="source">
@@ -652,7 +652,7 @@ def transformation_matrix(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.AmbiguousPoseMeasurement.translation_vector"><code class="name">var <span class="ident">translation_vector</span></code></dt>
+<dt id="measurements.AmbiguousPoseMeasurement.translation_vector"><code class="name">var <span class="ident">translation_vector</span></code></dt>
 <dd>
 <div class="desc"><p>Get the translation vector for the measurement</p></div>
 <details class="source">
@@ -669,7 +669,7 @@ def translation_vector(self):
 </dd>
 </dl>
 </dd>
-<dt id="factor_graph.measurements.FGRangeMeasurement"><code class="flex name class">
+<dt id="measurements.FGRangeMeasurement"><code class="flex name class">
 <span>class <span class="ident">FGRangeMeasurement</span></span>
 <span>(</span><span>association: Tuple[str, str], dist: float, stddev: float)</span>
 </code></dt>
@@ -750,22 +750,22 @@ class FGRangeMeasurement:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.measurements.FGRangeMeasurement.association"><code class="name">var <span class="ident">association</span> : Tuple[str, str]</code></dt>
+<dt id="measurements.FGRangeMeasurement.association"><code class="name">var <span class="ident">association</span> : Tuple[str, str]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.FGRangeMeasurement.dist"><code class="name">var <span class="ident">dist</span> : float</code></dt>
+<dt id="measurements.FGRangeMeasurement.dist"><code class="name">var <span class="ident">dist</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.FGRangeMeasurement.stddev"><code class="name">var <span class="ident">stddev</span> : float</code></dt>
+<dt id="measurements.FGRangeMeasurement.stddev"><code class="name">var <span class="ident">stddev</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.measurements.FGRangeMeasurement.landmark_key"><code class="name">var <span class="ident">landmark_key</span> : str</code></dt>
+<dt id="measurements.FGRangeMeasurement.landmark_key"><code class="name">var <span class="ident">landmark_key</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Get the landmark key from the association</p></div>
 <details class="source">
@@ -780,7 +780,7 @@ def landmark_key(self) -&gt; str:
     return self.association[1]</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.FGRangeMeasurement.pose_key"><code class="name">var <span class="ident">pose_key</span> : str</code></dt>
+<dt id="measurements.FGRangeMeasurement.pose_key"><code class="name">var <span class="ident">pose_key</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Get the pose key from the association</p></div>
 <details class="source">
@@ -795,7 +795,7 @@ def pose_key(self) -&gt; str:
     return self.association[0]</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.FGRangeMeasurement.weight"><code class="name">var <span class="ident">weight</span> : float</code></dt>
+<dt id="measurements.FGRangeMeasurement.weight"><code class="name">var <span class="ident">weight</span> : float</code></dt>
 <dd>
 <div class="desc"><p>Get the weight of the measurement</p></div>
 <details class="source">
@@ -813,7 +813,7 @@ def weight(self) -&gt; float:
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="factor_graph.measurements.FGRangeMeasurement.check_association"><code class="name flex">
+<dt id="measurements.FGRangeMeasurement.check_association"><code class="name flex">
 <span>def <span class="ident">check_association</span></span>(<span>self, attribute, value)</span>
 </code></dt>
 <dd>
@@ -872,7 +872,7 @@ def check_association(self, attribute, value):
 </dd>
 </dl>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement"><code class="flex name class">
+<dt id="measurements.PoseMeasurement"><code class="flex name class">
 <span>class <span class="ident">PoseMeasurement</span></span>
 <span>(</span><span>base_pose: str, to_pose: str, x: float, y: float, theta: float, translation_weight: float, rotation_weight: float)</span>
 </code></dt>
@@ -967,38 +967,38 @@ class PoseMeasurement:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.measurements.PoseMeasurement.base_pose"><code class="name">var <span class="ident">base_pose</span> : str</code></dt>
+<dt id="measurements.PoseMeasurement.base_pose"><code class="name">var <span class="ident">base_pose</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.rotation_weight"><code class="name">var <span class="ident">rotation_weight</span> : float</code></dt>
+<dt id="measurements.PoseMeasurement.rotation_weight"><code class="name">var <span class="ident">rotation_weight</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
+<dt id="measurements.PoseMeasurement.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.to_pose"><code class="name">var <span class="ident">to_pose</span> : str</code></dt>
+<dt id="measurements.PoseMeasurement.to_pose"><code class="name">var <span class="ident">to_pose</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.translation_weight"><code class="name">var <span class="ident">translation_weight</span> : float</code></dt>
+<dt id="measurements.PoseMeasurement.translation_weight"><code class="name">var <span class="ident">translation_weight</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.x"><code class="name">var <span class="ident">x</span> : float</code></dt>
+<dt id="measurements.PoseMeasurement.x"><code class="name">var <span class="ident">x</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.y"><code class="name">var <span class="ident">y</span> : float</code></dt>
+<dt id="measurements.PoseMeasurement.y"><code class="name">var <span class="ident">y</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.measurements.PoseMeasurement.covariance"><code class="name">var <span class="ident">covariance</span></code></dt>
+<dt id="measurements.PoseMeasurement.covariance"><code class="name">var <span class="ident">covariance</span></code></dt>
 <dd>
 <div class="desc"><p>Get the covariance matrix</p></div>
 <details class="source">
@@ -1019,7 +1019,7 @@ def covariance(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.rotation_matrix"><code class="name">var <span class="ident">rotation_matrix</span></code></dt>
+<dt id="measurements.PoseMeasurement.rotation_matrix"><code class="name">var <span class="ident">rotation_matrix</span></code></dt>
 <dd>
 <div class="desc"><p>Get the rotation matrix for the measurement</p></div>
 <details class="source">
@@ -1039,7 +1039,7 @@ def rotation_matrix(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.transformation_matrix"><code class="name">var <span class="ident">transformation_matrix</span></code></dt>
+<dt id="measurements.PoseMeasurement.transformation_matrix"><code class="name">var <span class="ident">transformation_matrix</span></code></dt>
 <dd>
 <div class="desc"><p>Get the transformation matrix</p></div>
 <details class="source">
@@ -1060,7 +1060,7 @@ def transformation_matrix(self):
     )</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.measurements.PoseMeasurement.translation_vector"><code class="name">var <span class="ident">translation_vector</span></code></dt>
+<dt id="measurements.PoseMeasurement.translation_vector"><code class="name">var <span class="ident">translation_vector</span></code></dt>
 <dd>
 <div class="desc"><p>Get the translation vector for the measurement</p></div>
 <details class="source">
@@ -1086,68 +1086,63 @@ def translation_vector(self):
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3>Super-module</h3>
-<ul>
-<li><code><a title="factor_graph" href="index.html">factor_graph</a></code></li>
-</ul>
-</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a></code></h4>
+<h4><code><a title="measurements.AmbiguousFGRangeMeasurement" href="#measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a></code></h4>
 <ul class="">
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.check_measured_association" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.check_measured_association">check_measured_association</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.check_true_association" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.check_true_association">check_true_association</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.dist" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.dist">dist</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.measured_association" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.measured_association">measured_association</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.stddev" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.stddev">stddev</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.true_association" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.true_association">true_association</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousFGRangeMeasurement.weight" href="#factor_graph.measurements.AmbiguousFGRangeMeasurement.weight">weight</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.check_measured_association" href="#measurements.AmbiguousFGRangeMeasurement.check_measured_association">check_measured_association</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.check_true_association" href="#measurements.AmbiguousFGRangeMeasurement.check_true_association">check_true_association</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.dist" href="#measurements.AmbiguousFGRangeMeasurement.dist">dist</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.measured_association" href="#measurements.AmbiguousFGRangeMeasurement.measured_association">measured_association</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.stddev" href="#measurements.AmbiguousFGRangeMeasurement.stddev">stddev</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.true_association" href="#measurements.AmbiguousFGRangeMeasurement.true_association">true_association</a></code></li>
+<li><code><a title="measurements.AmbiguousFGRangeMeasurement.weight" href="#measurements.AmbiguousFGRangeMeasurement.weight">weight</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a></code></h4>
+<h4><code><a title="measurements.AmbiguousPoseMeasurement" href="#measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a></code></h4>
 <ul class="">
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.base_pose" href="#factor_graph.measurements.AmbiguousPoseMeasurement.base_pose">base_pose</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.covariance" href="#factor_graph.measurements.AmbiguousPoseMeasurement.covariance">covariance</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.measured_to_pose" href="#factor_graph.measurements.AmbiguousPoseMeasurement.measured_to_pose">measured_to_pose</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.rotation_matrix" href="#factor_graph.measurements.AmbiguousPoseMeasurement.rotation_matrix">rotation_matrix</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.rotation_weight" href="#factor_graph.measurements.AmbiguousPoseMeasurement.rotation_weight">rotation_weight</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.theta" href="#factor_graph.measurements.AmbiguousPoseMeasurement.theta">theta</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.transformation_matrix" href="#factor_graph.measurements.AmbiguousPoseMeasurement.transformation_matrix">transformation_matrix</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.translation_vector" href="#factor_graph.measurements.AmbiguousPoseMeasurement.translation_vector">translation_vector</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.translation_weight" href="#factor_graph.measurements.AmbiguousPoseMeasurement.translation_weight">translation_weight</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.true_to_pose" href="#factor_graph.measurements.AmbiguousPoseMeasurement.true_to_pose">true_to_pose</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.x" href="#factor_graph.measurements.AmbiguousPoseMeasurement.x">x</a></code></li>
-<li><code><a title="factor_graph.measurements.AmbiguousPoseMeasurement.y" href="#factor_graph.measurements.AmbiguousPoseMeasurement.y">y</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.base_pose" href="#measurements.AmbiguousPoseMeasurement.base_pose">base_pose</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.covariance" href="#measurements.AmbiguousPoseMeasurement.covariance">covariance</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.measured_to_pose" href="#measurements.AmbiguousPoseMeasurement.measured_to_pose">measured_to_pose</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.rotation_matrix" href="#measurements.AmbiguousPoseMeasurement.rotation_matrix">rotation_matrix</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.rotation_weight" href="#measurements.AmbiguousPoseMeasurement.rotation_weight">rotation_weight</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.theta" href="#measurements.AmbiguousPoseMeasurement.theta">theta</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.transformation_matrix" href="#measurements.AmbiguousPoseMeasurement.transformation_matrix">transformation_matrix</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.translation_vector" href="#measurements.AmbiguousPoseMeasurement.translation_vector">translation_vector</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.translation_weight" href="#measurements.AmbiguousPoseMeasurement.translation_weight">translation_weight</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.true_to_pose" href="#measurements.AmbiguousPoseMeasurement.true_to_pose">true_to_pose</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.x" href="#measurements.AmbiguousPoseMeasurement.x">x</a></code></li>
+<li><code><a title="measurements.AmbiguousPoseMeasurement.y" href="#measurements.AmbiguousPoseMeasurement.y">y</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="factor_graph.measurements.FGRangeMeasurement" href="#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a></code></h4>
+<h4><code><a title="measurements.FGRangeMeasurement" href="#measurements.FGRangeMeasurement">FGRangeMeasurement</a></code></h4>
 <ul class="two-column">
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.association" href="#factor_graph.measurements.FGRangeMeasurement.association">association</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.check_association" href="#factor_graph.measurements.FGRangeMeasurement.check_association">check_association</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.dist" href="#factor_graph.measurements.FGRangeMeasurement.dist">dist</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.landmark_key" href="#factor_graph.measurements.FGRangeMeasurement.landmark_key">landmark_key</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.pose_key" href="#factor_graph.measurements.FGRangeMeasurement.pose_key">pose_key</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.stddev" href="#factor_graph.measurements.FGRangeMeasurement.stddev">stddev</a></code></li>
-<li><code><a title="factor_graph.measurements.FGRangeMeasurement.weight" href="#factor_graph.measurements.FGRangeMeasurement.weight">weight</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.association" href="#measurements.FGRangeMeasurement.association">association</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.check_association" href="#measurements.FGRangeMeasurement.check_association">check_association</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.dist" href="#measurements.FGRangeMeasurement.dist">dist</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.landmark_key" href="#measurements.FGRangeMeasurement.landmark_key">landmark_key</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.pose_key" href="#measurements.FGRangeMeasurement.pose_key">pose_key</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.stddev" href="#measurements.FGRangeMeasurement.stddev">stddev</a></code></li>
+<li><code><a title="measurements.FGRangeMeasurement.weight" href="#measurements.FGRangeMeasurement.weight">weight</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="factor_graph.measurements.PoseMeasurement" href="#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a></code></h4>
+<h4><code><a title="measurements.PoseMeasurement" href="#measurements.PoseMeasurement">PoseMeasurement</a></code></h4>
 <ul class="">
-<li><code><a title="factor_graph.measurements.PoseMeasurement.base_pose" href="#factor_graph.measurements.PoseMeasurement.base_pose">base_pose</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.covariance" href="#factor_graph.measurements.PoseMeasurement.covariance">covariance</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.rotation_matrix" href="#factor_graph.measurements.PoseMeasurement.rotation_matrix">rotation_matrix</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.rotation_weight" href="#factor_graph.measurements.PoseMeasurement.rotation_weight">rotation_weight</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.theta" href="#factor_graph.measurements.PoseMeasurement.theta">theta</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.to_pose" href="#factor_graph.measurements.PoseMeasurement.to_pose">to_pose</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.transformation_matrix" href="#factor_graph.measurements.PoseMeasurement.transformation_matrix">transformation_matrix</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.translation_vector" href="#factor_graph.measurements.PoseMeasurement.translation_vector">translation_vector</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.translation_weight" href="#factor_graph.measurements.PoseMeasurement.translation_weight">translation_weight</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.x" href="#factor_graph.measurements.PoseMeasurement.x">x</a></code></li>
-<li><code><a title="factor_graph.measurements.PoseMeasurement.y" href="#factor_graph.measurements.PoseMeasurement.y">y</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.base_pose" href="#measurements.PoseMeasurement.base_pose">base_pose</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.covariance" href="#measurements.PoseMeasurement.covariance">covariance</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.rotation_matrix" href="#measurements.PoseMeasurement.rotation_matrix">rotation_matrix</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.rotation_weight" href="#measurements.PoseMeasurement.rotation_weight">rotation_weight</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.theta" href="#measurements.PoseMeasurement.theta">theta</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.to_pose" href="#measurements.PoseMeasurement.to_pose">to_pose</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.transformation_matrix" href="#measurements.PoseMeasurement.transformation_matrix">transformation_matrix</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.translation_vector" href="#measurements.PoseMeasurement.translation_vector">translation_vector</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.translation_weight" href="#measurements.PoseMeasurement.translation_weight">translation_weight</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.x" href="#measurements.PoseMeasurement.x">x</a></code></li>
+<li><code><a title="measurements.PoseMeasurement.y" href="#measurements.PoseMeasurement.y">y</a></code></li>
 </ul>
 </li>
 </ul>
