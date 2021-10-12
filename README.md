@@ -10,3 +10,14 @@ and pickled `FactorGraphData` objects (`.pickle`) in the `/examples` directory.
 
 Also potentially useful, auto-documentation of this code can be found in the
 `/docs` directory.
+
+## Getting Started
+
+Installing this package is quick and easy!
+
+```bash
+cd ~/PyFactorGraph
+pip install .
+```
+
+Ta-da you should be ready to go!
