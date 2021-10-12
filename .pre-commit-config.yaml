@@ -14,3 +14,10 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-attrs==19.1.0]
+-   repo: local
+    hooks:
+    -   id: pdoc
+        name: pdoc
+        language: system
+        entry: pdoc --html --force --output-dir docs factor_graph
+        types: [python]
