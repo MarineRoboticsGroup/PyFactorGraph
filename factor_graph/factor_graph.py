@@ -103,7 +103,7 @@ class FactorGraphData:
         line += "\n"
 
         # add dimension
-        line += f"Dimension: {self._dimension}\n\n"
+        line += f"Dimension: {self.dimension}\n\n"
         return line
 
     #### Add data
