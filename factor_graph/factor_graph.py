@@ -131,6 +131,9 @@ class FactorGraphData:
             robot_idx (int): the index of the robot that made the measurement
             odom_meas (PoseMeasurement): the odom measurement to add
         """
+        while len(self.odom_measurements) <= robot_idx:
+            self.odom_measurements.append([])
+
         self.odom_measurements[robot_idx].append(odom_meas)
 
     def add_loop_closure(self, loop_closure: PoseMeasurement):

@@ -169,8 +169,6 @@ class FGRangeMeasurement:
             ValueError: the first association is not a valid pose key
             ValueError: the second association is not a valid landmark key
         """
-        print(attribute)
-        print(type(attribute))
         if len(value) != 2:
             raise ValueError(
                 "Range measurements must have exactly two variables associated with."

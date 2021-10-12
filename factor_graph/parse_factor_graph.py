@@ -43,15 +43,8 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
     pose_prior_header = "Factor UnarySE2ApproximateGaussianPriorFactor"
     landmark_prior_header = "Landmark"  # don't have any of these yet
 
-    pose_vars: List[PoseVariable] = []
-    landmark_vars: List[LandmarkVariable] = []
-    pose_measures: List[List[PoseMeasurement]] = []
-    loop_closures: List[PoseMeasurement] = []
-    amb_loop_closures: List[AmbiguousPoseMeasurement] = []
-    range_measures: List[FGRangeMeasurement] = []
-    amb_range_measures: List[AmbiguousFGRangeMeasurement] = []
-    pose_priors: List[PosePrior] = []
-    landmark_priors: List[LandmarkPrior] = []
+    new_fg_data = FactorGraphData(dimension=2)
+
     with open(filepath, "r") as f:
         for line in f:
             if line.startswith(pose_var_header):
@@ -60,13 +53,15 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 x = float(line_items[4])
                 y = float(line_items[5])
                 theta = float(line_items[6])
-                pose_vars.append(PoseVariable(pose_name, (x, y), theta))
+                pose_var = PoseVariable(pose_name, (x, y), theta)
+                new_fg_data.add_pose_variable(pose_var)
             elif line.startswith(landmark_var_header):
                 line_items = line.split()
                 landmark_name = line_items[3]
                 x = float(line_items[4])
                 y = float(line_items[5])
-                landmark_vars.append(LandmarkVariable(landmark_name, (x, y)))
+                landmark_var = LandmarkVariable(landmark_name, (x, y))
+                new_fg_data.add_landmark_variable(landmark_var)
             elif line.startswith(pose_measure_header):
                 line_items = line.split()
                 base_pose = line_items[2]
@@ -100,33 +95,21 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                     base_pose_idx != local_pose_idx
                     or local_time_idx != base_time_idx + 1
                 ):
-                    loop_closures.append(measure)
+                    new_fg_data.add_loop_closure(measure)
 
                 # otherwise it is an odometry measurement
                 else:
-                    # make sure that pose_measures has the correct length
-                    while base_pose_idx >= len(pose_measures):
-                        pose_measures.append([])
+                    new_fg_data.add_odom_measurement(base_pose_idx, measure)
 
-                    # add the measurement
-                    pose_measures[base_pose_idx].append(
-                        PoseMeasurement(
-                            base_pose,
-                            local_pose,
-                            delta_x,
-                            delta_y,
-                            delta_theta,
-                            trans_weight,
-                            rot_weight,
-                        )
-                    )
             elif line.startswith(range_measure_header):
                 line_items = line.split()
                 var1 = line_items[2]
                 var2 = line_items[3]
                 dist = float(line_items[4])
                 stddev = float(line_items[5])
-                range_measures.append(FGRangeMeasurement((var1, var2), dist, stddev))
+                range_measure = FGRangeMeasurement((var1, var2), dist, stddev)
+                new_fg_data.add_range_measurement(range_measure)
+
             elif line.startswith(pose_prior_header):
                 line_items = line.split()
                 pose_name = line_items[2]
@@ -135,7 +118,9 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 theta = float(line_items[5])
                 covar_list = [float(x) for x in line_items[7:]]
                 covar = get_covariance_matrix_from_list(covar_list)
-                pose_priors.append(PosePrior(pose_name, (x, y), theta, covar))
+                pose_prior = PosePrior(pose_name, (x, y), theta, covar)
+                new_fg_data.add_pose_prior(pose_prior)
+
             elif line.startswith(landmark_prior_header):
                 raise NotImplementedError("Landmark priors not implemented yet")
             elif line.startswith(amb_measure_header):
@@ -161,18 +146,7 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                         f"Unknown measurement type in ambiguous measurement: {line}"
                     )
 
-    return FactorGraphData(
-        pose_vars,
-        landmark_vars,
-        pose_measures,
-        loop_closures,
-        amb_loop_closures,
-        range_measures,
-        amb_range_measures,
-        pose_priors,
-        landmark_priors,
-        2,
-    )
+    return new_fg_data
 
 
 def parse_pickle_file(filepath: str) -> FactorGraphData:
