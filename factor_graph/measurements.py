@@ -8,13 +8,13 @@ class PoseMeasurement:
     """
     An pose measurement
 
-    base_pose (str): the name of the base pose which the measurement is in the
-        reference frame of
-    local_pose (str): the name of the pose the measurement is to
-    x (float): the change in x coordinate of the measurement
-    y (float): the change in y coordinate of the measurement
-    theta (float): the change in theta
-    covariance (np.ndarray): a 3x3 covariance matrix
+    Args:
+        base_pose (str): the pose which the measurement is in the reference frame of
+        local_pose (str): the name of the pose the measurement is to
+        x (float): the measured change in x coordinate
+        y (float): the measured change in y coordinate
+        theta (float): the measured change in theta
+        covariance (np.ndarray): a 3x3 covariance matrix from the measurement model
     """
 
     base_pose: str = attr.ib()
@@ -56,20 +56,6 @@ class PoseMeasurement:
         Get the translation vector for the measurement
         """
         return np.array([self.x, self.y])
-
-    @property
-    def base_pose_idx(self) -> int:
-        """
-        Get the index of the base pose
-        """
-        return int(self.base_pose[1:])
-
-    @property
-    def to_pose_idx(self) -> int:
-        """
-        Get the index of the to pose
-        """
-        return int(self.to_pose[1:])
 
     @property
     def covariance(self):
@@ -185,20 +171,6 @@ class FGRangeMeasurement:
         """
         return 1 / (self.stddev ** 2)
 
-    @property
-    def pose_idx(self):
-        """
-        Get the index of the pose
-        """
-        return int(self.var1[1:])
-
-    @property
-    def landmark_idx(self):
-        """
-        Get the index of the landmark
-        """
-        return int(self.var2[1:])
-
 
 @attr.s(frozen=True)
 class AmbiguousFGRangeMeasurement:
@@ -240,17 +212,3 @@ class AmbiguousFGRangeMeasurement:
         Get the weight of the measurement
         """
         return 1 / (self.stddev ** 2)
-
-    @property
-    def pose_idx(self):
-        """
-        Get the index of the pose
-        """
-        return int(self.var1[1:])
-
-    @property
-    def landmark_idx(self):
-        """
-        Get the index of the landmark
-        """
-        return int(self.var2[1:])
