@@ -1,0 +1,108 @@
+\hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement}{}\section{factor\+\_\+graph.\+measurements.\+Pose\+Measurement Class Reference}
+\label{classfactor__graph_1_1measurements_1_1PoseMeasurement}\index{factor\+\_\+graph.\+measurements.\+Pose\+Measurement@{factor\+\_\+graph.\+measurements.\+Pose\+Measurement}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_acc30dcc13980360b440098b45a20de01}{base\+\_\+pose\+\_\+idx} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_aef05f23a7d7e4f7e53358b4ae32d113a}{covariance} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_a8335e1a152a40280a937b0414c8d5c95}{rotation\+\_\+matrix} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_a6cbb9552418f41c807c7bd5f2bdf87db}{to\+\_\+pose\+\_\+idx} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_aabc57f4b800ae1602a9271f09c618b23}{transformation\+\_\+matrix} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_aa8a3a9af196a3dcd9ef80cb7c3830750}{translation\+\_\+vector} (self)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item
+\hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1cae3818fb223706bca90c8b6690ce91}{float}
+\item
+\hyperlink{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1660d5b6ea2c94a8f583ecb90b0d4c76}{str}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}An pose measurement
+
+base_pose (str): the name of the base pose which the measurement is in the
+    reference frame of
+local_pose (str): the name of the pose the measurement is to
+x (float): the change in x coordinate of the measurement
+y (float): the change in y coordinate of the measurement
+theta (float): the change in theta
+covariance (np.ndarray): a 3x3 covariance matrix
+\end{DoxyVerb}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_acc30dcc13980360b440098b45a20de01}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_acc30dcc13980360b440098b45a20de01}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!base\+\_\+pose\+\_\+idx@{base\+\_\+pose\+\_\+idx}}
+\index{base\+\_\+pose\+\_\+idx@{base\+\_\+pose\+\_\+idx}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{base\+\_\+pose\+\_\+idx()}{base\_pose\_idx()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+base\+\_\+pose\+\_\+idx (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{int }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the index of the base pose
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_aef05f23a7d7e4f7e53358b4ae32d113a}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_aef05f23a7d7e4f7e53358b4ae32d113a}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!covariance@{covariance}}
+\index{covariance@{covariance}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{covariance()}{covariance()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+covariance (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the covariance matrix
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_a8335e1a152a40280a937b0414c8d5c95}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_a8335e1a152a40280a937b0414c8d5c95}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!rotation\+\_\+matrix@{rotation\+\_\+matrix}}
+\index{rotation\+\_\+matrix@{rotation\+\_\+matrix}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{rotation\+\_\+matrix()}{rotation\_matrix()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+rotation\+\_\+matrix (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the rotation matrix for the measurement
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_a6cbb9552418f41c807c7bd5f2bdf87db}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_a6cbb9552418f41c807c7bd5f2bdf87db}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!to\+\_\+pose\+\_\+idx@{to\+\_\+pose\+\_\+idx}}
+\index{to\+\_\+pose\+\_\+idx@{to\+\_\+pose\+\_\+idx}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{to\+\_\+pose\+\_\+idx()}{to\_pose\_idx()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+to\+\_\+pose\+\_\+idx (\begin{DoxyParamCaption}\item[{}]{self,  }\item[{}]{int }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the index of the to pose
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_aabc57f4b800ae1602a9271f09c618b23}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_aabc57f4b800ae1602a9271f09c618b23}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!transformation\+\_\+matrix@{transformation\+\_\+matrix}}
+\index{transformation\+\_\+matrix@{transformation\+\_\+matrix}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{transformation\+\_\+matrix()}{transformation\_matrix()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+transformation\+\_\+matrix (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the transformation matrix
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_aa8a3a9af196a3dcd9ef80cb7c3830750}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_aa8a3a9af196a3dcd9ef80cb7c3830750}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!translation\+\_\+vector@{translation\+\_\+vector}}
+\index{translation\+\_\+vector@{translation\+\_\+vector}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{translation\+\_\+vector()}{translation\_vector()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+translation\+\_\+vector (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the translation vector for the measurement
+\end{DoxyVerb}
+
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1cae3818fb223706bca90c8b6690ce91}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1cae3818fb223706bca90c8b6690ce91}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!float@{float}}
+\index{float@{float}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{float}{float}}
+{\footnotesize\ttfamily factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+float\hspace{0.3cm}{\ttfamily [static]}}
+
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1660d5b6ea2c94a8f583ecb90b0d4c76}\label{classfactor__graph_1_1measurements_1_1PoseMeasurement_a1660d5b6ea2c94a8f583ecb90b0d4c76}}
+\index{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}!str@{str}}
+\index{str@{str}!factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{str}{str}}
+{\footnotesize\ttfamily factor\+\_\+graph.\+measurements.\+Pose\+Measurement.\+str\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item
+/home/alan/\+Py\+Factor\+Graph/factor\+\_\+graph/\hyperlink{measurements_8py}{measurements.\+py}\end{DoxyCompactItemize}

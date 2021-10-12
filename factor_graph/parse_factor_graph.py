@@ -46,7 +46,8 @@ def _get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
 
 def parse_efg_file(filepath: str) -> FactorGraphData:
     """
-    Parse a factor graph file to extract the factors and variables.
+    Parse a factor graph file to extract the factors and variables. Requires
+    that the file ends with .fg (e.g. "my_file.fg").
 
     Args:
         filepath: The path to the factor graph file.
@@ -163,7 +164,8 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
 
 def parse_pickle_file(filepath: str) -> FactorGraphData:
     """
-    Parse a factor graph file to extract the factors and variables.
+    Retrieve a pickled FactorGraphData object. Requires that the
+    file ends with .pickle (e.g. "my_file.pickle").
 
     Args:
         filepath: The path to the factor graph file.

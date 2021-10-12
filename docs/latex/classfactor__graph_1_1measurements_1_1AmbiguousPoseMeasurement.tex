@@ -1,0 +1,89 @@
+\hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement}{}\section{factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement Class Reference}
+\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement}\index{factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a9f058846f2c616f54b1dde166ead9aa3}{covariance} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a949af6a01f25c603c7f446c1946c5cbd}{rotation\+\_\+matrix} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a3003d89f4ca1e76240510dfa25977a83}{transformation\+\_\+matrix} (self)
+\item
+def \hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a8d1a2a3bffefbbc4af410e69bc6106ae}{translation\+\_\+vector} (self)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item
+\hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a5ce6dba9300f6b616eebd5be084af4e1}{float}
+\item
+\hyperlink{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a2129bfabf24a0886f92f4a9065746bd6}{str}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}An ambiguous odom measurement
+
+base_pose (str): the name of the base pose which the measurement is in the
+    reference frame of
+measured_to_pose (str): the name of the pose the measurement thinks it is to
+true_to_pose (str): the name of the pose the measurement is to
+x (float): the change in x
+y (float): the change in y
+theta (float): the change in theta
+covariance (np.ndarray): a 3x3 covariance matrix
+\end{DoxyVerb}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a9f058846f2c616f54b1dde166ead9aa3}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a9f058846f2c616f54b1dde166ead9aa3}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!covariance@{covariance}}
+\index{covariance@{covariance}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{covariance()}{covariance()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+covariance (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the covariance matrix
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a949af6a01f25c603c7f446c1946c5cbd}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a949af6a01f25c603c7f446c1946c5cbd}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!rotation\+\_\+matrix@{rotation\+\_\+matrix}}
+\index{rotation\+\_\+matrix@{rotation\+\_\+matrix}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{rotation\+\_\+matrix()}{rotation\_matrix()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+rotation\+\_\+matrix (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the rotation matrix for the measurement
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a3003d89f4ca1e76240510dfa25977a83}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a3003d89f4ca1e76240510dfa25977a83}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!transformation\+\_\+matrix@{transformation\+\_\+matrix}}
+\index{transformation\+\_\+matrix@{transformation\+\_\+matrix}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{transformation\+\_\+matrix()}{transformation\_matrix()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+transformation\+\_\+matrix (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the transformation matrix
+\end{DoxyVerb}
+ \mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a8d1a2a3bffefbbc4af410e69bc6106ae}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a8d1a2a3bffefbbc4af410e69bc6106ae}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!translation\+\_\+vector@{translation\+\_\+vector}}
+\index{translation\+\_\+vector@{translation\+\_\+vector}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{translation\+\_\+vector()}{translation\_vector()}}
+{\footnotesize\ttfamily def factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+translation\+\_\+vector (\begin{DoxyParamCaption}\item[{}]{self }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Get the translation vector for the measurement
+\end{DoxyVerb}
+
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a5ce6dba9300f6b616eebd5be084af4e1}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a5ce6dba9300f6b616eebd5be084af4e1}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!float@{float}}
+\index{float@{float}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{float}{float}}
+{\footnotesize\ttfamily factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+float\hspace{0.3cm}{\ttfamily [static]}}
+
+\mbox{\Hypertarget{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a2129bfabf24a0886f92f4a9065746bd6}\label{classfactor__graph_1_1measurements_1_1AmbiguousPoseMeasurement_a2129bfabf24a0886f92f4a9065746bd6}}
+\index{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}!str@{str}}
+\index{str@{str}!factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement@{factor\+\_\+graph\+::measurements\+::\+Ambiguous\+Pose\+Measurement}}
+\subsubsection{\texorpdfstring{str}{str}}
+{\footnotesize\ttfamily factor\+\_\+graph.\+measurements.\+Ambiguous\+Pose\+Measurement.\+str\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item
+/home/alan/\+Py\+Factor\+Graph/factor\+\_\+graph/\hyperlink{measurements_8py}{measurements.\+py}\end{DoxyCompactItemize}
