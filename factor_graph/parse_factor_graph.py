@@ -14,7 +14,7 @@ from factor_graph.priors import PosePrior, LandmarkPrior
 from factor_graph.factor_graph import (
     FactorGraphData,
 )
-from factor_graph.name_utils import (
+from factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
 )
