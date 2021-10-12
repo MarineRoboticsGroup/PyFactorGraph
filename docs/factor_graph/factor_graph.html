@@ -1,0 +1,2020 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>factor_graph.factor_graph API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>factor_graph.factor_graph</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from typing import Tuple, List
+import numpy as np
+import attr
+import os
+import pickle
+import pathlib
+
+from factor_graph.variables import PoseVariable, LandmarkVariable
+from factor_graph.measurements import (
+    PoseMeasurement,
+    AmbiguousPoseMeasurement,
+    FGRangeMeasurement,
+    AmbiguousFGRangeMeasurement,
+)
+from factor_graph.priors import PosePrior, LandmarkPrior
+
+
+@attr.s
+class FactorGraphData:
+    &#34;&#34;&#34;
+    Just a container for the data in a FactorGraph. Only considers standard
+    gaussian measurements.
+
+    Args:
+        pose_variables (List[PoseVariable]): a list of the pose variables
+        landmark_variables (List[LandmarkVariable]): a list of the landmarks
+        pose_measurements (List[PoseMeasurement]): a list of odom
+            measurements
+        ambiguous_pose_measurements (List[AmbiguousPoseMeasurement]): a list of
+            ambiguous pose measurements
+        range_measurements (List[FGRangeMeasurement]): a list of range
+            measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
+            of ambiguous range measurements
+        pose_priors (List[PosePrior]): a list of the pose priors
+        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
+    &#34;&#34;&#34;
+
+    pose_variables: List[PoseVariable] = attr.ib(factory=list)
+    landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
+    pose_measurements: List[PoseMeasurement] = attr.ib(factory=list)
+    ambiguous_pose_measurements: List[AmbiguousPoseMeasurement] = attr.ib(factory=list)
+    range_measurements: List[FGRangeMeasurement] = attr.ib(factory=list)
+    ambiguous_range_measurements: List[AmbiguousFGRangeMeasurement] = attr.ib(
+        factory=list
+    )
+    pose_priors: List[PosePrior] = attr.ib(factory=list)
+    landmark_priors: List[LandmarkPrior] = attr.ib(factory=list)
+    _dimension: int = attr.ib(default=2)
+
+    def __str__(self):
+        # TODO add ambiguous measurements
+        line = &#34;Factor Graph Data\n&#34;
+
+        # add pose variables
+        line += f&#34;Pose Variables: {len(self.pose_variables)}\n&#34;
+        for x in self.pose_variables:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add landmarks
+        line += f&#34;Landmark Variables: {len(self.landmark_variables)}\n&#34;
+        for x in self.landmark_variables:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add odom measurements
+        line += f&#34;odom Measurements: {len(self.pose_measurements)}\n&#34;
+        for x in self.pose_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add range measurements
+        line += f&#34;Range Measurements: {len(self.range_measurements)}\n&#34;
+        for x in self.range_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add pose priors
+        line += f&#34;Pose Priors: {len(self.pose_priors)}\n&#34;
+        for x in self.pose_priors:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add landmark priors
+        line += f&#34;Landmark Priors: {len(self.landmark_priors)}\n&#34;
+        for x in self.landmark_priors:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add dimension
+        line += f&#34;Dimension: {self._dimension}\n\n&#34;
+        return line
+
+    @property
+    def num_poses(self):
+        return len(self.pose_variables)
+
+    @property
+    def true_values_vector(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        returns the true values in a vectorized form
+        &#34;&#34;&#34;
+        vect: List[float] = []
+
+        # add in pose translations
+        for pose in self.pose_variables:
+            x, y = pose.true_position
+            vect.append(x)
+            vect.append(y)
+
+        # add in landmark positions
+        for pos in self.landmark_variables:
+            x, y = pos.true_position
+            vect.append(x)
+            vect.append(y)
+
+        # add in rotation measurements
+        for pose in self.pose_variables:
+            rot = pose.rotation_matrix.T.flatten()
+            for v in rot:
+                vect.append(v)
+
+        # add in distance variables
+        for range_measurement in self.range_measurements:
+            vect.append(range_measurement.dist)
+
+        vect.append(1.0)
+        return np.array(vect)
+
+    @property
+    def num_translations(self):
+        return self.num_poses + self.num_landmarks
+
+    @property
+    def num_landmarks(self):
+        return len(self.landmark_variables)
+
+    @property
+    def dimension(self):
+        return self._dimension
+
+    @property
+    def poses_and_landmarks_dimension(self):
+        d = self.dimension
+
+        # size due to translations
+        n_trans = self.num_translations
+        mat_dim = n_trans * d
+
+        # size due to rotations
+        n_pose = self.num_poses
+        mat_dim += n_pose * d * d
+
+        return mat_dim
+
+    @property
+    def distance_variables_dimension(self):
+        mat_dim = self.num_range_measurements + 1
+        return mat_dim
+
+    @property
+    def num_range_measurements(self):
+        return len(self.range_measurements)
+
+    @property
+    def num_pose_measurements(self):
+        return len(self.pose_measurements)
+
+    @property
+    def num_total_measurements(self):
+        return self.num_range_measurements + self.num_pose_measurements
+
+    @property
+    def dist_measurements_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get a vector of the distance measurements
+
+        Returns:
+            np.ndarray: a vector of the distance measurements
+        &#34;&#34;&#34;
+        return np.array([meas.dist for meas in self.range_measurements])
+
+    @property
+    def weighted_dist_measurements_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get of the distance measurements weighted by their precision
+        &#34;&#34;&#34;
+        return self.dist_measurements_vect * self.measurements_weight_vect
+
+    @property
+    def measurements_weight_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get the weights of the measurements
+        &#34;&#34;&#34;
+        return np.array([meas.weight for meas in self.range_measurements])
+
+    @property
+    def sum_weighted_measurements_squared(self) -&gt; float:
+        &#34;&#34;&#34;
+        Get the sum of the squared weighted measurements
+        &#34;&#34;&#34;
+        weighted_dist_vect = self.weighted_dist_measurements_vect
+        dist_vect = self.dist_measurements_vect
+        return np.dot(weighted_dist_vect, dist_vect)
+
+    #### Add data
+
+    def add_pose_variable(self, pose_var: PoseVariable):
+        self.pose_variables.append(pose_var)
+
+    def add_landmark_variable(self, landmark_var: LandmarkVariable):
+        self.landmark_variables.append(landmark_var)
+
+    def add_pose_measurement(self, odom_meas: PoseMeasurement):
+        self.pose_measurements.append(odom_meas)
+
+    def add_ambiguous_pose_measurement(self, measure: AmbiguousPoseMeasurement):
+        self.ambiguous_pose_measurements.append(measure)
+
+    def add_range_measurement(self, range_meas: FGRangeMeasurement):
+        self.range_measurements.append(range_meas)
+
+    def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
+        self.ambiguous_range_measurements.append(measure)
+
+    def add_pose_prior(self, pose_prior: PosePrior):
+        self.pose_priors.append(pose_prior)
+
+    def add_landmark_prior(self, landmark_prior: LandmarkPrior):
+        self.landmark_priors.append(landmark_prior)
+
+    #### Accessors for the data
+
+    def get_range_measurement_pose(self, measure: FGRangeMeasurement) -&gt; PoseVariable:
+        &#34;&#34;&#34;Gets the pose associated with the range measurement
+
+        Arguments:
+            measure (FGRangeMeasurement): the range measurement
+
+        Returns:
+            PoseVariable: the pose variable associated with the range
+                measurement
+        &#34;&#34;&#34;
+        pose_name = measure.association[0]
+        pose_idx = int(pose_name[1:])
+        return self.pose_variables[pose_idx]
+
+    def get_range_measurement_landmark(
+        self, measure: FGRangeMeasurement
+    ) -&gt; LandmarkVariable:
+        &#34;&#34;&#34;Returns the landmark variable associated with this range measurement
+
+        Arguments:
+            measure (FGRangeMeasurement): the range measurement
+
+        Returns:
+            LandmarkVariable: the landmark variable associated with the range
+                measurement
+        &#34;&#34;&#34;
+        landmark_name = measure.association[1]
+        landmark_idx = int(landmark_name[1:])
+        return self.landmark_variables[landmark_idx]
+
+    def get_pose_translation_variable_indices(
+        self, pose: PoseVariable
+    ) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the translation variable corresponding to this pose
+        in the factor graph
+
+        Args:
+            pose (PoseVariable): the pose variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert pose in self.pose_variables
+        pose_idx = self.pose_variables.index(pose)
+        d = self.dimension
+
+        # get the start and stop indices for the translation variables
+        start = pose_idx * d
+        stop = (pose_idx + 1) * d
+
+        return (start, stop)
+
+    def get_landmark_translation_variable_indices(
+        self, landmark: LandmarkVariable
+    ) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the translation variable corresponding to this landmark
+        in the factor graph
+
+        Args:
+            landmark (LandmarkVariable): the landmark variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert landmark in self.landmark_variables
+        landmark_idx = self.landmark_variables.index(landmark)
+
+        # offset due to the pose translations
+        d = self.dimension
+        offset = self.num_poses * d
+
+        # get the start and stop indices for the translation variables
+        start = landmark_idx * d + offset
+        stop = start + d
+
+        return (start, stop)
+
+    def get_pose_rotation_variable_indices(self, pose: PoseVariable) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the rotation variable corresponding to
+        this pose in the factor graph
+
+        Args:
+            pose (PoseVariable): the pose variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert pose in self.pose_variables
+        pose_idx = self.pose_variables.index(pose)
+        d = self.dimension
+
+        # need an offset to skip over all the translation variables
+        offset = self.num_translations * d
+
+        # get the start and stop indices
+        start = (pose_idx * d * d) + offset
+        stop = start + d * d
+
+        return (start, stop)
+
+    def get_range_dist_variable_indices(self, measurement: FGRangeMeasurement) -&gt; int:
+        &#34;&#34;&#34;
+        Get the index for the distance variable corresponding to
+        this measurement in the factor graph
+
+        Args:
+            measurement (FGRangeMeasurement): the measurement
+
+        Returns:
+            int: the index of the distance variable
+        &#34;&#34;&#34;
+        assert measurement in self.range_measurements
+        measure_idx = self.range_measurements.index(measurement)
+        d = self.dimension
+
+        # need an offset to skip over all the translation and rotation
+        # variables
+        range_offset = self.num_translations * d
+        range_offset += self.num_poses * d * d
+
+        # get the start and stop indices
+        range_idx = (measure_idx) + range_offset
+
+        return range_idx
+
+    def save_to_file(self, filepath: str):
+        &#34;&#34;&#34;
+        Save the factor graph in the EFG format
+
+        Args:
+            filepath (str): the path of the file to write to
+        &#34;&#34;&#34;
+        # TODO need to check that directory exists!
+        # check is valid file type
+        file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
+        format_options = [&#34;fg&#34;, &#34;pickle&#34;]
+        assert (
+            file_extension in format_options
+        ), f&#34;File extension: {file_extension} not available, must be one of {format_options}&#34;
+
+        if file_extension == &#34;fg&#34;:
+            self._save_to_efg_format(filepath)
+        elif file_extension == &#34;pickle&#34;:
+            self._save_to_pickle_format(filepath)
+        else:
+            raise ValueError(f&#34;Unknown format: {file_extension}&#34;)
+
+        print(f&#34;Saved data to {filepath}&#34;)
+
+    def _save_to_efg_format(
+        self,
+        data_file: str,
+    ) -&gt; None:
+        &#34;&#34;&#34;
+        Save the given data to the extended factor graph format.
+        &#34;&#34;&#34;
+
+        def get_normal_pose_measurement_string(pose_measure: PoseMeasurement) -&gt; str:
+            &#34;&#34;&#34;This is a utility function to get a formatted string to write to EFG
+            formats for measurements which can be represented by poses (i.e.
+            odometry and loop closures.
+
+            Args:
+                pose (PoseMeasurement): the measurement
+
+            Returns:
+                str: the formatted string representation of the pose measurement
+            &#34;&#34;&#34;
+            line = &#34;Factor SE2RelativeGaussianLikelihoodFactor &#34;
+
+            base_key = pose_measure.base_pose
+            to_key = pose_measure.to_pose
+            line += f&#34;{base_key} {to_key} &#34;
+
+            # add in odometry info
+            del_x = pose_measure.x
+            del_y = pose_measure.y
+            del_theta = pose_measure.theta
+            line += f&#34;{del_x:.15f} {del_y:.15f} {del_theta:.15f} &#34;
+
+            # add in covariance info
+            line += &#34;covariance &#34;
+            covar_info = pose_measure.covariance.flatten()
+            for val in covar_info:
+                line += f&#34;{val:.15f} &#34;
+
+            line += &#34;\n&#34;
+            # return the formatted string
+            return line
+
+        def get_ambiguous_pose_measurement_string(
+            pose_measure: AmbiguousPoseMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;This is a utility function to get a formatted string to write to EFG
+            formats for measurements which can be represented by poses (i.e.
+            odometry and loop closures.
+
+            Args:
+                pose (SE2Pose): the measurement
+
+            Returns:
+                str: the formatted string representation of the pose measurement
+            &#34;&#34;&#34;
+            line = &#34;Factor AmbiguousDataAssociationFactor &#34;
+
+            cur_id = pose_measure.base_pose
+            line += f&#34;Observer {cur_id} &#34;
+
+            true_measure_id = pose_measure.true_to_pose
+            measure_id = pose_measure.measured_to_pose
+            line += f&#34;Observed {true_measure_id} {measure_id} &#34;
+            line += &#34;Weights 0.5 0.5 Binary SE2RelativeGaussianLikelihoodFactor Observation &#34;
+
+            # add in odometry info
+            del_x = pose_measure.x
+            del_y = pose_measure.y
+            del_theta = pose_measure.theta
+            line += f&#34;{del_x:.15f} {del_y:.15f} {del_theta:.15f} &#34;
+
+            # add in covariance info (Sigma == covariance)
+            line += &#34;Sigma &#34;
+            covar_info = pose_measure.covariance.flatten()
+            for val in covar_info:
+                line += f&#34;{val:.15f} &#34;
+
+            line += &#34;\n&#34;
+            # return the formatted string
+            return line
+
+        def get_pose_var_string(pose: PoseVariable) -&gt; str:
+            &#34;&#34;&#34;
+            Takes a pose and returns a string in the desired format
+            &#34;&#34;&#34;
+            line = &#34;Variable Pose SE2 &#34;
+
+            # get local frame for pose
+            pose_key = pose.name
+
+            # add in pose information
+            line += f&#34;{pose_key} {pose.true_x:.15f} {pose.true_y:.15f} {pose.true_theta:.15f}\n&#34;
+
+            return line
+
+        def get_beacon_var_string(beacon: LandmarkVariable) -&gt; str:
+            &#34;&#34;&#34;Takes in a beacon and returns a string formatted as desired
+
+            Args:
+                beacon (Beacon): the beacon
+
+            Returns:
+                str: the formatted string
+            &#34;&#34;&#34;
+            line = &#34;Variable Landmark R2 &#34;
+
+            frame = beacon.name
+            line += f&#34;{frame} {beacon.true_x:.15f} {beacon.true_y:.15f}\n&#34;
+            return line
+
+        def get_prior_to_pin_string(prior: PosePrior) -&gt; str:
+            &#34;&#34;&#34;this is the prior on the first pose to &#39;pin&#39; the factor graph.
+
+            Returns:
+                str: the line representing the prior
+            &#34;&#34;&#34;
+            prior_key = prior.name
+            line = f&#34;Factor UnarySE2ApproximateGaussianPriorFactor {prior_key} &#34;
+            line += f&#34;{prior.x:.15f} {prior.y:.15f} {prior.theta:.15f} &#34;
+
+            line += &#34;covariance &#34;
+            cov = prior.covariance.flatten()
+            for val in cov:
+                line += f&#34;{val:.15f} &#34;
+            line += &#34;\n&#34;
+
+            return line
+
+        def get_range_measurement_string(
+            range_measure: FGRangeMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;Returns the string representing a range factor based on the provided
+            range measurement and the association information.
+
+            Args:
+                range_measure (FGRangeMeasurement): the measurement info (value and
+                    stddev)
+
+            Returns:
+                str: the line representing the factor
+            &#34;&#34;&#34;
+
+            robot_id, measure_id = range_measure.association
+
+            # Factor SE2R2RangeGaussianLikelihoodFactor X0 L1 14.14214292904807 0.5
+            if &#34;L&#34; in measure_id:
+                # L is reserved for landmark names
+                range_factor_type = &#34;SE2R2RangeGaussianLikelihoodFactor&#34;
+            else:
+                # ID starts with other letters are robots
+                range_factor_type = &#34;SE2SE2RangeGaussianLikelihoodFactor&#34;
+            line = f&#34;Factor {range_factor_type} &#34;
+            line += f&#34;{robot_id} {measure_id} &#34;
+            line += f&#34;{range_measure.dist:.15f} {range_measure.stddev:.15f}\n&#34;
+
+            return line
+
+        def get_ambiguous_range_measurement_string(
+            range_measure: AmbiguousFGRangeMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;Returns the string representing an ambiguous range factor based on
+            the provided range measurement and the association information.
+
+            Args:
+                range_measure (AmbiguousFGRangeMeasurement): the measurement info
+                    (value and stddev)
+
+            Returns:
+                str: the line representing the factor
+            &#34;&#34;&#34;
+
+            true_robot_id, true_beacon_id = range_measure.true_association
+            measured_robot_id, measured_beacon_id = range_measure.measured_association
+
+            assert (
+                true_robot_id == measured_robot_id
+            ), &#34;the robot id must always be correct&#34;
+            assert (
+                &#34;L&#34; in true_beacon_id and &#34;L&#34; in measured_beacon_id
+            ), &#34;right now only considering ambiguous measurements to landmarks&#34;
+
+            # Factor AmbiguousDataAssociationFactor Observer X1 Observed L1 L2
+            # Weights 0.5 0.5 Binary SE2R2RangeGaussianLikelihoodFactor
+            # Observation 24.494897460297107 Sigma 0.5
+            line = &#34;Factor AmbiguousDataAssociationFactor &#34;
+            line += f&#34;Observer {true_robot_id} &#34;
+            line += f&#34;Observed {true_beacon_id} {measured_beacon_id} &#34;
+            line += &#34;Weights 0.5 0.5 Binary SE2R2RangeGaussianLikelihoodFactor &#34;
+            line += f&#34;Observation {range_measure.dist:.15f} Sigma {range_measure.stddev:.15f}\n&#34;
+
+            return line
+
+        file_writer = open(data_file, &#34;w&#34;)
+
+        for pose in self.pose_variables:
+            line = get_pose_var_string(pose)
+            file_writer.write(line)
+
+        for beacon in self.landmark_variables:
+            line = get_beacon_var_string(beacon)
+            file_writer.write(line)
+
+        for prior in self.pose_priors:
+            line = get_prior_to_pin_string(prior)
+            file_writer.write(line)
+
+        for odom_measure in self.pose_measurements:
+            line = get_normal_pose_measurement_string(odom_measure)
+            file_writer.write(line)
+
+        for amb_odom_measure in self.ambiguous_pose_measurements:
+            line = get_ambiguous_pose_measurement_string(amb_odom_measure)
+            file_writer.write(line)
+
+        for range_measure in self.range_measurements:
+            line = get_range_measurement_string(range_measure)
+            file_writer.write(line)
+
+        for amb_range_measure in self.ambiguous_range_measurements:
+            line = get_ambiguous_range_measurement_string(amb_range_measure)
+            file_writer.write(line)
+
+        file_writer.close()
+
+    def _save_to_pickle_format(self, data_file: str) -&gt; None:
+        &#34;&#34;&#34;
+        Save to efg pickle format.
+        &#34;&#34;&#34;
+        pickle_file = open(data_file, &#34;wb&#34;)
+        pickle.dump(self, pickle_file)
+        pickle_file.close()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="factor_graph.factor_graph.FactorGraphData"><code class="flex name class">
+<span>class <span class="ident">FactorGraphData</span></span>
+<span>(</span><span>pose_variables: List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>] = NOTHING, landmark_variables: List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>] = NOTHING, pose_measurements: List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>] = NOTHING, ambiguous_pose_measurements: List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>] = NOTHING, range_measurements: List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>] = NOTHING, ambiguous_range_measurements: List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>] = NOTHING, pose_priors: List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>] = NOTHING, landmark_priors: List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>] = NOTHING, dimension: int = 2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Just a container for the data in a FactorGraph. Only considers standard
+gaussian measurements.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>pose_variables</code></strong> :&ensp;<code>List[PoseVariable]</code></dt>
+<dd>a list of the pose variables</dd>
+<dt><strong><code>landmark_variables</code></strong> :&ensp;<code>List[LandmarkVariable]</code></dt>
+<dd>a list of the landmarks</dd>
+<dt><strong><code>pose_measurements</code></strong> :&ensp;<code>List[PoseMeasurement]</code></dt>
+<dd>a list of odom
+measurements</dd>
+<dt><strong><code>ambiguous_pose_measurements</code></strong> :&ensp;<code>List[AmbiguousPoseMeasurement]</code></dt>
+<dd>a list of
+ambiguous pose measurements</dd>
+<dt><strong><code>range_measurements</code></strong> :&ensp;<code>List[FGRangeMeasurement]</code></dt>
+<dd>a list of range
+measurements</dd>
+<dt><strong><code>ambiguous_range_measurements</code></strong> :&ensp;<code>List[AmbiguousFGRangeMeasurement]</code></dt>
+<dd>a list
+of ambiguous range measurements</dd>
+<dt><strong><code>pose_priors</code></strong> :&ensp;<code>List[PosePrior]</code></dt>
+<dd>a list of the pose priors</dd>
+<dt><strong><code>landmark_priors</code></strong> :&ensp;<code>List[LandmarkPrior]</code></dt>
+<dd>a list of the landmark priors</dd>
+</dl>
+<p>Method generated by attrs for class FactorGraphData.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@attr.s
+class FactorGraphData:
+    &#34;&#34;&#34;
+    Just a container for the data in a FactorGraph. Only considers standard
+    gaussian measurements.
+
+    Args:
+        pose_variables (List[PoseVariable]): a list of the pose variables
+        landmark_variables (List[LandmarkVariable]): a list of the landmarks
+        pose_measurements (List[PoseMeasurement]): a list of odom
+            measurements
+        ambiguous_pose_measurements (List[AmbiguousPoseMeasurement]): a list of
+            ambiguous pose measurements
+        range_measurements (List[FGRangeMeasurement]): a list of range
+            measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
+            of ambiguous range measurements
+        pose_priors (List[PosePrior]): a list of the pose priors
+        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
+    &#34;&#34;&#34;
+
+    pose_variables: List[PoseVariable] = attr.ib(factory=list)
+    landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
+    pose_measurements: List[PoseMeasurement] = attr.ib(factory=list)
+    ambiguous_pose_measurements: List[AmbiguousPoseMeasurement] = attr.ib(factory=list)
+    range_measurements: List[FGRangeMeasurement] = attr.ib(factory=list)
+    ambiguous_range_measurements: List[AmbiguousFGRangeMeasurement] = attr.ib(
+        factory=list
+    )
+    pose_priors: List[PosePrior] = attr.ib(factory=list)
+    landmark_priors: List[LandmarkPrior] = attr.ib(factory=list)
+    _dimension: int = attr.ib(default=2)
+
+    def __str__(self):
+        # TODO add ambiguous measurements
+        line = &#34;Factor Graph Data\n&#34;
+
+        # add pose variables
+        line += f&#34;Pose Variables: {len(self.pose_variables)}\n&#34;
+        for x in self.pose_variables:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add landmarks
+        line += f&#34;Landmark Variables: {len(self.landmark_variables)}\n&#34;
+        for x in self.landmark_variables:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add odom measurements
+        line += f&#34;odom Measurements: {len(self.pose_measurements)}\n&#34;
+        for x in self.pose_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add range measurements
+        line += f&#34;Range Measurements: {len(self.range_measurements)}\n&#34;
+        for x in self.range_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add pose priors
+        line += f&#34;Pose Priors: {len(self.pose_priors)}\n&#34;
+        for x in self.pose_priors:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add landmark priors
+        line += f&#34;Landmark Priors: {len(self.landmark_priors)}\n&#34;
+        for x in self.landmark_priors:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add dimension
+        line += f&#34;Dimension: {self._dimension}\n\n&#34;
+        return line
+
+    @property
+    def num_poses(self):
+        return len(self.pose_variables)
+
+    @property
+    def true_values_vector(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        returns the true values in a vectorized form
+        &#34;&#34;&#34;
+        vect: List[float] = []
+
+        # add in pose translations
+        for pose in self.pose_variables:
+            x, y = pose.true_position
+            vect.append(x)
+            vect.append(y)
+
+        # add in landmark positions
+        for pos in self.landmark_variables:
+            x, y = pos.true_position
+            vect.append(x)
+            vect.append(y)
+
+        # add in rotation measurements
+        for pose in self.pose_variables:
+            rot = pose.rotation_matrix.T.flatten()
+            for v in rot:
+                vect.append(v)
+
+        # add in distance variables
+        for range_measurement in self.range_measurements:
+            vect.append(range_measurement.dist)
+
+        vect.append(1.0)
+        return np.array(vect)
+
+    @property
+    def num_translations(self):
+        return self.num_poses + self.num_landmarks
+
+    @property
+    def num_landmarks(self):
+        return len(self.landmark_variables)
+
+    @property
+    def dimension(self):
+        return self._dimension
+
+    @property
+    def poses_and_landmarks_dimension(self):
+        d = self.dimension
+
+        # size due to translations
+        n_trans = self.num_translations
+        mat_dim = n_trans * d
+
+        # size due to rotations
+        n_pose = self.num_poses
+        mat_dim += n_pose * d * d
+
+        return mat_dim
+
+    @property
+    def distance_variables_dimension(self):
+        mat_dim = self.num_range_measurements + 1
+        return mat_dim
+
+    @property
+    def num_range_measurements(self):
+        return len(self.range_measurements)
+
+    @property
+    def num_pose_measurements(self):
+        return len(self.pose_measurements)
+
+    @property
+    def num_total_measurements(self):
+        return self.num_range_measurements + self.num_pose_measurements
+
+    @property
+    def dist_measurements_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get a vector of the distance measurements
+
+        Returns:
+            np.ndarray: a vector of the distance measurements
+        &#34;&#34;&#34;
+        return np.array([meas.dist for meas in self.range_measurements])
+
+    @property
+    def weighted_dist_measurements_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get of the distance measurements weighted by their precision
+        &#34;&#34;&#34;
+        return self.dist_measurements_vect * self.measurements_weight_vect
+
+    @property
+    def measurements_weight_vect(self) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Get the weights of the measurements
+        &#34;&#34;&#34;
+        return np.array([meas.weight for meas in self.range_measurements])
+
+    @property
+    def sum_weighted_measurements_squared(self) -&gt; float:
+        &#34;&#34;&#34;
+        Get the sum of the squared weighted measurements
+        &#34;&#34;&#34;
+        weighted_dist_vect = self.weighted_dist_measurements_vect
+        dist_vect = self.dist_measurements_vect
+        return np.dot(weighted_dist_vect, dist_vect)
+
+    #### Add data
+
+    def add_pose_variable(self, pose_var: PoseVariable):
+        self.pose_variables.append(pose_var)
+
+    def add_landmark_variable(self, landmark_var: LandmarkVariable):
+        self.landmark_variables.append(landmark_var)
+
+    def add_pose_measurement(self, odom_meas: PoseMeasurement):
+        self.pose_measurements.append(odom_meas)
+
+    def add_ambiguous_pose_measurement(self, measure: AmbiguousPoseMeasurement):
+        self.ambiguous_pose_measurements.append(measure)
+
+    def add_range_measurement(self, range_meas: FGRangeMeasurement):
+        self.range_measurements.append(range_meas)
+
+    def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
+        self.ambiguous_range_measurements.append(measure)
+
+    def add_pose_prior(self, pose_prior: PosePrior):
+        self.pose_priors.append(pose_prior)
+
+    def add_landmark_prior(self, landmark_prior: LandmarkPrior):
+        self.landmark_priors.append(landmark_prior)
+
+    #### Accessors for the data
+
+    def get_range_measurement_pose(self, measure: FGRangeMeasurement) -&gt; PoseVariable:
+        &#34;&#34;&#34;Gets the pose associated with the range measurement
+
+        Arguments:
+            measure (FGRangeMeasurement): the range measurement
+
+        Returns:
+            PoseVariable: the pose variable associated with the range
+                measurement
+        &#34;&#34;&#34;
+        pose_name = measure.association[0]
+        pose_idx = int(pose_name[1:])
+        return self.pose_variables[pose_idx]
+
+    def get_range_measurement_landmark(
+        self, measure: FGRangeMeasurement
+    ) -&gt; LandmarkVariable:
+        &#34;&#34;&#34;Returns the landmark variable associated with this range measurement
+
+        Arguments:
+            measure (FGRangeMeasurement): the range measurement
+
+        Returns:
+            LandmarkVariable: the landmark variable associated with the range
+                measurement
+        &#34;&#34;&#34;
+        landmark_name = measure.association[1]
+        landmark_idx = int(landmark_name[1:])
+        return self.landmark_variables[landmark_idx]
+
+    def get_pose_translation_variable_indices(
+        self, pose: PoseVariable
+    ) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the translation variable corresponding to this pose
+        in the factor graph
+
+        Args:
+            pose (PoseVariable): the pose variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert pose in self.pose_variables
+        pose_idx = self.pose_variables.index(pose)
+        d = self.dimension
+
+        # get the start and stop indices for the translation variables
+        start = pose_idx * d
+        stop = (pose_idx + 1) * d
+
+        return (start, stop)
+
+    def get_landmark_translation_variable_indices(
+        self, landmark: LandmarkVariable
+    ) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the translation variable corresponding to this landmark
+        in the factor graph
+
+        Args:
+            landmark (LandmarkVariable): the landmark variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert landmark in self.landmark_variables
+        landmark_idx = self.landmark_variables.index(landmark)
+
+        # offset due to the pose translations
+        d = self.dimension
+        offset = self.num_poses * d
+
+        # get the start and stop indices for the translation variables
+        start = landmark_idx * d + offset
+        stop = start + d
+
+        return (start, stop)
+
+    def get_pose_rotation_variable_indices(self, pose: PoseVariable) -&gt; Tuple[int, int]:
+        &#34;&#34;&#34;
+        Get the indices [start, stop) for the rotation variable corresponding to
+        this pose in the factor graph
+
+        Args:
+            pose (PoseVariable): the pose variable
+
+        Returns:
+            Tuple[int, int]: [start, stop) the start and stop indices
+        &#34;&#34;&#34;
+        assert pose in self.pose_variables
+        pose_idx = self.pose_variables.index(pose)
+        d = self.dimension
+
+        # need an offset to skip over all the translation variables
+        offset = self.num_translations * d
+
+        # get the start and stop indices
+        start = (pose_idx * d * d) + offset
+        stop = start + d * d
+
+        return (start, stop)
+
+    def get_range_dist_variable_indices(self, measurement: FGRangeMeasurement) -&gt; int:
+        &#34;&#34;&#34;
+        Get the index for the distance variable corresponding to
+        this measurement in the factor graph
+
+        Args:
+            measurement (FGRangeMeasurement): the measurement
+
+        Returns:
+            int: the index of the distance variable
+        &#34;&#34;&#34;
+        assert measurement in self.range_measurements
+        measure_idx = self.range_measurements.index(measurement)
+        d = self.dimension
+
+        # need an offset to skip over all the translation and rotation
+        # variables
+        range_offset = self.num_translations * d
+        range_offset += self.num_poses * d * d
+
+        # get the start and stop indices
+        range_idx = (measure_idx) + range_offset
+
+        return range_idx
+
+    def save_to_file(self, filepath: str):
+        &#34;&#34;&#34;
+        Save the factor graph in the EFG format
+
+        Args:
+            filepath (str): the path of the file to write to
+        &#34;&#34;&#34;
+        # TODO need to check that directory exists!
+        # check is valid file type
+        file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
+        format_options = [&#34;fg&#34;, &#34;pickle&#34;]
+        assert (
+            file_extension in format_options
+        ), f&#34;File extension: {file_extension} not available, must be one of {format_options}&#34;
+
+        if file_extension == &#34;fg&#34;:
+            self._save_to_efg_format(filepath)
+        elif file_extension == &#34;pickle&#34;:
+            self._save_to_pickle_format(filepath)
+        else:
+            raise ValueError(f&#34;Unknown format: {file_extension}&#34;)
+
+        print(f&#34;Saved data to {filepath}&#34;)
+
+    def _save_to_efg_format(
+        self,
+        data_file: str,
+    ) -&gt; None:
+        &#34;&#34;&#34;
+        Save the given data to the extended factor graph format.
+        &#34;&#34;&#34;
+
+        def get_normal_pose_measurement_string(pose_measure: PoseMeasurement) -&gt; str:
+            &#34;&#34;&#34;This is a utility function to get a formatted string to write to EFG
+            formats for measurements which can be represented by poses (i.e.
+            odometry and loop closures.
+
+            Args:
+                pose (PoseMeasurement): the measurement
+
+            Returns:
+                str: the formatted string representation of the pose measurement
+            &#34;&#34;&#34;
+            line = &#34;Factor SE2RelativeGaussianLikelihoodFactor &#34;
+
+            base_key = pose_measure.base_pose
+            to_key = pose_measure.to_pose
+            line += f&#34;{base_key} {to_key} &#34;
+
+            # add in odometry info
+            del_x = pose_measure.x
+            del_y = pose_measure.y
+            del_theta = pose_measure.theta
+            line += f&#34;{del_x:.15f} {del_y:.15f} {del_theta:.15f} &#34;
+
+            # add in covariance info
+            line += &#34;covariance &#34;
+            covar_info = pose_measure.covariance.flatten()
+            for val in covar_info:
+                line += f&#34;{val:.15f} &#34;
+
+            line += &#34;\n&#34;
+            # return the formatted string
+            return line
+
+        def get_ambiguous_pose_measurement_string(
+            pose_measure: AmbiguousPoseMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;This is a utility function to get a formatted string to write to EFG
+            formats for measurements which can be represented by poses (i.e.
+            odometry and loop closures.
+
+            Args:
+                pose (SE2Pose): the measurement
+
+            Returns:
+                str: the formatted string representation of the pose measurement
+            &#34;&#34;&#34;
+            line = &#34;Factor AmbiguousDataAssociationFactor &#34;
+
+            cur_id = pose_measure.base_pose
+            line += f&#34;Observer {cur_id} &#34;
+
+            true_measure_id = pose_measure.true_to_pose
+            measure_id = pose_measure.measured_to_pose
+            line += f&#34;Observed {true_measure_id} {measure_id} &#34;
+            line += &#34;Weights 0.5 0.5 Binary SE2RelativeGaussianLikelihoodFactor Observation &#34;
+
+            # add in odometry info
+            del_x = pose_measure.x
+            del_y = pose_measure.y
+            del_theta = pose_measure.theta
+            line += f&#34;{del_x:.15f} {del_y:.15f} {del_theta:.15f} &#34;
+
+            # add in covariance info (Sigma == covariance)
+            line += &#34;Sigma &#34;
+            covar_info = pose_measure.covariance.flatten()
+            for val in covar_info:
+                line += f&#34;{val:.15f} &#34;
+
+            line += &#34;\n&#34;
+            # return the formatted string
+            return line
+
+        def get_pose_var_string(pose: PoseVariable) -&gt; str:
+            &#34;&#34;&#34;
+            Takes a pose and returns a string in the desired format
+            &#34;&#34;&#34;
+            line = &#34;Variable Pose SE2 &#34;
+
+            # get local frame for pose
+            pose_key = pose.name
+
+            # add in pose information
+            line += f&#34;{pose_key} {pose.true_x:.15f} {pose.true_y:.15f} {pose.true_theta:.15f}\n&#34;
+
+            return line
+
+        def get_beacon_var_string(beacon: LandmarkVariable) -&gt; str:
+            &#34;&#34;&#34;Takes in a beacon and returns a string formatted as desired
+
+            Args:
+                beacon (Beacon): the beacon
+
+            Returns:
+                str: the formatted string
+            &#34;&#34;&#34;
+            line = &#34;Variable Landmark R2 &#34;
+
+            frame = beacon.name
+            line += f&#34;{frame} {beacon.true_x:.15f} {beacon.true_y:.15f}\n&#34;
+            return line
+
+        def get_prior_to_pin_string(prior: PosePrior) -&gt; str:
+            &#34;&#34;&#34;this is the prior on the first pose to &#39;pin&#39; the factor graph.
+
+            Returns:
+                str: the line representing the prior
+            &#34;&#34;&#34;
+            prior_key = prior.name
+            line = f&#34;Factor UnarySE2ApproximateGaussianPriorFactor {prior_key} &#34;
+            line += f&#34;{prior.x:.15f} {prior.y:.15f} {prior.theta:.15f} &#34;
+
+            line += &#34;covariance &#34;
+            cov = prior.covariance.flatten()
+            for val in cov:
+                line += f&#34;{val:.15f} &#34;
+            line += &#34;\n&#34;
+
+            return line
+
+        def get_range_measurement_string(
+            range_measure: FGRangeMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;Returns the string representing a range factor based on the provided
+            range measurement and the association information.
+
+            Args:
+                range_measure (FGRangeMeasurement): the measurement info (value and
+                    stddev)
+
+            Returns:
+                str: the line representing the factor
+            &#34;&#34;&#34;
+
+            robot_id, measure_id = range_measure.association
+
+            # Factor SE2R2RangeGaussianLikelihoodFactor X0 L1 14.14214292904807 0.5
+            if &#34;L&#34; in measure_id:
+                # L is reserved for landmark names
+                range_factor_type = &#34;SE2R2RangeGaussianLikelihoodFactor&#34;
+            else:
+                # ID starts with other letters are robots
+                range_factor_type = &#34;SE2SE2RangeGaussianLikelihoodFactor&#34;
+            line = f&#34;Factor {range_factor_type} &#34;
+            line += f&#34;{robot_id} {measure_id} &#34;
+            line += f&#34;{range_measure.dist:.15f} {range_measure.stddev:.15f}\n&#34;
+
+            return line
+
+        def get_ambiguous_range_measurement_string(
+            range_measure: AmbiguousFGRangeMeasurement,
+        ) -&gt; str:
+            &#34;&#34;&#34;Returns the string representing an ambiguous range factor based on
+            the provided range measurement and the association information.
+
+            Args:
+                range_measure (AmbiguousFGRangeMeasurement): the measurement info
+                    (value and stddev)
+
+            Returns:
+                str: the line representing the factor
+            &#34;&#34;&#34;
+
+            true_robot_id, true_beacon_id = range_measure.true_association
+            measured_robot_id, measured_beacon_id = range_measure.measured_association
+
+            assert (
+                true_robot_id == measured_robot_id
+            ), &#34;the robot id must always be correct&#34;
+            assert (
+                &#34;L&#34; in true_beacon_id and &#34;L&#34; in measured_beacon_id
+            ), &#34;right now only considering ambiguous measurements to landmarks&#34;
+
+            # Factor AmbiguousDataAssociationFactor Observer X1 Observed L1 L2
+            # Weights 0.5 0.5 Binary SE2R2RangeGaussianLikelihoodFactor
+            # Observation 24.494897460297107 Sigma 0.5
+            line = &#34;Factor AmbiguousDataAssociationFactor &#34;
+            line += f&#34;Observer {true_robot_id} &#34;
+            line += f&#34;Observed {true_beacon_id} {measured_beacon_id} &#34;
+            line += &#34;Weights 0.5 0.5 Binary SE2R2RangeGaussianLikelihoodFactor &#34;
+            line += f&#34;Observation {range_measure.dist:.15f} Sigma {range_measure.stddev:.15f}\n&#34;
+
+            return line
+
+        file_writer = open(data_file, &#34;w&#34;)
+
+        for pose in self.pose_variables:
+            line = get_pose_var_string(pose)
+            file_writer.write(line)
+
+        for beacon in self.landmark_variables:
+            line = get_beacon_var_string(beacon)
+            file_writer.write(line)
+
+        for prior in self.pose_priors:
+            line = get_prior_to_pin_string(prior)
+            file_writer.write(line)
+
+        for odom_measure in self.pose_measurements:
+            line = get_normal_pose_measurement_string(odom_measure)
+            file_writer.write(line)
+
+        for amb_odom_measure in self.ambiguous_pose_measurements:
+            line = get_ambiguous_pose_measurement_string(amb_odom_measure)
+            file_writer.write(line)
+
+        for range_measure in self.range_measurements:
+            line = get_range_measurement_string(range_measure)
+            file_writer.write(line)
+
+        for amb_range_measure in self.ambiguous_range_measurements:
+            line = get_ambiguous_range_measurement_string(amb_range_measure)
+            file_writer.write(line)
+
+        file_writer.close()
+
+    def _save_to_pickle_format(self, data_file: str) -&gt; None:
+        &#34;&#34;&#34;
+        Save to efg pickle format.
+        &#34;&#34;&#34;
+        pickle_file = open(data_file, &#34;wb&#34;)
+        pickle.dump(self, pickle_file)
+        pickle_file.close()</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="factor_graph.factor_graph.FactorGraphData.ambiguous_pose_measurements"><code class="name">var <span class="ident">ambiguous_pose_measurements</span> : List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements"><code class="name">var <span class="ident">ambiguous_range_measurements</span> : List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.landmark_priors"><code class="name">var <span class="ident">landmark_priors</span> : List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.landmark_variables"><code class="name">var <span class="ident">landmark_variables</span> : List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.pose_measurements"><code class="name">var <span class="ident">pose_measurements</span> : List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.pose_priors"><code class="name">var <span class="ident">pose_priors</span> : List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables"><code class="name">var <span class="ident">pose_variables</span> : List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.range_measurements"><code class="name">var <span class="ident">range_measurements</span> : List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="factor_graph.factor_graph.FactorGraphData.dimension"><code class="name">var <span class="ident">dimension</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def dimension(self):
+    return self._dimension</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.dist_measurements_vect"><code class="name">var <span class="ident">dist_measurements_vect</span> : numpy.ndarray</code></dt>
+<dd>
+<div class="desc"><p>Get a vector of the distance measurements</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>a vector of the distance measurements</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def dist_measurements_vect(self) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Get a vector of the distance measurements
+
+    Returns:
+        np.ndarray: a vector of the distance measurements
+    &#34;&#34;&#34;
+    return np.array([meas.dist for meas in self.range_measurements])</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.distance_variables_dimension"><code class="name">var <span class="ident">distance_variables_dimension</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def distance_variables_dimension(self):
+    mat_dim = self.num_range_measurements + 1
+    return mat_dim</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.measurements_weight_vect"><code class="name">var <span class="ident">measurements_weight_vect</span> : numpy.ndarray</code></dt>
+<dd>
+<div class="desc"><p>Get the weights of the measurements</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def measurements_weight_vect(self) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Get the weights of the measurements
+    &#34;&#34;&#34;
+    return np.array([meas.weight for meas in self.range_measurements])</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_landmarks"><code class="name">var <span class="ident">num_landmarks</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_landmarks(self):
+    return len(self.landmark_variables)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_pose_measurements"><code class="name">var <span class="ident">num_pose_measurements</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_pose_measurements(self):
+    return len(self.pose_measurements)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_poses"><code class="name">var <span class="ident">num_poses</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_poses(self):
+    return len(self.pose_variables)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_range_measurements"><code class="name">var <span class="ident">num_range_measurements</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_range_measurements(self):
+    return len(self.range_measurements)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_total_measurements"><code class="name">var <span class="ident">num_total_measurements</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_total_measurements(self):
+    return self.num_range_measurements + self.num_pose_measurements</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_translations"><code class="name">var <span class="ident">num_translations</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_translations(self):
+    return self.num_poses + self.num_landmarks</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.poses_and_landmarks_dimension"><code class="name">var <span class="ident">poses_and_landmarks_dimension</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def poses_and_landmarks_dimension(self):
+    d = self.dimension
+
+    # size due to translations
+    n_trans = self.num_translations
+    mat_dim = n_trans * d
+
+    # size due to rotations
+    n_pose = self.num_poses
+    mat_dim += n_pose * d * d
+
+    return mat_dim</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.sum_weighted_measurements_squared"><code class="name">var <span class="ident">sum_weighted_measurements_squared</span> : float</code></dt>
+<dd>
+<div class="desc"><p>Get the sum of the squared weighted measurements</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def sum_weighted_measurements_squared(self) -&gt; float:
+    &#34;&#34;&#34;
+    Get the sum of the squared weighted measurements
+    &#34;&#34;&#34;
+    weighted_dist_vect = self.weighted_dist_measurements_vect
+    dist_vect = self.dist_measurements_vect
+    return np.dot(weighted_dist_vect, dist_vect)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.true_values_vector"><code class="name">var <span class="ident">true_values_vector</span> : numpy.ndarray</code></dt>
+<dd>
+<div class="desc"><p>returns the true values in a vectorized form</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def true_values_vector(self) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    returns the true values in a vectorized form
+    &#34;&#34;&#34;
+    vect: List[float] = []
+
+    # add in pose translations
+    for pose in self.pose_variables:
+        x, y = pose.true_position
+        vect.append(x)
+        vect.append(y)
+
+    # add in landmark positions
+    for pos in self.landmark_variables:
+        x, y = pos.true_position
+        vect.append(x)
+        vect.append(y)
+
+    # add in rotation measurements
+    for pose in self.pose_variables:
+        rot = pose.rotation_matrix.T.flatten()
+        for v in rot:
+            vect.append(v)
+
+    # add in distance variables
+    for range_measurement in self.range_measurements:
+        vect.append(range_measurement.dist)
+
+    vect.append(1.0)
+    return np.array(vect)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.weighted_dist_measurements_vect"><code class="name">var <span class="ident">weighted_dist_measurements_vect</span> : numpy.ndarray</code></dt>
+<dd>
+<div class="desc"><p>Get of the distance measurements weighted by their precision</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def weighted_dist_measurements_vect(self) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Get of the distance measurements weighted by their precision
+    &#34;&#34;&#34;
+    return self.dist_measurements_vect * self.measurements_weight_vect</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_ambiguous_pose_measurement"><code class="name flex">
+<span>def <span class="ident">add_ambiguous_pose_measurement</span></span>(<span>self, measure: <a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_ambiguous_pose_measurement(self, measure: AmbiguousPoseMeasurement):
+    self.ambiguous_pose_measurements.append(measure)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement"><code class="name flex">
+<span>def <span class="ident">add_ambiguous_range_measurement</span></span>(<span>self, measure: <a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
+    self.ambiguous_range_measurements.append(measure)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_landmark_prior"><code class="name flex">
+<span>def <span class="ident">add_landmark_prior</span></span>(<span>self, landmark_prior: <a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_landmark_prior(self, landmark_prior: LandmarkPrior):
+    self.landmark_priors.append(landmark_prior)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_landmark_variable"><code class="name flex">
+<span>def <span class="ident">add_landmark_variable</span></span>(<span>self, landmark_var: <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_landmark_variable(self, landmark_var: LandmarkVariable):
+    self.landmark_variables.append(landmark_var)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_pose_measurement"><code class="name flex">
+<span>def <span class="ident">add_pose_measurement</span></span>(<span>self, odom_meas: <a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_pose_measurement(self, odom_meas: PoseMeasurement):
+    self.pose_measurements.append(odom_meas)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_pose_prior"><code class="name flex">
+<span>def <span class="ident">add_pose_prior</span></span>(<span>self, pose_prior: <a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_pose_prior(self, pose_prior: PosePrior):
+    self.pose_priors.append(pose_prior)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_pose_variable"><code class="name flex">
+<span>def <span class="ident">add_pose_variable</span></span>(<span>self, pose_var: <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_pose_variable(self, pose_var: PoseVariable):
+    self.pose_variables.append(pose_var)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.add_range_measurement"><code class="name flex">
+<span>def <span class="ident">add_range_measurement</span></span>(<span>self, range_meas: <a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_range_measurement(self, range_meas: FGRangeMeasurement):
+    self.range_measurements.append(range_meas)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_landmark_translation_variable_indices"><code class="name flex">
+<span>def <span class="ident">get_landmark_translation_variable_indices</span></span>(<span>self, landmark: <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>) ‑> Tuple[int, int]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the indices [start, stop) for the translation variable corresponding to this landmark
+in the factor graph</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>landmark</code></strong> :&ensp;<code>LandmarkVariable</code></dt>
+<dd>the landmark variable</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, int]</code></dt>
+<dd>[start, stop) the start and stop indices</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_landmark_translation_variable_indices(
+    self, landmark: LandmarkVariable
+) -&gt; Tuple[int, int]:
+    &#34;&#34;&#34;
+    Get the indices [start, stop) for the translation variable corresponding to this landmark
+    in the factor graph
+
+    Args:
+        landmark (LandmarkVariable): the landmark variable
+
+    Returns:
+        Tuple[int, int]: [start, stop) the start and stop indices
+    &#34;&#34;&#34;
+    assert landmark in self.landmark_variables
+    landmark_idx = self.landmark_variables.index(landmark)
+
+    # offset due to the pose translations
+    d = self.dimension
+    offset = self.num_poses * d
+
+    # get the start and stop indices for the translation variables
+    start = landmark_idx * d + offset
+    stop = start + d
+
+    return (start, stop)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_pose_rotation_variable_indices"><code class="name flex">
+<span>def <span class="ident">get_pose_rotation_variable_indices</span></span>(<span>self, pose: <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>) ‑> Tuple[int, int]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the indices [start, stop) for the rotation variable corresponding to
+this pose in the factor graph</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>pose</code></strong> :&ensp;<code>PoseVariable</code></dt>
+<dd>the pose variable</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, int]</code></dt>
+<dd>[start, stop) the start and stop indices</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_pose_rotation_variable_indices(self, pose: PoseVariable) -&gt; Tuple[int, int]:
+    &#34;&#34;&#34;
+    Get the indices [start, stop) for the rotation variable corresponding to
+    this pose in the factor graph
+
+    Args:
+        pose (PoseVariable): the pose variable
+
+    Returns:
+        Tuple[int, int]: [start, stop) the start and stop indices
+    &#34;&#34;&#34;
+    assert pose in self.pose_variables
+    pose_idx = self.pose_variables.index(pose)
+    d = self.dimension
+
+    # need an offset to skip over all the translation variables
+    offset = self.num_translations * d
+
+    # get the start and stop indices
+    start = (pose_idx * d * d) + offset
+    stop = start + d * d
+
+    return (start, stop)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_pose_translation_variable_indices"><code class="name flex">
+<span>def <span class="ident">get_pose_translation_variable_indices</span></span>(<span>self, pose: <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>) ‑> Tuple[int, int]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the indices [start, stop) for the translation variable corresponding to this pose
+in the factor graph</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>pose</code></strong> :&ensp;<code>PoseVariable</code></dt>
+<dd>the pose variable</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[int, int]</code></dt>
+<dd>[start, stop) the start and stop indices</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_pose_translation_variable_indices(
+    self, pose: PoseVariable
+) -&gt; Tuple[int, int]:
+    &#34;&#34;&#34;
+    Get the indices [start, stop) for the translation variable corresponding to this pose
+    in the factor graph
+
+    Args:
+        pose (PoseVariable): the pose variable
+
+    Returns:
+        Tuple[int, int]: [start, stop) the start and stop indices
+    &#34;&#34;&#34;
+    assert pose in self.pose_variables
+    pose_idx = self.pose_variables.index(pose)
+    d = self.dimension
+
+    # get the start and stop indices for the translation variables
+    start = pose_idx * d
+    stop = (pose_idx + 1) * d
+
+    return (start, stop)</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_range_dist_variable_indices"><code class="name flex">
+<span>def <span class="ident">get_range_dist_variable_indices</span></span>(<span>self, measurement: <a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the index for the distance variable corresponding to
+this measurement in the factor graph</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>measurement</code></strong> :&ensp;<code>FGRangeMeasurement</code></dt>
+<dd>the measurement</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>the index of the distance variable</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_range_dist_variable_indices(self, measurement: FGRangeMeasurement) -&gt; int:
+    &#34;&#34;&#34;
+    Get the index for the distance variable corresponding to
+    this measurement in the factor graph
+
+    Args:
+        measurement (FGRangeMeasurement): the measurement
+
+    Returns:
+        int: the index of the distance variable
+    &#34;&#34;&#34;
+    assert measurement in self.range_measurements
+    measure_idx = self.range_measurements.index(measurement)
+    d = self.dimension
+
+    # need an offset to skip over all the translation and rotation
+    # variables
+    range_offset = self.num_translations * d
+    range_offset += self.num_poses * d * d
+
+    # get the start and stop indices
+    range_idx = (measure_idx) + range_offset
+
+    return range_idx</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_range_measurement_landmark"><code class="name flex">
+<span>def <span class="ident">get_range_measurement_landmark</span></span>(<span>self, measure: <a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>) ‑> <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the landmark variable associated with this range measurement</p>
+<h2 id="arguments">Arguments</h2>
+<p>measure (FGRangeMeasurement): the range measurement</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>LandmarkVariable</code></dt>
+<dd>the landmark variable associated with the range
+measurement</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_range_measurement_landmark(
+    self, measure: FGRangeMeasurement
+) -&gt; LandmarkVariable:
+    &#34;&#34;&#34;Returns the landmark variable associated with this range measurement
+
+    Arguments:
+        measure (FGRangeMeasurement): the range measurement
+
+    Returns:
+        LandmarkVariable: the landmark variable associated with the range
+            measurement
+    &#34;&#34;&#34;
+    landmark_name = measure.association[1]
+    landmark_idx = int(landmark_name[1:])
+    return self.landmark_variables[landmark_idx]</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.get_range_measurement_pose"><code class="name flex">
+<span>def <span class="ident">get_range_measurement_pose</span></span>(<span>self, measure: <a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>) ‑> <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the pose associated with the range measurement</p>
+<h2 id="arguments">Arguments</h2>
+<p>measure (FGRangeMeasurement): the range measurement</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>PoseVariable</code></dt>
+<dd>the pose variable associated with the range
+measurement</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_range_measurement_pose(self, measure: FGRangeMeasurement) -&gt; PoseVariable:
+    &#34;&#34;&#34;Gets the pose associated with the range measurement
+
+    Arguments:
+        measure (FGRangeMeasurement): the range measurement
+
+    Returns:
+        PoseVariable: the pose variable associated with the range
+            measurement
+    &#34;&#34;&#34;
+    pose_name = measure.association[0]
+    pose_idx = int(pose_name[1:])
+    return self.pose_variables[pose_idx]</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.save_to_file"><code class="name flex">
+<span>def <span class="ident">save_to_file</span></span>(<span>self, filepath: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Save the factor graph in the EFG format</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>filepath</code></strong> :&ensp;<code>str</code></dt>
+<dd>the path of the file to write to</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_to_file(self, filepath: str):
+    &#34;&#34;&#34;
+    Save the factor graph in the EFG format
+
+    Args:
+        filepath (str): the path of the file to write to
+    &#34;&#34;&#34;
+    # TODO need to check that directory exists!
+    # check is valid file type
+    file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
+    format_options = [&#34;fg&#34;, &#34;pickle&#34;]
+    assert (
+        file_extension in format_options
+    ), f&#34;File extension: {file_extension} not available, must be one of {format_options}&#34;
+
+    if file_extension == &#34;fg&#34;:
+        self._save_to_efg_format(filepath)
+    elif file_extension == &#34;pickle&#34;:
+        self._save_to_pickle_format(filepath)
+    else:
+        raise ValueError(f&#34;Unknown format: {file_extension}&#34;)
+
+    print(f&#34;Saved data to {filepath}&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="factor_graph" href="index.html">factor_graph</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="factor_graph.factor_graph.FactorGraphData" href="#factor_graph.factor_graph.FactorGraphData">FactorGraphData</a></code></h4>
+<ul class="">
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_ambiguous_pose_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_ambiguous_pose_measurement">add_ambiguous_pose_measurement</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement">add_ambiguous_range_measurement</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_landmark_prior" href="#factor_graph.factor_graph.FactorGraphData.add_landmark_prior">add_landmark_prior</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_landmark_variable" href="#factor_graph.factor_graph.FactorGraphData.add_landmark_variable">add_landmark_variable</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_pose_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_pose_measurement">add_pose_measurement</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_pose_prior" href="#factor_graph.factor_graph.FactorGraphData.add_pose_prior">add_pose_prior</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_pose_variable" href="#factor_graph.factor_graph.FactorGraphData.add_pose_variable">add_pose_variable</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_range_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_range_measurement">add_range_measurement</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.ambiguous_pose_measurements" href="#factor_graph.factor_graph.FactorGraphData.ambiguous_pose_measurements">ambiguous_pose_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements" href="#factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements">ambiguous_range_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.dimension" href="#factor_graph.factor_graph.FactorGraphData.dimension">dimension</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.dist_measurements_vect" href="#factor_graph.factor_graph.FactorGraphData.dist_measurements_vect">dist_measurements_vect</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.distance_variables_dimension" href="#factor_graph.factor_graph.FactorGraphData.distance_variables_dimension">distance_variables_dimension</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_landmark_translation_variable_indices" href="#factor_graph.factor_graph.FactorGraphData.get_landmark_translation_variable_indices">get_landmark_translation_variable_indices</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_pose_rotation_variable_indices" href="#factor_graph.factor_graph.FactorGraphData.get_pose_rotation_variable_indices">get_pose_rotation_variable_indices</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_pose_translation_variable_indices" href="#factor_graph.factor_graph.FactorGraphData.get_pose_translation_variable_indices">get_pose_translation_variable_indices</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_range_dist_variable_indices" href="#factor_graph.factor_graph.FactorGraphData.get_range_dist_variable_indices">get_range_dist_variable_indices</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_range_measurement_landmark" href="#factor_graph.factor_graph.FactorGraphData.get_range_measurement_landmark">get_range_measurement_landmark</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.get_range_measurement_pose" href="#factor_graph.factor_graph.FactorGraphData.get_range_measurement_pose">get_range_measurement_pose</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_priors" href="#factor_graph.factor_graph.FactorGraphData.landmark_priors">landmark_priors</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_variables" href="#factor_graph.factor_graph.FactorGraphData.landmark_variables">landmark_variables</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.measurements_weight_vect" href="#factor_graph.factor_graph.FactorGraphData.measurements_weight_vect">measurements_weight_vect</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_landmarks" href="#factor_graph.factor_graph.FactorGraphData.num_landmarks">num_landmarks</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_pose_measurements" href="#factor_graph.factor_graph.FactorGraphData.num_pose_measurements">num_pose_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_poses" href="#factor_graph.factor_graph.FactorGraphData.num_poses">num_poses</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_range_measurements" href="#factor_graph.factor_graph.FactorGraphData.num_range_measurements">num_range_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_total_measurements" href="#factor_graph.factor_graph.FactorGraphData.num_total_measurements">num_total_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_translations" href="#factor_graph.factor_graph.FactorGraphData.num_translations">num_translations</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_measurements" href="#factor_graph.factor_graph.FactorGraphData.pose_measurements">pose_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_priors" href="#factor_graph.factor_graph.FactorGraphData.pose_priors">pose_priors</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_variables" href="#factor_graph.factor_graph.FactorGraphData.pose_variables">pose_variables</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.poses_and_landmarks_dimension" href="#factor_graph.factor_graph.FactorGraphData.poses_and_landmarks_dimension">poses_and_landmarks_dimension</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.range_measurements" href="#factor_graph.factor_graph.FactorGraphData.range_measurements">range_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.save_to_file" href="#factor_graph.factor_graph.FactorGraphData.save_to_file">save_to_file</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.sum_weighted_measurements_squared" href="#factor_graph.factor_graph.FactorGraphData.sum_weighted_measurements_squared">sum_weighted_measurements_squared</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.true_values_vector" href="#factor_graph.factor_graph.FactorGraphData.true_values_vector">true_values_vector</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.weighted_dist_measurements_vect" href="#factor_graph.factor_graph.FactorGraphData.weighted_dist_measurements_vect">weighted_dist_measurements_vect</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,4 +1,11 @@
 repos:
+-   repo: local
+    hooks:
+    -   id: pdoc
+        name: pdoc
+        language: system
+        entry: pdoc --html --force --output-dir docs factor_graph
+        types: [python]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
@@ -14,10 +21,3 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-attrs==19.1.0]
--   repo: local
-    hooks:
-    -   id: pdoc
-        name: pdoc
-        language: system
-        entry: pdoc --html --force --output-dir docs factor_graph
-        types: [python]
