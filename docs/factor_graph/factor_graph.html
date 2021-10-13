@@ -30,6 +30,7 @@
 import attr
 import pickle
 import pathlib
+import os
 
 from factor_graph.variables import PoseVariable, LandmarkVariable
 from factor_graph.measurements import (
@@ -47,22 +48,20 @@ class FactorGraphData:
     Just a container for the data in a FactorGraph. Only considers standard
     gaussian measurements.
 
-    pose_variables (List[PoseVariable]): a list of the pose variables
-    landmark_variables (List[LandmarkVariable]): a list of the landmarks
-    pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
-    loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
-    ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
-    range_measurements (List[FGRangeMeasurement]): a list of range measurements
-    ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
-    pose_priors (List[PosePrior]): a list of the pose priors
-    landmark_priors (List[LandmarkPrior]): a list of the landmark priors
-    dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
+    Args:
+        pose_variables (List[PoseVariable]): a list of the pose variables
+        landmark_variables (List[LandmarkVariable]): a list of the landmarks
+        pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
+        loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
+        range_measurements (List[FGRangeMeasurement]): a list of range measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
+        pose_priors (List[PosePrior]): a list of the pose priors
+        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
+        dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
 
     Raises:
         ValueError: inputs do not match criteria
-
-    Returns:
-        [type]: [description]
     &#34;&#34;&#34;
 
     # variables
@@ -89,9 +88,7 @@ class FactorGraphData:
     # latent dimension of the space (e.g. 2D or 3D)
     dimension: int = attr.ib(default=2)
 
-    # TODO update the string
     def __str__(self):
-        # TODO add ambiguous measurements
         line = &#34;Factor Graph Data\n&#34;
 
         # add pose variables
@@ -107,14 +104,34 @@ class FactorGraphData:
         line += &#34;\n&#34;
 
         # add odom measurements
-        line += f&#34;odom Measurements: {len(self.pose_measurements)}\n&#34;
-        for x in self.pose_measurements:
+        line += f&#34;Odom Measurements: {len(self.odom_measurements)}\n&#34;
+        for x in self.odom_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add loop closure measurements
+        line += f&#34;Loop Closure Measurements: {len(self.loop_closure_measurements)}\n&#34;
+        for x in self.loop_closure_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add ambiguous loop closure measurements
+        line += f&#34;Ambiguous Loop Closure Measurements: {len(self.ambiguous_loop_closure_measurements)}\n&#34;
+        for x in self.ambiguous_loop_closure_measurements:
             line += f&#34;{x}\n&#34;
         line += &#34;\n&#34;
 
         # add range measurements
         line += f&#34;Range Measurements: {len(self.range_measurements)}\n&#34;
         for x in self.range_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add ambiguous range measurements
+        line += (
+            f&#34;Ambiguous Range Measurements: {len(self.ambiguous_range_measurements)}\n&#34;
+        )
+        for x in self.ambiguous_range_measurements:
             line += f&#34;{x}\n&#34;
         line += &#34;\n&#34;
 
@@ -221,7 +238,9 @@ class FactorGraphData:
         Args:
             filepath (str): the path of the file to write to
         &#34;&#34;&#34;
-        # TODO need to check that directory exists!
+        file_dir = os.path.dirname(filepath)
+        assert os.path.isdir(file_dir), f&#34;{file_dir} is not a directory&#34;
+
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
         format_options = [&#34;fg&#34;, &#34;pickle&#34;]
@@ -494,25 +513,33 @@ class FactorGraphData:
 <dd>
 <div class="desc"><p>Just a container for the data in a FactorGraph. Only considers standard
 gaussian measurements.</p>
-<p>pose_variables (List[PoseVariable]): a list of the pose variables
-landmark_variables (List[LandmarkVariable]): a list of the landmarks
-pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
-loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
-ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
-range_measurements (List[FGRangeMeasurement]): a list of range measurements
-ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
-pose_priors (List[PosePrior]): a list of the pose priors
-landmark_priors (List[LandmarkPrior]): a list of the landmark priors
-dimension (int): the dimension of the factor graph (e.g. 2D or 3D)</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>pose_variables</code></strong> :&ensp;<code>List[PoseVariable]</code></dt>
+<dd>a list of the pose variables</dd>
+<dt><strong><code>landmark_variables</code></strong> :&ensp;<code>List[LandmarkVariable]</code></dt>
+<dd>a list of the landmarks</dd>
+<dt><strong><code>pose_measurements</code></strong> :&ensp;<code>List[List[PoseMeasurement]]</code></dt>
+<dd>nested lists of odom measurements</dd>
+<dt><strong><code>loop_closure_measurements</code></strong> :&ensp;<code>List[PoseMeasurement]</code></dt>
+<dd>a list of loop closure measurements</dd>
+<dt><strong><code>ambiguous_loop_closure_measurements</code></strong> :&ensp;<code>List[AmbiguousPoseMeasurement]</code></dt>
+<dd>a list of ambiguous pose measurements</dd>
+<dt><strong><code>range_measurements</code></strong> :&ensp;<code>List[FGRangeMeasurement]</code></dt>
+<dd>a list of range measurements</dd>
+<dt><strong><code>ambiguous_range_measurements</code></strong> :&ensp;<code>List[AmbiguousFGRangeMeasurement]</code></dt>
+<dd>a list of ambiguous range measurements</dd>
+<dt><strong><code>pose_priors</code></strong> :&ensp;<code>List[PosePrior]</code></dt>
+<dd>a list of the pose priors</dd>
+<dt><strong><code>landmark_priors</code></strong> :&ensp;<code>List[LandmarkPrior]</code></dt>
+<dd>a list of the landmark priors</dd>
+<dt><strong><code>dimension</code></strong> :&ensp;<code>int</code></dt>
+<dd>the dimension of the factor graph (e.g. 2D or 3D)</dd>
+</dl>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>ValueError</code></dt>
 <dd>inputs do not match criteria</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>[type]</code></dt>
-<dd>[description]</dd>
 </dl>
 <p>Method generated by attrs for class FactorGraphData.</p></div>
 <details class="source">
@@ -525,22 +552,20 @@ class FactorGraphData:
     Just a container for the data in a FactorGraph. Only considers standard
     gaussian measurements.
 
-    pose_variables (List[PoseVariable]): a list of the pose variables
-    landmark_variables (List[LandmarkVariable]): a list of the landmarks
-    pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
-    loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
-    ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
-    range_measurements (List[FGRangeMeasurement]): a list of range measurements
-    ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
-    pose_priors (List[PosePrior]): a list of the pose priors
-    landmark_priors (List[LandmarkPrior]): a list of the landmark priors
-    dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
+    Args:
+        pose_variables (List[PoseVariable]): a list of the pose variables
+        landmark_variables (List[LandmarkVariable]): a list of the landmarks
+        pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
+        loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
+        range_measurements (List[FGRangeMeasurement]): a list of range measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
+        pose_priors (List[PosePrior]): a list of the pose priors
+        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
+        dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
 
     Raises:
         ValueError: inputs do not match criteria
-
-    Returns:
-        [type]: [description]
     &#34;&#34;&#34;
 
     # variables
@@ -567,9 +592,7 @@ class FactorGraphData:
     # latent dimension of the space (e.g. 2D or 3D)
     dimension: int = attr.ib(default=2)
 
-    # TODO update the string
     def __str__(self):
-        # TODO add ambiguous measurements
         line = &#34;Factor Graph Data\n&#34;
 
         # add pose variables
@@ -585,14 +608,34 @@ class FactorGraphData:
         line += &#34;\n&#34;
 
         # add odom measurements
-        line += f&#34;odom Measurements: {len(self.pose_measurements)}\n&#34;
-        for x in self.pose_measurements:
+        line += f&#34;Odom Measurements: {len(self.odom_measurements)}\n&#34;
+        for x in self.odom_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add loop closure measurements
+        line += f&#34;Loop Closure Measurements: {len(self.loop_closure_measurements)}\n&#34;
+        for x in self.loop_closure_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add ambiguous loop closure measurements
+        line += f&#34;Ambiguous Loop Closure Measurements: {len(self.ambiguous_loop_closure_measurements)}\n&#34;
+        for x in self.ambiguous_loop_closure_measurements:
             line += f&#34;{x}\n&#34;
         line += &#34;\n&#34;
 
         # add range measurements
         line += f&#34;Range Measurements: {len(self.range_measurements)}\n&#34;
         for x in self.range_measurements:
+            line += f&#34;{x}\n&#34;
+        line += &#34;\n&#34;
+
+        # add ambiguous range measurements
+        line += (
+            f&#34;Ambiguous Range Measurements: {len(self.ambiguous_range_measurements)}\n&#34;
+        )
+        for x in self.ambiguous_range_measurements:
             line += f&#34;{x}\n&#34;
         line += &#34;\n&#34;
 
@@ -699,7 +742,9 @@ class FactorGraphData:
         Args:
             filepath (str): the path of the file to write to
         &#34;&#34;&#34;
-        # TODO need to check that directory exists!
+        file_dir = os.path.dirname(filepath)
+        assert os.path.isdir(file_dir), f&#34;{file_dir} is not a directory&#34;
+
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
         format_options = [&#34;fg&#34;, &#34;pickle&#34;]
@@ -1234,7 +1279,9 @@ class FactorGraphData:
     Args:
         filepath (str): the path of the file to write to
     &#34;&#34;&#34;
-    # TODO need to check that directory exists!
+    file_dir = os.path.dirname(filepath)
+    assert os.path.isdir(file_dir), f&#34;{file_dir} is not a directory&#34;
+
     # check is valid file type
     file_extension = pathlib.Path(filepath).suffix.strip(&#34;.&#34;)
     format_options = [&#34;fg&#34;, &#34;pickle&#34;]

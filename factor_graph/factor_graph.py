@@ -2,6 +2,7 @@ from typing import List
 import attr
 import pickle
 import pathlib
+import os
 
 from factor_graph.variables import PoseVariable, LandmarkVariable
 from factor_graph.measurements import (
@@ -19,22 +20,20 @@ class FactorGraphData:
     Just a container for the data in a FactorGraph. Only considers standard
     gaussian measurements.
 
-    pose_variables (List[PoseVariable]): a list of the pose variables
-    landmark_variables (List[LandmarkVariable]): a list of the landmarks
-    pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
-    loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
-    ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
-    range_measurements (List[FGRangeMeasurement]): a list of range measurements
-    ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
-    pose_priors (List[PosePrior]): a list of the pose priors
-    landmark_priors (List[LandmarkPrior]): a list of the landmark priors
-    dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
+    Args:
+        pose_variables (List[PoseVariable]): a list of the pose variables
+        landmark_variables (List[LandmarkVariable]): a list of the landmarks
+        pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
+        loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
+        range_measurements (List[FGRangeMeasurement]): a list of range measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
+        pose_priors (List[PosePrior]): a list of the pose priors
+        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
+        dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
 
     Raises:
         ValueError: inputs do not match criteria
-
-    Returns:
-        [type]: [description]
     """
 
     # variables
@@ -61,9 +60,7 @@ class FactorGraphData:
     # latent dimension of the space (e.g. 2D or 3D)
     dimension: int = attr.ib(default=2)
 
-    # TODO update the string
     def __str__(self):
-        # TODO add ambiguous measurements
         line = "Factor Graph Data\n"
 
         # add pose variables
@@ -79,14 +76,34 @@ class FactorGraphData:
         line += "\n"
 
         # add odom measurements
-        line += f"odom Measurements: {len(self.pose_measurements)}\n"
-        for x in self.pose_measurements:
+        line += f"Odom Measurements: {len(self.odom_measurements)}\n"
+        for x in self.odom_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
+        # add loop closure measurements
+        line += f"Loop Closure Measurements: {len(self.loop_closure_measurements)}\n"
+        for x in self.loop_closure_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
+        # add ambiguous loop closure measurements
+        line += f"Ambiguous Loop Closure Measurements: {len(self.ambiguous_loop_closure_measurements)}\n"
+        for x in self.ambiguous_loop_closure_measurements:
             line += f"{x}\n"
         line += "\n"
 
         # add range measurements
         line += f"Range Measurements: {len(self.range_measurements)}\n"
         for x in self.range_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
+        # add ambiguous range measurements
+        line += (
+            f"Ambiguous Range Measurements: {len(self.ambiguous_range_measurements)}\n"
+        )
+        for x in self.ambiguous_range_measurements:
             line += f"{x}\n"
         line += "\n"
 
@@ -193,7 +210,9 @@ class FactorGraphData:
         Args:
             filepath (str): the path of the file to write to
         """
-        # TODO need to check that directory exists!
+        file_dir = os.path.dirname(filepath)
+        assert os.path.isdir(file_dir), f"{file_dir} is not a directory"
+
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(".")
         format_options = ["fg", "pickle"]

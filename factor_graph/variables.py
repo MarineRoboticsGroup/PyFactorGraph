@@ -1,12 +1,13 @@
 import attr
 from typing import Tuple
+import numpy as np
 
 
 @attr.s(frozen=True)
 class PoseVariable:
     """A variable which is a robot pose
 
-    Arguments:
+    Args:
         name (str): the name of the variable (defines the frame)
         true_position (Tuple[float, float]): the true position of the robot
         true_theta (float): the true orientation of the robot
