@@ -40,6 +40,10 @@ from factor_graph.measurements import (
     AmbiguousFGRangeMeasurement,
 )
 from factor_graph.priors import PosePrior, LandmarkPrior
+from factor_graph.utils.name_utils import (
+    get_robot_idx_from_frame_name,
+    get_time_idx_from_frame_name,
+)
 
 
 @attr.s
@@ -65,7 +69,7 @@ class FactorGraphData:
     &#34;&#34;&#34;
 
     # variables
-    pose_variables: List[PoseVariable] = attr.ib(factory=list)
+    pose_variables: List[List[PoseVariable]] = attr.ib(factory=list)
     landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
 
     # pose measurements
@@ -158,15 +162,52 @@ class FactorGraphData:
 
         Args:
             pose_var (PoseVariable): the pose variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         &#34;&#34;&#34;
-        self.pose_variables.append(pose_var)
+        robot_idx = get_robot_idx_from_frame_name(pose_var.name)
+        while len(self.pose_variables) &lt;= robot_idx:
+            self.pose_variables.append([])
+
+        # enforce that the list is sorted by time
+        new_pose_time_idx = get_time_idx_from_frame_name(pose_var.name)
+        if len(self.pose_variables[robot_idx]) &gt; 0:
+            last_time_idx = get_time_idx_from_frame_name(
+                self.pose_variables[robot_idx][-1].name
+            )
+            if last_time_idx &gt;= new_pose_time_idx:
+                raise ValueError(
+                    &#34;Pose variables must be added in order of increasing time_idx&#34;
+                )
+
+        self.pose_variables[robot_idx].append(pose_var)
 
     def add_landmark_variable(self, landmark_var: LandmarkVariable):
         &#34;&#34;&#34;Adds a landmark variable to the list of landmark variables.
 
         Args:
             landmark_var (LandmarkVariable): the landmark variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         &#34;&#34;&#34;
+        if len(self.landmark_variables) &gt; 0:
+            new_landmark_idx = get_time_idx_from_frame_name(landmark_var.name)
+            last_landmark_idx = get_time_idx_from_frame_name(
+                self.landmark_variables[-1].name
+            )
+            if new_landmark_idx &lt;= last_landmark_idx:
+                print(self.landmark_variables)
+                print(landmark_var)
+                raise ValueError(
+                    &#34;Landmark variables must be added in order of increasing robot_idx&#34;
+                )
+
         self.landmark_variables.append(landmark_var)
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
@@ -453,9 +494,10 @@ class FactorGraphData:
 
         file_writer = open(data_file, &#34;w&#34;)
 
-        for pose in self.pose_variables:
-            line = get_pose_var_string(pose)
-            file_writer.write(line)
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                line = get_pose_var_string(pose)
+                file_writer.write(line)
 
         for beacon in self.landmark_variables:
             line = get_beacon_var_string(beacon)
@@ -508,7 +550,7 @@ class FactorGraphData:
 <dl>
 <dt id="factor_graph.factor_graph.FactorGraphData"><code class="flex name class">
 <span>class <span class="ident">FactorGraphData</span></span>
-<span>(</span><span>pose_variables: List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>] = NOTHING, landmark_variables: List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>] = NOTHING, odom_measurements: List[List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]] = NOTHING, loop_closure_measurements: List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>] = NOTHING, ambiguous_loop_closure_measurements: List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>] = NOTHING, range_measurements: List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>] = NOTHING, ambiguous_range_measurements: List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>] = NOTHING, pose_priors: List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>] = NOTHING, landmark_priors: List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>] = NOTHING, dimension: int = 2)</span>
+<span>(</span><span>pose_variables: List[List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]] = NOTHING, landmark_variables: List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>] = NOTHING, odom_measurements: List[List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]] = NOTHING, loop_closure_measurements: List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>] = NOTHING, ambiguous_loop_closure_measurements: List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>] = NOTHING, range_measurements: List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>] = NOTHING, ambiguous_range_measurements: List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>] = NOTHING, pose_priors: List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>] = NOTHING, landmark_priors: List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>] = NOTHING, dimension: int = 2)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Just a container for the data in a FactorGraph. Only considers standard
@@ -569,7 +611,7 @@ class FactorGraphData:
     &#34;&#34;&#34;
 
     # variables
-    pose_variables: List[PoseVariable] = attr.ib(factory=list)
+    pose_variables: List[List[PoseVariable]] = attr.ib(factory=list)
     landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
 
     # pose measurements
@@ -662,15 +704,52 @@ class FactorGraphData:
 
         Args:
             pose_var (PoseVariable): the pose variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         &#34;&#34;&#34;
-        self.pose_variables.append(pose_var)
+        robot_idx = get_robot_idx_from_frame_name(pose_var.name)
+        while len(self.pose_variables) &lt;= robot_idx:
+            self.pose_variables.append([])
+
+        # enforce that the list is sorted by time
+        new_pose_time_idx = get_time_idx_from_frame_name(pose_var.name)
+        if len(self.pose_variables[robot_idx]) &gt; 0:
+            last_time_idx = get_time_idx_from_frame_name(
+                self.pose_variables[robot_idx][-1].name
+            )
+            if last_time_idx &gt;= new_pose_time_idx:
+                raise ValueError(
+                    &#34;Pose variables must be added in order of increasing time_idx&#34;
+                )
+
+        self.pose_variables[robot_idx].append(pose_var)
 
     def add_landmark_variable(self, landmark_var: LandmarkVariable):
         &#34;&#34;&#34;Adds a landmark variable to the list of landmark variables.
 
         Args:
             landmark_var (LandmarkVariable): the landmark variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         &#34;&#34;&#34;
+        if len(self.landmark_variables) &gt; 0:
+            new_landmark_idx = get_time_idx_from_frame_name(landmark_var.name)
+            last_landmark_idx = get_time_idx_from_frame_name(
+                self.landmark_variables[-1].name
+            )
+            if new_landmark_idx &lt;= last_landmark_idx:
+                print(self.landmark_variables)
+                print(landmark_var)
+                raise ValueError(
+                    &#34;Landmark variables must be added in order of increasing robot_idx&#34;
+                )
+
         self.landmark_variables.append(landmark_var)
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
@@ -957,9 +1036,10 @@ class FactorGraphData:
 
         file_writer = open(data_file, &#34;w&#34;)
 
-        for pose in self.pose_variables:
-            line = get_pose_var_string(pose)
-            file_writer.write(line)
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                line = get_pose_var_string(pose)
+                file_writer.write(line)
 
         for beacon in self.landmark_variables:
             line = get_beacon_var_string(beacon)
@@ -1034,7 +1114,7 @@ class FactorGraphData:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables"><code class="name">var <span class="ident">pose_variables</span> : List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]</code></dt>
+<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables"><code class="name">var <span class="ident">pose_variables</span> : List[List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1123,7 +1203,14 @@ class FactorGraphData:
 <dl>
 <dt><strong><code>landmark_var</code></strong> :&ensp;<code>LandmarkVariable</code></dt>
 <dd>the landmark variable to add</dd>
-</dl></div>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>if the pose variable is not added in chronological order</dd>
+</dl>
+<p>(time indices must be ordered to ensure that the list is always
+ordered)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1133,7 +1220,24 @@ class FactorGraphData:
 
     Args:
         landmark_var (LandmarkVariable): the landmark variable to add
+
+    Raises:
+        ValueError: if the pose variable is not added in chronological order
+        (time indices must be ordered to ensure that the list is always
+        ordered)
     &#34;&#34;&#34;
+    if len(self.landmark_variables) &gt; 0:
+        new_landmark_idx = get_time_idx_from_frame_name(landmark_var.name)
+        last_landmark_idx = get_time_idx_from_frame_name(
+            self.landmark_variables[-1].name
+        )
+        if new_landmark_idx &lt;= last_landmark_idx:
+            print(self.landmark_variables)
+            print(landmark_var)
+            raise ValueError(
+                &#34;Landmark variables must be added in order of increasing robot_idx&#34;
+            )
+
     self.landmark_variables.append(landmark_var)</code></pre>
 </details>
 </dd>
@@ -1221,7 +1325,14 @@ class FactorGraphData:
 <dl>
 <dt><strong><code>pose_var</code></strong> :&ensp;<code>PoseVariable</code></dt>
 <dd>the pose variable to add</dd>
-</dl></div>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>if the pose variable is not added in chronological order</dd>
+</dl>
+<p>(time indices must be ordered to ensure that the list is always
+ordered)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1231,8 +1342,28 @@ class FactorGraphData:
 
     Args:
         pose_var (PoseVariable): the pose variable to add
+
+    Raises:
+        ValueError: if the pose variable is not added in chronological order
+        (time indices must be ordered to ensure that the list is always
+        ordered)
     &#34;&#34;&#34;
-    self.pose_variables.append(pose_var)</code></pre>
+    robot_idx = get_robot_idx_from_frame_name(pose_var.name)
+    while len(self.pose_variables) &lt;= robot_idx:
+        self.pose_variables.append([])
+
+    # enforce that the list is sorted by time
+    new_pose_time_idx = get_time_idx_from_frame_name(pose_var.name)
+    if len(self.pose_variables[robot_idx]) &gt; 0:
+        last_time_idx = get_time_idx_from_frame_name(
+            self.pose_variables[robot_idx][-1].name
+        )
+        if last_time_idx &gt;= new_pose_time_idx:
+            raise ValueError(
+                &#34;Pose variables must be added in order of increasing time_idx&#34;
+            )
+
+    self.pose_variables[robot_idx].append(pose_var)</code></pre>
 </details>
 </dd>
 <dt id="factor_graph.factor_graph.FactorGraphData.add_range_measurement"><code class="name flex">

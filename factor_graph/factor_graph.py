@@ -12,6 +12,10 @@ from factor_graph.measurements import (
     AmbiguousFGRangeMeasurement,
 )
 from factor_graph.priors import PosePrior, LandmarkPrior
+from factor_graph.utils.name_utils import (
+    get_robot_idx_from_frame_name,
+    get_time_idx_from_frame_name,
+)
 
 
 @attr.s
@@ -37,7 +41,7 @@ class FactorGraphData:
     """
 
     # variables
-    pose_variables: List[PoseVariable] = attr.ib(factory=list)
+    pose_variables: List[List[PoseVariable]] = attr.ib(factory=list)
     landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
 
     # pose measurements
@@ -130,15 +134,52 @@ class FactorGraphData:
 
         Args:
             pose_var (PoseVariable): the pose variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         """
-        self.pose_variables.append(pose_var)
+        robot_idx = get_robot_idx_from_frame_name(pose_var.name)
+        while len(self.pose_variables) <= robot_idx:
+            self.pose_variables.append([])
+
+        # enforce that the list is sorted by time
+        new_pose_time_idx = get_time_idx_from_frame_name(pose_var.name)
+        if len(self.pose_variables[robot_idx]) > 0:
+            last_time_idx = get_time_idx_from_frame_name(
+                self.pose_variables[robot_idx][-1].name
+            )
+            if last_time_idx >= new_pose_time_idx:
+                raise ValueError(
+                    "Pose variables must be added in order of increasing time_idx"
+                )
+
+        self.pose_variables[robot_idx].append(pose_var)
 
     def add_landmark_variable(self, landmark_var: LandmarkVariable):
         """Adds a landmark variable to the list of landmark variables.
 
         Args:
             landmark_var (LandmarkVariable): the landmark variable to add
+
+        Raises:
+            ValueError: if the pose variable is not added in chronological order
+            (time indices must be ordered to ensure that the list is always
+            ordered)
         """
+        if len(self.landmark_variables) > 0:
+            new_landmark_idx = get_time_idx_from_frame_name(landmark_var.name)
+            last_landmark_idx = get_time_idx_from_frame_name(
+                self.landmark_variables[-1].name
+            )
+            if new_landmark_idx <= last_landmark_idx:
+                print(self.landmark_variables)
+                print(landmark_var)
+                raise ValueError(
+                    "Landmark variables must be added in order of increasing robot_idx"
+                )
+
         self.landmark_variables.append(landmark_var)
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
@@ -425,9 +466,10 @@ class FactorGraphData:
 
         file_writer = open(data_file, "w")
 
-        for pose in self.pose_variables:
-            line = get_pose_var_string(pose)
-            file_writer.write(line)
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                line = get_pose_var_string(pose)
+                file_writer.write(line)
 
         for beacon in self.landmark_variables:
             line = get_beacon_var_string(beacon)
