@@ -26,7 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from typing import List
+<pre><code class="python">from typing import List, Dict
 import attr
 import pickle
 import pathlib
@@ -154,6 +154,40 @@ class FactorGraphData:
         # add dimension
         line += f&#34;Dimension: {self.dimension}\n\n&#34;
         return line
+
+    @property
+    def num_poses(self) -&gt; int:
+        &#34;&#34;&#34;Returns the number of pose variables.
+
+        Returns:
+            int: the number of pose variables
+        &#34;&#34;&#34;
+        pose_chain_len = len(self.pose_variables[0])
+        assert all(len(x) == pose_chain_len for x in self.pose_variables)
+        return sum([len(x) for x in self.pose_variables])
+
+    @property
+    def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
+        &#34;&#34;&#34;Returns the pose variables as a dict.
+
+        Returns:
+            Dict[str, PoseVariable]: a dict of the pose variables
+        &#34;&#34;&#34;
+        pose_var_dict = {}
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                pose_var_dict[pose.name] = pose
+        return pose_var_dict
+
+    @property
+    def landmark_var_dict(self) -&gt; Dict[str, LandmarkVariable]:
+        &#34;&#34;&#34;Returns the landmark variables as a dict.
+
+        Returns:
+            Dict[str, LandmarkVariable]: a dict of the landmark variables
+        &#34;&#34;&#34;
+        landmark_var_dict = {x.name: x for x in self.landmark_variables}
+        return landmark_var_dict
 
     #### Add data
 
@@ -697,6 +731,40 @@ class FactorGraphData:
         line += f&#34;Dimension: {self.dimension}\n\n&#34;
         return line
 
+    @property
+    def num_poses(self) -&gt; int:
+        &#34;&#34;&#34;Returns the number of pose variables.
+
+        Returns:
+            int: the number of pose variables
+        &#34;&#34;&#34;
+        pose_chain_len = len(self.pose_variables[0])
+        assert all(len(x) == pose_chain_len for x in self.pose_variables)
+        return sum([len(x) for x in self.pose_variables])
+
+    @property
+    def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
+        &#34;&#34;&#34;Returns the pose variables as a dict.
+
+        Returns:
+            Dict[str, PoseVariable]: a dict of the pose variables
+        &#34;&#34;&#34;
+        pose_var_dict = {}
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                pose_var_dict[pose.name] = pose
+        return pose_var_dict
+
+    @property
+    def landmark_var_dict(self) -&gt; Dict[str, LandmarkVariable]:
+        &#34;&#34;&#34;Returns the landmark variables as a dict.
+
+        Returns:
+            Dict[str, LandmarkVariable]: a dict of the landmark variables
+        &#34;&#34;&#34;
+        landmark_var_dict = {x.name: x for x in self.landmark_variables}
+        return landmark_var_dict
+
     #### Add data
 
     def add_pose_variable(self, pose_var: PoseVariable):
@@ -1123,6 +1191,82 @@ class FactorGraphData:
 <div class="desc"></div>
 </dd>
 </dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="factor_graph.factor_graph.FactorGraphData.landmark_var_dict"><code class="name">var <span class="ident">landmark_var_dict</span> : Dict[str, <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
+<dd>
+<div class="desc"><p>Returns the landmark variables as a dict.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict[str, LandmarkVariable]</code></dt>
+<dd>a dict of the landmark variables</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def landmark_var_dict(self) -&gt; Dict[str, LandmarkVariable]:
+    &#34;&#34;&#34;Returns the landmark variables as a dict.
+
+    Returns:
+        Dict[str, LandmarkVariable]: a dict of the landmark variables
+    &#34;&#34;&#34;
+    landmark_var_dict = {x.name: x for x in self.landmark_variables}
+    return landmark_var_dict</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.num_poses"><code class="name">var <span class="ident">num_poses</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Returns the number of pose variables.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>the number of pose variables</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def num_poses(self) -&gt; int:
+    &#34;&#34;&#34;Returns the number of pose variables.
+
+    Returns:
+        int: the number of pose variables
+    &#34;&#34;&#34;
+    pose_chain_len = len(self.pose_variables[0])
+    assert all(len(x) == pose_chain_len for x in self.pose_variables)
+    return sum([len(x) for x in self.pose_variables])</code></pre>
+</details>
+</dd>
+<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables_dict"><code class="name">var <span class="ident">pose_variables_dict</span> : Dict[str, <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]</code></dt>
+<dd>
+<div class="desc"><p>Returns the pose variables as a dict.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Dict[str, PoseVariable]</code></dt>
+<dd>a dict of the pose variables</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
+    &#34;&#34;&#34;Returns the pose variables as a dict.
+
+    Returns:
+        Dict[str, PoseVariable]: a dict of the pose variables
+    &#34;&#34;&#34;
+    pose_var_dict = {}
+    for pose_chain in self.pose_variables:
+        for pose in pose_chain:
+            pose_var_dict[pose.name] = pose
+    return pose_var_dict</code></pre>
+</details>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure"><code class="name flex">
@@ -1464,11 +1608,14 @@ ordered)</p></div>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements" href="#factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements">ambiguous_range_measurements</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.dimension" href="#factor_graph.factor_graph.FactorGraphData.dimension">dimension</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_priors" href="#factor_graph.factor_graph.FactorGraphData.landmark_priors">landmark_priors</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_var_dict" href="#factor_graph.factor_graph.FactorGraphData.landmark_var_dict">landmark_var_dict</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_variables" href="#factor_graph.factor_graph.FactorGraphData.landmark_variables">landmark_variables</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.loop_closure_measurements" href="#factor_graph.factor_graph.FactorGraphData.loop_closure_measurements">loop_closure_measurements</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_poses" href="#factor_graph.factor_graph.FactorGraphData.num_poses">num_poses</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.odom_measurements" href="#factor_graph.factor_graph.FactorGraphData.odom_measurements">odom_measurements</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_priors" href="#factor_graph.factor_graph.FactorGraphData.pose_priors">pose_priors</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_variables" href="#factor_graph.factor_graph.FactorGraphData.pose_variables">pose_variables</a></code></li>
+<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_variables_dict" href="#factor_graph.factor_graph.FactorGraphData.pose_variables_dict">pose_variables_dict</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.range_measurements" href="#factor_graph.factor_graph.FactorGraphData.range_measurements">range_measurements</a></code></li>
 <li><code><a title="factor_graph.factor_graph.FactorGraphData.save_to_file" href="#factor_graph.factor_graph.FactorGraphData.save_to_file">save_to_file</a></code></li>
 </ul>

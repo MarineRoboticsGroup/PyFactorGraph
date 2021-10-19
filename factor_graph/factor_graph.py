@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import attr
 import pickle
 import pathlib
@@ -126,6 +126,40 @@ class FactorGraphData:
         # add dimension
         line += f"Dimension: {self.dimension}\n\n"
         return line
+
+    @property
+    def num_poses(self) -> int:
+        """Returns the number of pose variables.
+
+        Returns:
+            int: the number of pose variables
+        """
+        pose_chain_len = len(self.pose_variables[0])
+        assert all(len(x) == pose_chain_len for x in self.pose_variables)
+        return sum([len(x) for x in self.pose_variables])
+
+    @property
+    def pose_variables_dict(self) -> Dict[str, PoseVariable]:
+        """Returns the pose variables as a dict.
+
+        Returns:
+            Dict[str, PoseVariable]: a dict of the pose variables
+        """
+        pose_var_dict = {}
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                pose_var_dict[pose.name] = pose
+        return pose_var_dict
+
+    @property
+    def landmark_var_dict(self) -> Dict[str, LandmarkVariable]:
+        """Returns the landmark variables as a dict.
+
+        Returns:
+            Dict[str, LandmarkVariable]: a dict of the landmark variables
+        """
+        landmark_var_dict = {x.name: x for x in self.landmark_variables}
+        return landmark_var_dict
 
     #### Add data
 
