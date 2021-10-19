@@ -3,22 +3,22 @@ from os.path import isfile
 import numpy as np
 import pickle
 
-from factor_graph.variables import PoseVariable, LandmarkVariable
-from factor_graph.measurements import (
+from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.measurements import (
     PoseMeasurement,
     AmbiguousPoseMeasurement,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
 )
-from factor_graph.priors import PosePrior, LandmarkPrior
-from factor_graph.factor_graph import (
+from py_factor_graph.priors import PosePrior, LandmarkPrior
+from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
-from factor_graph.utils.name_utils import (
+from py_factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
 )
-from factor_graph.utils.data_utils import get_covariance_matrix_from_list
+from py_factor_graph.utils.data_utils import get_covariance_matrix_from_list
 
 
 def parse_efg_file(filepath: str) -> FactorGraphData:

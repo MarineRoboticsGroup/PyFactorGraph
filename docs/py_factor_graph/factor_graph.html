@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>factor_graph.factor_graph API documentation</title>
+<title>py_factor_graph.factor_graph API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>factor_graph.factor_graph</code></h1>
+<h1 class="title">Module <code>py_factor_graph.factor_graph</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
@@ -32,15 +32,15 @@ import pickle
 import pathlib
 import os
 
-from factor_graph.variables import PoseVariable, LandmarkVariable
-from factor_graph.measurements import (
+from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.measurements import (
     PoseMeasurement,
     AmbiguousPoseMeasurement,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
 )
-from factor_graph.priors import PosePrior, LandmarkPrior
-from factor_graph.utils.name_utils import (
+from py_factor_graph.priors import PosePrior, LandmarkPrior
+from py_factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
 )
@@ -582,9 +582,9 @@ class FactorGraphData:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="factor_graph.factor_graph.FactorGraphData"><code class="flex name class">
+<dt id="py_factor_graph.factor_graph.FactorGraphData"><code class="flex name class">
 <span>class <span class="ident">FactorGraphData</span></span>
-<span>(</span><span>pose_variables: List[List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]] = NOTHING, landmark_variables: List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>] = NOTHING, odom_measurements: List[List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]] = NOTHING, loop_closure_measurements: List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>] = NOTHING, ambiguous_loop_closure_measurements: List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>] = NOTHING, range_measurements: List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>] = NOTHING, ambiguous_range_measurements: List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>] = NOTHING, pose_priors: List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>] = NOTHING, landmark_priors: List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>] = NOTHING, dimension: int = 2)</span>
+<span>(</span><span>pose_variables: List[List[<a title="py_factor_graph.variables.PoseVariable" href="variables.html#py_factor_graph.variables.PoseVariable">PoseVariable</a>]] = NOTHING, landmark_variables: List[<a title="py_factor_graph.variables.LandmarkVariable" href="variables.html#py_factor_graph.variables.LandmarkVariable">LandmarkVariable</a>] = NOTHING, odom_measurements: List[List[<a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]] = NOTHING, loop_closure_measurements: List[<a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>] = NOTHING, ambiguous_loop_closure_measurements: List[<a title="py_factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>] = NOTHING, range_measurements: List[<a title="py_factor_graph.measurements.FGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>] = NOTHING, ambiguous_range_measurements: List[<a title="py_factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>] = NOTHING, pose_priors: List[<a title="py_factor_graph.priors.PosePrior" href="priors.html#py_factor_graph.priors.PosePrior">PosePrior</a>] = NOTHING, landmark_priors: List[<a title="py_factor_graph.priors.LandmarkPrior" href="priors.html#py_factor_graph.priors.LandmarkPrior">LandmarkPrior</a>] = NOTHING, dimension: int = 2)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Just a container for the data in a FactorGraph. Only considers standard
@@ -1150,50 +1150,50 @@ class FactorGraphData:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements"><code class="name">var <span class="ident">ambiguous_loop_closure_measurements</span> : List[<a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements"><code class="name">var <span class="ident">ambiguous_loop_closure_measurements</span> : List[<a title="py_factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements"><code class="name">var <span class="ident">ambiguous_range_measurements</span> : List[<a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements"><code class="name">var <span class="ident">ambiguous_range_measurements</span> : List[<a title="py_factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.dimension"><code class="name">var <span class="ident">dimension</span> : int</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.dimension"><code class="name">var <span class="ident">dimension</span> : int</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.landmark_priors"><code class="name">var <span class="ident">landmark_priors</span> : List[<a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.landmark_priors"><code class="name">var <span class="ident">landmark_priors</span> : List[<a title="py_factor_graph.priors.LandmarkPrior" href="priors.html#py_factor_graph.priors.LandmarkPrior">LandmarkPrior</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.landmark_variables"><code class="name">var <span class="ident">landmark_variables</span> : List[<a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.landmark_variables"><code class="name">var <span class="ident">landmark_variables</span> : List[<a title="py_factor_graph.variables.LandmarkVariable" href="variables.html#py_factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.loop_closure_measurements"><code class="name">var <span class="ident">loop_closure_measurements</span> : List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.loop_closure_measurements"><code class="name">var <span class="ident">loop_closure_measurements</span> : List[<a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.odom_measurements"><code class="name">var <span class="ident">odom_measurements</span> : List[List[<a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.odom_measurements"><code class="name">var <span class="ident">odom_measurements</span> : List[List[<a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.pose_priors"><code class="name">var <span class="ident">pose_priors</span> : List[<a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.pose_priors"><code class="name">var <span class="ident">pose_priors</span> : List[<a title="py_factor_graph.priors.PosePrior" href="priors.html#py_factor_graph.priors.PosePrior">PosePrior</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables"><code class="name">var <span class="ident">pose_variables</span> : List[List[<a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.pose_variables"><code class="name">var <span class="ident">pose_variables</span> : List[List[<a title="py_factor_graph.variables.PoseVariable" href="variables.html#py_factor_graph.variables.PoseVariable">PoseVariable</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.range_measurements"><code class="name">var <span class="ident">range_measurements</span> : List[<a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.range_measurements"><code class="name">var <span class="ident">range_measurements</span> : List[<a title="py_factor_graph.measurements.FGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.factor_graph.FactorGraphData.landmark_var_dict"><code class="name">var <span class="ident">landmark_var_dict</span> : Dict[str, <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.landmark_var_dict"><code class="name">var <span class="ident">landmark_var_dict</span> : Dict[str, <a title="py_factor_graph.variables.LandmarkVariable" href="variables.html#py_factor_graph.variables.LandmarkVariable">LandmarkVariable</a>]</code></dt>
 <dd>
 <div class="desc"><p>Returns the landmark variables as a dict.</p>
 <h2 id="returns">Returns</h2>
@@ -1216,7 +1216,7 @@ def landmark_var_dict(self) -&gt; Dict[str, LandmarkVariable]:
     return landmark_var_dict</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.num_poses"><code class="name">var <span class="ident">num_poses</span> : int</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.num_poses"><code class="name">var <span class="ident">num_poses</span> : int</code></dt>
 <dd>
 <div class="desc"><p>Returns the number of pose variables.</p>
 <h2 id="returns">Returns</h2>
@@ -1240,7 +1240,7 @@ def num_poses(self) -&gt; int:
     return sum([len(x) for x in self.pose_variables])</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.pose_variables_dict"><code class="name">var <span class="ident">pose_variables_dict</span> : Dict[str, <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>]</code></dt>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.pose_variables_dict"><code class="name">var <span class="ident">pose_variables_dict</span> : Dict[str, <a title="py_factor_graph.variables.PoseVariable" href="variables.html#py_factor_graph.variables.PoseVariable">PoseVariable</a>]</code></dt>
 <dd>
 <div class="desc"><p>Returns the pose variables as a dict.</p>
 <h2 id="returns">Returns</h2>
@@ -1269,8 +1269,8 @@ def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure"><code class="name flex">
-<span>def <span class="ident">add_ambiguous_loop_closure</span></span>(<span>self, measure: <a title="factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure"><code class="name flex">
+<span>def <span class="ident">add_ambiguous_loop_closure</span></span>(<span>self, measure: <a title="py_factor_graph.measurements.AmbiguousPoseMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousPoseMeasurement">AmbiguousPoseMeasurement</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds an ambiguous loop closure measurement to the list of ambiguous loop closure measurements.</p>
@@ -1292,8 +1292,8 @@ def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
     self.ambiguous_loop_closure_measurements.append(measure)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement"><code class="name flex">
-<span>def <span class="ident">add_ambiguous_range_measurement</span></span>(<span>self, measure: <a title="factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement"><code class="name flex">
+<span>def <span class="ident">add_ambiguous_range_measurement</span></span>(<span>self, measure: <a title="py_factor_graph.measurements.AmbiguousFGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.AmbiguousFGRangeMeasurement">AmbiguousFGRangeMeasurement</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds an ambiguous range measurement to the list of ambiguous range measurements.</p>
@@ -1315,8 +1315,8 @@ def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
     self.ambiguous_range_measurements.append(measure)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_landmark_prior"><code class="name flex">
-<span>def <span class="ident">add_landmark_prior</span></span>(<span>self, landmark_prior: <a title="factor_graph.priors.LandmarkPrior" href="priors.html#factor_graph.priors.LandmarkPrior">LandmarkPrior</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_landmark_prior"><code class="name flex">
+<span>def <span class="ident">add_landmark_prior</span></span>(<span>self, landmark_prior: <a title="py_factor_graph.priors.LandmarkPrior" href="priors.html#py_factor_graph.priors.LandmarkPrior">LandmarkPrior</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a landmark prior to the list of landmark priors.</p>
@@ -1338,8 +1338,8 @@ def pose_variables_dict(self) -&gt; Dict[str, PoseVariable]:
     self.landmark_priors.append(landmark_prior)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_landmark_variable"><code class="name flex">
-<span>def <span class="ident">add_landmark_variable</span></span>(<span>self, landmark_var: <a title="factor_graph.variables.LandmarkVariable" href="variables.html#factor_graph.variables.LandmarkVariable">LandmarkVariable</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_landmark_variable"><code class="name flex">
+<span>def <span class="ident">add_landmark_variable</span></span>(<span>self, landmark_var: <a title="py_factor_graph.variables.LandmarkVariable" href="variables.html#py_factor_graph.variables.LandmarkVariable">LandmarkVariable</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a landmark variable to the list of landmark variables.</p>
@@ -1385,8 +1385,8 @@ ordered)</p></div>
     self.landmark_variables.append(landmark_var)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_loop_closure"><code class="name flex">
-<span>def <span class="ident">add_loop_closure</span></span>(<span>self, loop_closure: <a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_loop_closure"><code class="name flex">
+<span>def <span class="ident">add_loop_closure</span></span>(<span>self, loop_closure: <a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a loop closure measurement to the list of loop closure measurements.</p>
@@ -1408,8 +1408,8 @@ ordered)</p></div>
     self.loop_closure_measurements.append(loop_closure)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_odom_measurement"><code class="name flex">
-<span>def <span class="ident">add_odom_measurement</span></span>(<span>self, robot_idx: int, odom_meas: <a title="factor_graph.measurements.PoseMeasurement" href="measurements.html#factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_odom_measurement"><code class="name flex">
+<span>def <span class="ident">add_odom_measurement</span></span>(<span>self, robot_idx: int, odom_meas: <a title="py_factor_graph.measurements.PoseMeasurement" href="measurements.html#py_factor_graph.measurements.PoseMeasurement">PoseMeasurement</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds an odom measurement to the list of odom measurements.</p>
@@ -1437,8 +1437,8 @@ ordered)</p></div>
     self.odom_measurements[robot_idx].append(odom_meas)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_pose_prior"><code class="name flex">
-<span>def <span class="ident">add_pose_prior</span></span>(<span>self, pose_prior: <a title="factor_graph.priors.PosePrior" href="priors.html#factor_graph.priors.PosePrior">PosePrior</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_pose_prior"><code class="name flex">
+<span>def <span class="ident">add_pose_prior</span></span>(<span>self, pose_prior: <a title="py_factor_graph.priors.PosePrior" href="priors.html#py_factor_graph.priors.PosePrior">PosePrior</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a pose prior to the list of pose priors.</p>
@@ -1460,8 +1460,8 @@ ordered)</p></div>
     self.pose_priors.append(pose_prior)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_pose_variable"><code class="name flex">
-<span>def <span class="ident">add_pose_variable</span></span>(<span>self, pose_var: <a title="factor_graph.variables.PoseVariable" href="variables.html#factor_graph.variables.PoseVariable">PoseVariable</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_pose_variable"><code class="name flex">
+<span>def <span class="ident">add_pose_variable</span></span>(<span>self, pose_var: <a title="py_factor_graph.variables.PoseVariable" href="variables.html#py_factor_graph.variables.PoseVariable">PoseVariable</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a pose variable to the list of pose variables.</p>
@@ -1510,8 +1510,8 @@ ordered)</p></div>
     self.pose_variables[robot_idx].append(pose_var)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.add_range_measurement"><code class="name flex">
-<span>def <span class="ident">add_range_measurement</span></span>(<span>self, range_meas: <a title="factor_graph.measurements.FGRangeMeasurement" href="measurements.html#factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>)</span>
+<dt id="py_factor_graph.factor_graph.FactorGraphData.add_range_measurement"><code class="name flex">
+<span>def <span class="ident">add_range_measurement</span></span>(<span>self, range_meas: <a title="py_factor_graph.measurements.FGRangeMeasurement" href="measurements.html#py_factor_graph.measurements.FGRangeMeasurement">FGRangeMeasurement</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a range measurement to the list of range measurements.</p>
@@ -1533,7 +1533,7 @@ ordered)</p></div>
     self.range_measurements.append(range_meas)</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.factor_graph.FactorGraphData.save_to_file"><code class="name flex">
+<dt id="py_factor_graph.factor_graph.FactorGraphData.save_to_file"><code class="name flex">
 <span>def <span class="ident">save_to_file</span></span>(<span>self, filepath: str)</span>
 </code></dt>
 <dd>
@@ -1587,37 +1587,37 @@ ordered)</p></div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="factor_graph" href="index.html">factor_graph</a></code></li>
+<li><code><a title="py_factor_graph" href="index.html">py_factor_graph</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="factor_graph.factor_graph.FactorGraphData" href="#factor_graph.factor_graph.FactorGraphData">FactorGraphData</a></code></h4>
+<h4><code><a title="py_factor_graph.factor_graph.FactorGraphData" href="#py_factor_graph.factor_graph.FactorGraphData">FactorGraphData</a></code></h4>
 <ul class="">
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure" href="#factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure">add_ambiguous_loop_closure</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement">add_ambiguous_range_measurement</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_landmark_prior" href="#factor_graph.factor_graph.FactorGraphData.add_landmark_prior">add_landmark_prior</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_landmark_variable" href="#factor_graph.factor_graph.FactorGraphData.add_landmark_variable">add_landmark_variable</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_loop_closure" href="#factor_graph.factor_graph.FactorGraphData.add_loop_closure">add_loop_closure</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_odom_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_odom_measurement">add_odom_measurement</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_pose_prior" href="#factor_graph.factor_graph.FactorGraphData.add_pose_prior">add_pose_prior</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_pose_variable" href="#factor_graph.factor_graph.FactorGraphData.add_pose_variable">add_pose_variable</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.add_range_measurement" href="#factor_graph.factor_graph.FactorGraphData.add_range_measurement">add_range_measurement</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements" href="#factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements">ambiguous_loop_closure_measurements</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements" href="#factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements">ambiguous_range_measurements</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.dimension" href="#factor_graph.factor_graph.FactorGraphData.dimension">dimension</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_priors" href="#factor_graph.factor_graph.FactorGraphData.landmark_priors">landmark_priors</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_var_dict" href="#factor_graph.factor_graph.FactorGraphData.landmark_var_dict">landmark_var_dict</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.landmark_variables" href="#factor_graph.factor_graph.FactorGraphData.landmark_variables">landmark_variables</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.loop_closure_measurements" href="#factor_graph.factor_graph.FactorGraphData.loop_closure_measurements">loop_closure_measurements</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.num_poses" href="#factor_graph.factor_graph.FactorGraphData.num_poses">num_poses</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.odom_measurements" href="#factor_graph.factor_graph.FactorGraphData.odom_measurements">odom_measurements</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_priors" href="#factor_graph.factor_graph.FactorGraphData.pose_priors">pose_priors</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_variables" href="#factor_graph.factor_graph.FactorGraphData.pose_variables">pose_variables</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.pose_variables_dict" href="#factor_graph.factor_graph.FactorGraphData.pose_variables_dict">pose_variables_dict</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.range_measurements" href="#factor_graph.factor_graph.FactorGraphData.range_measurements">range_measurements</a></code></li>
-<li><code><a title="factor_graph.factor_graph.FactorGraphData.save_to_file" href="#factor_graph.factor_graph.FactorGraphData.save_to_file">save_to_file</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure" href="#py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_loop_closure">add_ambiguous_loop_closure</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement" href="#py_factor_graph.factor_graph.FactorGraphData.add_ambiguous_range_measurement">add_ambiguous_range_measurement</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_landmark_prior" href="#py_factor_graph.factor_graph.FactorGraphData.add_landmark_prior">add_landmark_prior</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_landmark_variable" href="#py_factor_graph.factor_graph.FactorGraphData.add_landmark_variable">add_landmark_variable</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_loop_closure" href="#py_factor_graph.factor_graph.FactorGraphData.add_loop_closure">add_loop_closure</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_odom_measurement" href="#py_factor_graph.factor_graph.FactorGraphData.add_odom_measurement">add_odom_measurement</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_pose_prior" href="#py_factor_graph.factor_graph.FactorGraphData.add_pose_prior">add_pose_prior</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_pose_variable" href="#py_factor_graph.factor_graph.FactorGraphData.add_pose_variable">add_pose_variable</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.add_range_measurement" href="#py_factor_graph.factor_graph.FactorGraphData.add_range_measurement">add_range_measurement</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements" href="#py_factor_graph.factor_graph.FactorGraphData.ambiguous_loop_closure_measurements">ambiguous_loop_closure_measurements</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements" href="#py_factor_graph.factor_graph.FactorGraphData.ambiguous_range_measurements">ambiguous_range_measurements</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.dimension" href="#py_factor_graph.factor_graph.FactorGraphData.dimension">dimension</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.landmark_priors" href="#py_factor_graph.factor_graph.FactorGraphData.landmark_priors">landmark_priors</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.landmark_var_dict" href="#py_factor_graph.factor_graph.FactorGraphData.landmark_var_dict">landmark_var_dict</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.landmark_variables" href="#py_factor_graph.factor_graph.FactorGraphData.landmark_variables">landmark_variables</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.loop_closure_measurements" href="#py_factor_graph.factor_graph.FactorGraphData.loop_closure_measurements">loop_closure_measurements</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.num_poses" href="#py_factor_graph.factor_graph.FactorGraphData.num_poses">num_poses</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.odom_measurements" href="#py_factor_graph.factor_graph.FactorGraphData.odom_measurements">odom_measurements</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.pose_priors" href="#py_factor_graph.factor_graph.FactorGraphData.pose_priors">pose_priors</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.pose_variables" href="#py_factor_graph.factor_graph.FactorGraphData.pose_variables">pose_variables</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.pose_variables_dict" href="#py_factor_graph.factor_graph.FactorGraphData.pose_variables_dict">pose_variables_dict</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.range_measurements" href="#py_factor_graph.factor_graph.FactorGraphData.range_measurements">range_measurements</a></code></li>
+<li><code><a title="py_factor_graph.factor_graph.FactorGraphData.save_to_file" href="#py_factor_graph.factor_graph.FactorGraphData.save_to_file">save_to_file</a></code></li>
 </ul>
 </li>
 </ul>

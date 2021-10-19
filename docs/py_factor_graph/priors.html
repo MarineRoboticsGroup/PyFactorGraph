@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>factor_graph.priors API documentation</title>
+<title>py_factor_graph.priors API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>factor_graph.priors</code></h1>
+<h1 class="title">Module <code>py_factor_graph.priors</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
@@ -80,7 +80,7 @@ class LandmarkPrior:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="factor_graph.priors.LandmarkPrior"><code class="flex name class">
+<dt id="py_factor_graph.priors.LandmarkPrior"><code class="flex name class">
 <span>class <span class="ident">LandmarkPrior</span></span>
 <span>(</span><span>name: str, position: Tuple[float, float], covariance: numpy.ndarray)</span>
 </code></dt>
@@ -110,7 +110,7 @@ class LandmarkPrior:
     _covariance: np.ndarray = attr.ib()</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.priors.PosePrior"><code class="flex name class">
+<dt id="py_factor_graph.priors.PosePrior"><code class="flex name class">
 <span>class <span class="ident">PosePrior</span></span>
 <span>(</span><span>name: str, position: Tuple[float, float], theta: float, covariance: numpy.ndarray)</span>
 </code></dt>
@@ -152,26 +152,26 @@ class PosePrior:
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="factor_graph.priors.PosePrior.covariance"><code class="name">var <span class="ident">covariance</span> : numpy.ndarray</code></dt>
+<dt id="py_factor_graph.priors.PosePrior.covariance"><code class="name">var <span class="ident">covariance</span> : numpy.ndarray</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.priors.PosePrior.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="py_factor_graph.priors.PosePrior.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.priors.PosePrior.position"><code class="name">var <span class="ident">position</span> : Tuple[float, float]</code></dt>
+<dt id="py_factor_graph.priors.PosePrior.position"><code class="name">var <span class="ident">position</span> : Tuple[float, float]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="factor_graph.priors.PosePrior.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
+<dt id="py_factor_graph.priors.PosePrior.theta"><code class="name">var <span class="ident">theta</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="factor_graph.priors.PosePrior.x"><code class="name">var <span class="ident">x</span></code></dt>
+<dt id="py_factor_graph.priors.PosePrior.x"><code class="name">var <span class="ident">x</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -183,7 +183,7 @@ def x(self):
     return self.position[0]</code></pre>
 </details>
 </dd>
-<dt id="factor_graph.priors.PosePrior.y"><code class="name">var <span class="ident">y</span></code></dt>
+<dt id="py_factor_graph.priors.PosePrior.y"><code class="name">var <span class="ident">y</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -208,23 +208,23 @@ def y(self):
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="factor_graph" href="index.html">factor_graph</a></code></li>
+<li><code><a title="py_factor_graph" href="index.html">py_factor_graph</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="factor_graph.priors.LandmarkPrior" href="#factor_graph.priors.LandmarkPrior">LandmarkPrior</a></code></h4>
+<h4><code><a title="py_factor_graph.priors.LandmarkPrior" href="#py_factor_graph.priors.LandmarkPrior">LandmarkPrior</a></code></h4>
 </li>
 <li>
-<h4><code><a title="factor_graph.priors.PosePrior" href="#factor_graph.priors.PosePrior">PosePrior</a></code></h4>
+<h4><code><a title="py_factor_graph.priors.PosePrior" href="#py_factor_graph.priors.PosePrior">PosePrior</a></code></h4>
 <ul class="two-column">
-<li><code><a title="factor_graph.priors.PosePrior.covariance" href="#factor_graph.priors.PosePrior.covariance">covariance</a></code></li>
-<li><code><a title="factor_graph.priors.PosePrior.name" href="#factor_graph.priors.PosePrior.name">name</a></code></li>
-<li><code><a title="factor_graph.priors.PosePrior.position" href="#factor_graph.priors.PosePrior.position">position</a></code></li>
-<li><code><a title="factor_graph.priors.PosePrior.theta" href="#factor_graph.priors.PosePrior.theta">theta</a></code></li>
-<li><code><a title="factor_graph.priors.PosePrior.x" href="#factor_graph.priors.PosePrior.x">x</a></code></li>
-<li><code><a title="factor_graph.priors.PosePrior.y" href="#factor_graph.priors.PosePrior.y">y</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.covariance" href="#py_factor_graph.priors.PosePrior.covariance">covariance</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.name" href="#py_factor_graph.priors.PosePrior.name">name</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.position" href="#py_factor_graph.priors.PosePrior.position">position</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.theta" href="#py_factor_graph.priors.PosePrior.theta">theta</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.x" href="#py_factor_graph.priors.PosePrior.x">x</a></code></li>
+<li><code><a title="py_factor_graph.priors.PosePrior.y" href="#py_factor_graph.priors.PosePrior.y">y</a></code></li>
 </ul>
 </li>
 </ul>

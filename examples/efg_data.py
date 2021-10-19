@@ -1,6 +1,6 @@
 import os
 
-from factor_graph import parse_factor_graph as fg_parser
+from py_factor_graph import parse_factor_graph as fg_parser
 
 
 def main():
