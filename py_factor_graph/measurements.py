@@ -1,5 +1,5 @@
 import attr
-from typing import Tuple
+from typing import Optional, Tuple
 import numpy as np
 
 
@@ -15,6 +15,7 @@ class PoseMeasurement:
         y (float): the measured change in y coordinate
         theta (float): the measured change in theta
         covariance (np.ndarray): a 3x3 covariance matrix from the measurement model
+        timestamp (float): seconds since epoch
     """
 
     base_pose: str = attr.ib()
@@ -24,6 +25,7 @@ class PoseMeasurement:
     theta: float = attr.ib()
     translation_weight: float = attr.ib()
     rotation_weight: float = attr.ib()
+    timestamp: Optional[float] = attr.ib(default=None)
 
     @property
     def rotation_matrix(self):
@@ -84,6 +86,7 @@ class AmbiguousPoseMeasurement:
     y (float): the change in y
     theta (float): the change in theta
     covariance (np.ndarray): a 3x3 covariance matrix
+    timestamp (float): seconds since epoch
     """
 
     base_pose: str = attr.ib()
@@ -94,6 +97,7 @@ class AmbiguousPoseMeasurement:
     theta: float = attr.ib()
     translation_weight: float = attr.ib()
     rotation_weight: float = attr.ib()
+    timestamp: Optional[float] = attr.ib(default=None)
 
     @property
     def rotation_matrix(self):
@@ -149,11 +153,13 @@ class FGRangeMeasurement:
         association (Tuple[str]): the data associations of the measurement
         dist (float): The measured range
         stddev (float): The standard deviation
+        timestamp (float): seconds since epoch
     """
 
     association: Tuple[str, str] = attr.ib()
     dist: float = attr.ib()
     stddev: float = attr.ib()
+    timestamp: Optional[float] = attr.ib(default=None)
 
     @association.validator
     def check_association(self, attribute, value):
@@ -213,12 +219,14 @@ class AmbiguousFGRangeMeasurement:
         var2 (str): the other variable the measurement is associated with
         dist (float): The measured range
         stddev (float): The standard deviation
+        timestamp (float): seconds since epoch
     """
 
     true_association: Tuple[str, str] = attr.ib()
     measured_association: Tuple[str, str] = attr.ib()
     dist: float = attr.ib()
     stddev: float = attr.ib()
+    timestamp: Optional[float] = attr.ib(default=None)
 
     @true_association.validator
     def check_true_association(self, attribute, value: Tuple[str, str]):

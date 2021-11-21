@@ -12,12 +12,14 @@ class PosePrior:
         position (Tuple[float, float]): the prior of the position
         theta (float): the prior of the theta
         covariance (np.ndarray): the covariance of the prior
+        timestamp (float): seconds since epoch
     """
 
     name: str = attr.ib()
     position: Tuple[float, float] = attr.ib()
     theta: float = attr.ib()
     covariance: np.ndarray = attr.ib()
+    timestamp: Optional[float] = attr.ib(default=None)
 
     @property
     def x(self):
