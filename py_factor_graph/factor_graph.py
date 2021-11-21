@@ -3,6 +3,7 @@ import attr
 import pickle
 import pathlib
 import os
+from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
@@ -612,13 +613,12 @@ class FactorGraphData:
             filewriter = open(filename, "w")
 
             init_pose = self.pose_variables[0][0]
-            # ahhhhhhhh
-            init_x = init_pose.true_x
-            init_y = init_pose.true_y
-            init_th = init_pose.true_theta
+            dr_pose = init_pose.transformation_matrix
 
             for odom in self.odom_measurements[0]:
-                line = f"{odom.timestamp}"
+                dr_pose = dr_pose@odom.transformation_matrix
+                dr_theta = get_theta_from_transformation_matrix(dr_pose)
+                line = f"{odom.timestamp} {dr_pose[0,2]} {dr_pose[1,2]} {dr_theta}"
                 filewriter.write(line)
 
             filewriter.close()
@@ -630,8 +630,8 @@ class FactorGraphData:
             filename = data_folder + "/TL.plaza"
             filewriter = open(filename, "w")
 
-            for pose in self.pose_variables[0]:
-                line = f"{pose.timestamp}"
+            for landmark in self.landmark_variables:
+                line = f"{0} {landmark.true_x} {landmark.true_y}"
                 filewriter.write(line)
 
             filewriter.close()
@@ -643,8 +643,8 @@ class FactorGraphData:
             filename = data_folder + "/TD.plaza"
             filewriter = open(filename, "w")
 
-            for pose in self.pose_variables[0]:
-                line = f"{pose.timestamp}"
+            for range_measurement in self.range_measurements:
+                line = f"{range_measurement.timestamp} {range_measurement.pose_key} {range_measurement.landmark_key} {range_measurement.dist}"
                 filewriter.write(line)
 
             filewriter.close()
