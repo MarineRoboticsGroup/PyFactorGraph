@@ -20,7 +20,7 @@ class PoseVariable:
     timestamp: Optional[float] = attr.ib(default=None)
 
     @property
-    def rotation_matrix(self):
+    def rotation_matrix(self) -> np.ndarray:
         """
         Get the rotation matrix for the measurement
         """
@@ -32,12 +32,26 @@ class PoseVariable:
         )
 
     @property
-    def true_x(self):
+    def true_x(self) -> float:
         return self.true_position[0]
 
     @property
-    def true_y(self):
+    def true_y(self) -> float:
         return self.true_position[1]
+
+    @property
+    def transformation_matrix(self) -> np.ndarray:
+        """Returns the transformation matrix representing the true latent pose
+        of this variable
+
+        Returns:
+            np.ndarray: the transformation matrix
+        """
+        T = np.eye(3)
+        T[0:2, 0:2] = self.rotation_matrix
+        T[0, 2] = self.true_x
+        T[1, 2] = self.true_y
+        return T
 
 
 @attr.s(frozen=True)
