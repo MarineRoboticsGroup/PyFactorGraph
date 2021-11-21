@@ -325,7 +325,7 @@ class FactorGraphData:
         elif file_extension == "pickle":
             self._save_to_pickle_format(filepath)
         elif file_extension == "plaza":
-            self._save_to_plaza_format(filepath)
+            self._save_to_plaza_format(file_dir)
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
