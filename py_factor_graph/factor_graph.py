@@ -543,3 +543,87 @@ class FactorGraphData:
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()
+
+    def _save_to_plaza_format(self, data_folder: str) -> None:
+        """
+        Save to five plaza file formats.
+
+        Args:
+            data_folder (str): the base folder to write the files to
+        """
+        assert (len(self.pose_variables) == 1), ".plaza file format only supports one robot"
+
+        def save_GT_plaza() -> None:
+            """
+            Save Ground Truth plaza file
+            """
+            filename = data_folder + "/GT.plaza"
+            filewriter = open(filename, "w")
+
+            for pose in self.pose_variables[0]:
+                line = f"{pose.timestamp} {pose.true_position[0]} {pose.true_position[1]} {pose.true_theta}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_DR_plaza() -> None:
+            """
+            Save Odometry Input plaza file
+            """
+            filename = data_folder + "/DR.plaza"
+            filewriter = open(filename, "w")
+
+            for odom in self.odom_measurements[0]:
+                # We only take odom.x because plaza assumes we are moving in the direction of the robot's heading
+                line = f"{odom.timestamp} {odom.x} {odom.theta}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_DRp_plaza() -> None:
+            """
+            Save Dead Reckoning Path from Odometry plaza file
+            """
+            filename = data_folder + "/DRp.plaza"
+            filewriter = open(filename, "w")
+
+            init_pose = self.pose_variables[0][0]
+            # ahhhhhhhh
+            init_x = init_pose.true_x
+            init_y = init_pose.true_y
+            init_th = init_pose.true_theta
+
+            for odom in self.odom_measurements[0]:
+                line = f"{odom.timestamp}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_TL_plaza() -> None:
+            """
+            Save Surveyed Node Locations plaza file
+            """
+            filename = data_folder + "/TL.plaza"
+            filewriter = open(filename, "w")
+
+            for pose in self.pose_variables[0]:
+                line = f"{pose.timestamp}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_TD_plaza() -> None:
+            """
+            Save Range Measurements plaza file
+            """
+            filename = data_folder + "/TD.plaza"
+            filewriter = open(filename, "w")
+
+            for pose in self.pose_variables[0]:
+                line = f"{pose.timestamp}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        return
+
