@@ -24,17 +24,24 @@ class FactorGraphData:
     Just a container for the data in a FactorGraph. Only considers standard
     gaussian measurements.
 
+    Ambiguous measurements are used to represent cases where data association
+    was uncertain
+
     Args:
-        pose_variables (List[PoseVariable]): a list of the pose variables
-        landmark_variables (List[LandmarkVariable]): a list of the landmarks
-        pose_measurements (List[List[PoseMeasurement]]): nested lists of odom measurements
-        loop_closure_measurements (List[PoseMeasurement]): a list of loop closure measurements
-        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a list of ambiguous pose measurements
-        range_measurements (List[FGRangeMeasurement]): a list of range measurements
-        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list of ambiguous range measurements
-        pose_priors (List[PosePrior]): a list of the pose priors
-        landmark_priors (List[LandmarkPrior]): a list of the landmark priors
-        dimension (int): the dimension of the factor graph (e.g. 2D or 3D)
+        pose_variables (List[List[PoseVariable]]): the pose chains. Each
+        different robot is a different one of the nested lists.
+        landmark_variables (List[LandmarkVariable]): the landmark variables
+        odom_measurements (List[List[PoseMeasurement]]): the odom measurements.
+        Same structure as pose_variables.
+        loop_closure_measurements (List[PoseMeasurement]): the loop closures
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a
+        list of ambiguous loop closures.
+        range_measurements (List[FGRangeMeasurement]): the range measurements
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
+        of ambiguous range measurements.
+        pose_priors (List[PosePrior]): the pose priors
+        landmark_priors (List[LandmarkPrior]): the landmark priors
+        dimension (int): the dimension of the factor graph (e.g. 3 for 3D)
 
     Raises:
         ValueError: inputs do not match criteria
@@ -126,6 +133,22 @@ class FactorGraphData:
         # add dimension
         line += f"Dimension: {self.dimension}\n\n"
         return line
+
+    def num_poses_by_robot_idx(self, robot_idx: int) -> int:
+        """Returns the number of pose variables for a given robot index.
+
+        Args:
+            robot_idx (int): the robot index
+
+        Returns:
+            int: the number of pose variables for the given robot index
+        """
+
+        # if there are no pose variables, return 0
+        if len(self.pose_variables) <= robot_idx:
+            return 0
+
+        return len(self.pose_variables[robot_idx])
 
     @property
     def num_poses(self) -> int:
