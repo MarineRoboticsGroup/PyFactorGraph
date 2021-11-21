@@ -315,7 +315,7 @@ class FactorGraphData:
 
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(".")
-        format_options = ["fg", "pickle"]
+        format_options = ["fg", "pickle", "plaza"]
         assert (
             file_extension in format_options
         ), f"File extension: {file_extension} not available, must be one of {format_options}"
@@ -324,6 +324,8 @@ class FactorGraphData:
             self._save_to_efg_format(filepath)
         elif file_extension == "pickle":
             self._save_to_pickle_format(filepath)
+        elif file_extension == "plaza":
+            self._save_to_plaza_format(filepath)
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
@@ -649,5 +651,10 @@ class FactorGraphData:
 
             filewriter.close()
 
+        save_GT_plaza()
+        save_DR_plaza()
+        save_DRp_plaza()
+        save_TL_plaza()
+        save_TD_plaza()
         return
 
