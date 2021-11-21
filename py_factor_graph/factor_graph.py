@@ -280,7 +280,8 @@ class FactorGraphData:
 
     def save_to_file(self, filepath: str):
         """
-        Save the factor graph in the EFG format
+        Save the factor graph to a file. The format is determined by the file
+        extension. We currently support ["fg", "pickle"].
 
         Args:
             filepath (str): the path of the file to write to
