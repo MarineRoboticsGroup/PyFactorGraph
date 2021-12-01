@@ -175,18 +175,17 @@ class FGRangeMeasurement:
             ValueError: the first association is not a valid pose key
             ValueError: the second association is not a valid landmark key
         """
+        assert all(isinstance(x, str) for x in value)
         if len(value) != 2:
             raise ValueError(
                 "Range measurements must have exactly two variables associated with."
             )
         if value[0] == value[1]:
-            raise ValueError("Range measurements must have unique variables.")
+            raise ValueError(f"Range measurements must have unique variables{value}")
         if value[0].startswith("L"):
             raise ValueError("First association must be a pose - cannot start with L")
-        if not value[1].startswith("L"):
-            raise ValueError(
-                "Second association must be a Landmark - must start with L"
-            )
+        if not value[1][0].isalpha() and value[1][1:].isnumeric():
+            raise ValueError(f"Second association was not a valid variable: {value[1]}")
 
     @property
     def weight(self) -> float:
