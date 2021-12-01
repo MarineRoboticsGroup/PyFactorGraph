@@ -3,6 +3,7 @@ import attr
 import pickle
 import pathlib
 import os
+from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
@@ -314,7 +315,7 @@ class FactorGraphData:
 
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(".")
-        format_options = ["fg", "pickle"]
+        format_options = ["fg", "pickle", "plaza"]
         assert (
             file_extension in format_options
         ), f"File extension: {file_extension} not available, must be one of {format_options}"
@@ -323,6 +324,8 @@ class FactorGraphData:
             self._save_to_efg_format(filepath)
         elif file_extension == "pickle":
             self._save_to_pickle_format(filepath)
+        elif file_extension == "plaza":
+            self._save_to_plaza_format(file_dir)
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
@@ -567,3 +570,91 @@ class FactorGraphData:
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()
+
+    def _save_to_plaza_format(self, data_folder: str) -> None:
+        """
+        Save to five plaza file formats.
+
+        Args:
+            data_folder (str): the base folder to write the files to
+        """
+        assert (len(self.pose_variables) == 1), ".plaza file format only supports one robot"
+
+        def save_GT_plaza() -> None:
+            """
+            Save Ground Truth plaza file
+            """
+            filename = data_folder + "/GT.plaza"
+            filewriter = open(filename, "w")
+
+            for pose in self.pose_variables[0]:
+                line = f"{pose.timestamp} {pose.true_position[0]} {pose.true_position[1]} {pose.true_theta}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_DR_plaza() -> None:
+            """
+            Save Odometry Input plaza file
+            """
+            filename = data_folder + "/DR.plaza"
+            filewriter = open(filename, "w")
+
+            for odom in self.odom_measurements[0]:
+                # We only take odom.x because plaza assumes we are moving in the direction of the robot's heading
+                line = f"{odom.timestamp} {odom.x} {odom.theta}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_DRp_plaza() -> None:
+            """
+            Save Dead Reckoning Path from Odometry plaza file
+            """
+            filename = data_folder + "/DRp.plaza"
+            filewriter = open(filename, "w")
+
+            init_pose = self.pose_variables[0][0]
+            dr_pose = init_pose.transformation_matrix
+
+            for odom in self.odom_measurements[0]:
+                dr_pose = dr_pose@odom.transformation_matrix
+                dr_theta = get_theta_from_transformation_matrix(dr_pose)
+                line = f"{odom.timestamp} {dr_pose[0,2]} {dr_pose[1,2]} {dr_theta}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_TL_plaza() -> None:
+            """
+            Save Surveyed Node Locations plaza file
+            """
+            filename = data_folder + "/TL.plaza"
+            filewriter = open(filename, "w")
+
+            for landmark in self.landmark_variables:
+                line = f"{0} {landmark.true_x} {landmark.true_y}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        def save_TD_plaza() -> None:
+            """
+            Save Range Measurements plaza file
+            """
+            filename = data_folder + "/TD.plaza"
+            filewriter = open(filename, "w")
+
+            for range_measurement in self.range_measurements:
+                line = f"{range_measurement.timestamp} {range_measurement.pose_key} {range_measurement.landmark_key} {range_measurement.dist}"
+                filewriter.write(line)
+
+            filewriter.close()
+
+        save_GT_plaza()
+        save_DR_plaza()
+        save_DRp_plaza()
+        save_TL_plaza()
+        save_TD_plaza()
+        return
+
