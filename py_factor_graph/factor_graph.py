@@ -310,6 +310,19 @@ class FactorGraphData:
         """
         self.landmark_priors.append(landmark_prior)
 
+    #### Get pose chain variable names
+    
+    def get_pose_chain_names(self):
+        """Returns the pose chain variable names.
+
+        Returns:
+            List[str]: the pose chain variable names
+        """
+        pose_chain_names = []
+        for pose_chain in self.pose_variables:
+            pose_chain_names.append([pose.name for pose in pose_chain])
+        return pose_chain_names
+
     #### saving functionalities
 
     def save_to_file(self, filepath: str):
