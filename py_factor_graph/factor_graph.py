@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Set
 import attr
 import pickle
 import pathlib
@@ -52,6 +52,8 @@ class FactorGraphData:
     # variables
     pose_variables: List[List[PoseVariable]] = attr.ib(factory=list)
     landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
+    existing_pose_variables: Set[str] = attr.ib(factory=set)
+    existing_landmark_variables: Set[str] = attr.ib(factory=set)
 
     # pose measurements
     odom_measurements: List[List[PoseMeasurement]] = attr.ib(factory=list)
@@ -196,6 +198,17 @@ class FactorGraphData:
         landmark_var_dict = {x.name: x for x in self.landmark_variables}
         return landmark_var_dict
 
+    def pose_exists(self, pose_var_name: str) -> bool:
+        """Returns whether pose variables exist.
+
+        Args:
+            pose_var_name (str): the name of the pose variable
+
+        Returns:
+            bool: whether pose variables exist
+        """
+        return len(self.pose_variables) > 0
+
     #### Add data
 
     def add_pose_variable(self, pose_var: PoseVariable):
@@ -225,6 +238,7 @@ class FactorGraphData:
                 )
 
         self.pose_variables[robot_idx].append(pose_var)
+        self.existing_pose_variables.add(pose_var.name)
 
     def add_landmark_variable(self, landmark_var: LandmarkVariable):
         """Adds a landmark variable to the list of landmark variables.
@@ -250,6 +264,7 @@ class FactorGraphData:
                 )
 
         self.landmark_variables.append(landmark_var)
+        self.existing_landmark_variables.add(landmark_var.name)
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
         """Adds an odom measurement to the list of odom measurements.
@@ -263,6 +278,12 @@ class FactorGraphData:
 
         self.odom_measurements[robot_idx].append(odom_meas)
 
+        # check that we are not adding a measurement between variables that exist
+        base_pose = odom_meas.base_pose
+        assert base_pose in self.existing_pose_variables
+        to_pose = odom_meas.to_pose
+        assert to_pose in self.existing_pose_variables
+
     def add_loop_closure(self, loop_closure: PoseMeasurement):
         """Adds a loop closure measurement to the list of loop closure measurements.
 
@@ -270,6 +291,12 @@ class FactorGraphData:
             loop_closure (PoseMeasurement): the loop closure measurement to add
         """
         self.loop_closure_measurements.append(loop_closure)
+
+        # check that we are not adding a measurement between variables that exist
+        base_pose = loop_closure.base_pose
+        assert base_pose in self.existing_pose_variables
+        to_pose = loop_closure.to_pose
+        assert to_pose in self.existing_pose_variables
 
     def add_ambiguous_loop_closure(self, measure: AmbiguousPoseMeasurement):
         """Adds an ambiguous loop closure measurement to the list of ambiguous loop closure measurements.
@@ -285,6 +312,17 @@ class FactorGraphData:
         Args:
             range_meas (FGRangeMeasurement): the range measurement to add
         """
+
+        # check that we are not adding a measurement between variables that exist
+        var1, var2 = range_meas.association
+        assert (
+            var1 in self.existing_pose_variables
+            or var1 in self.existing_landmark_variables
+        )
+        assert (
+            var2 in self.existing_pose_variables
+            or var2 in self.existing_landmark_variables
+        )
         self.range_measurements.append(range_meas)
 
     def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
