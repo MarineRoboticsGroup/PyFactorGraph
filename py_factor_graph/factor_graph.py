@@ -3,6 +3,7 @@ import attr
 import pickle
 import pathlib
 import os
+import numpy as np
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
@@ -311,7 +312,7 @@ class FactorGraphData:
         self.landmark_priors.append(landmark_prior)
 
     #### Get pose chain variable names
-    
+
     def get_pose_chain_names(self):
         """Returns the pose chain variable names.
 
@@ -682,3 +683,27 @@ class FactorGraphData:
         save_TL_plaza()
         save_TD_plaza()
         return
+
+    def write_pose_gt_to_tum(self, data_dir: str) -> None:
+        """
+        Write ground truth to TUM format.
+
+        Args:
+            data_dir (str): the base folder to write the files to
+        """
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        print(f"Writing ground truth to TUM format in {data_dir}")
+        for i, pose_chain in enumerate(self.pose_variables):
+            filename = "gt_traj_" + chr(ord("A") + i) + ".tum"
+            filepath = os.path.join(data_dir, filename)
+            fw = open(filepath, "w")
+
+            for pose in pose_chain:
+                fw.write(
+                    f"{pose.timestamp} {pose.true_position[0]} {pose.true_position[1]}"
+                    f" 0 0 0 {np.sin(pose.true_theta/2)} {np.cos(pose.true_theta/2)}\n"
+                )
+
+            fw.close()
