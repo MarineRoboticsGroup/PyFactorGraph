@@ -151,6 +151,15 @@ class FactorGraphData:
 
         return len(self.pose_variables[robot_idx])
 
+    def is_empty(self) -> bool:
+        """Returns whether the factor graph data is empty.
+
+        Returns:
+            bool: whether the factor graph data is empty
+        """
+        # if there are no pose variables, return True
+        return self.num_poses == 0
+
     @property
     def num_poses(self) -> int:
         """Returns the number of pose variables.
@@ -158,8 +167,9 @@ class FactorGraphData:
         Returns:
             int: the number of pose variables
         """
-        pose_chain_len = len(self.pose_variables[0])
-        assert all(len(x) == pose_chain_len for x in self.pose_variables)
+        if len(self.pose_variables) == 0:
+            return 0
+
         return sum([len(x) for x in self.pose_variables])
 
     @property
@@ -578,7 +588,9 @@ class FactorGraphData:
         Args:
             data_folder (str): the base folder to write the files to
         """
-        assert (len(self.pose_variables) == 1), ".plaza file format only supports one robot"
+        assert (
+            len(self.pose_variables) == 1
+        ), ".plaza file format only supports one robot"
 
         def save_GT_plaza() -> None:
             """
@@ -618,7 +630,7 @@ class FactorGraphData:
             dr_pose = init_pose.transformation_matrix
 
             for odom in self.odom_measurements[0]:
-                dr_pose = dr_pose@odom.transformation_matrix
+                dr_pose = dr_pose @ odom.transformation_matrix
                 dr_theta = get_theta_from_transformation_matrix(dr_pose)
                 line = f"{odom.timestamp} {dr_pose[0,2]} {dr_pose[1,2]} {dr_theta}"
                 filewriter.write(line)
@@ -657,4 +669,3 @@ class FactorGraphData:
         save_TL_plaza()
         save_TD_plaza()
         return
-
