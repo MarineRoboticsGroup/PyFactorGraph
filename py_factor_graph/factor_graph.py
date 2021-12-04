@@ -1,4 +1,4 @@
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Optional
 import attr
 import pickle
 import pathlib
@@ -74,6 +74,12 @@ class FactorGraphData:
 
     # latent dimension of the space (e.g. 2D or 3D)
     dimension: int = attr.ib(default=2)
+
+    # useful helper values
+    x_min: Optional[float] = attr.ib(default=None)
+    x_max: Optional[float] = attr.ib(default=None)
+    y_min: Optional[float] = attr.ib(default=None)
+    y_max: Optional[float] = attr.ib(default=None)
 
     def __str__(self):
         line = "Factor Graph Data\n"
@@ -240,6 +246,15 @@ class FactorGraphData:
         self.pose_variables[robot_idx].append(pose_var)
         self.existing_pose_variables.add(pose_var.name)
 
+        if self.x_min is None or self.x_min > pose_var.true_x:
+            self.x_min = pose_var.true_x
+        if self.x_max is None or self.x_max < pose_var.true_x:
+            self.x_max = pose_var.true_x
+        if self.y_min is None or self.y_min > pose_var.true_y:
+            self.y_min = pose_var.true_y
+        if self.y_max is None or self.y_max < pose_var.true_y:
+            self.y_max = pose_var.true_y
+
     def add_landmark_variable(self, landmark_var: LandmarkVariable):
         """Adds a landmark variable to the list of landmark variables.
 
@@ -265,6 +280,15 @@ class FactorGraphData:
 
         self.landmark_variables.append(landmark_var)
         self.existing_landmark_variables.add(landmark_var.name)
+
+        if self.x_min is None or self.x_min > landmark_var.true_x:
+            self.x_min = landmark_var.true_x
+        if self.x_max is None or self.x_max < landmark_var.true_x:
+            self.x_max = landmark_var.true_x
+        if self.y_min is None or self.y_min > landmark_var.true_y:
+            self.y_min = landmark_var.true_y
+        if self.y_max is None or self.y_max < landmark_var.true_y:
+            self.y_max = landmark_var.true_y
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
         """Adds an odom measurement to the list of odom measurements.
