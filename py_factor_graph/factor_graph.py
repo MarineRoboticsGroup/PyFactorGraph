@@ -215,6 +215,25 @@ class FactorGraphData:
         """
         return len(self.pose_variables) > 0
 
+    def only_good_measurements(self) -> bool:
+        """Checks the measurements for validity.
+
+        Returns:
+            bool: whether the measurements are valid
+        """
+        for odom_chain in self.odom_measurements:
+            for odom in odom_chain:
+                if odom.translation_weight < 1 or odom.rotation_weight < 1:
+                    print(odom)
+                    return False
+
+        for range_measure in self.range_measurements:
+            if range_measure.weight < 1:
+                print(range_measure)
+                return False
+
+        return True
+
     #### Add data
 
     def add_pose_variable(self, pose_var: PoseVariable):
