@@ -960,8 +960,9 @@ class FactorGraphData:
                 pose_var_plot_obj.append(var_arrow)
 
                 if show_gt:
+                    pose_chain_idx = min(len(pose_chain) - 1, pose_idx)
                     var_arrow = draw_pose_variable(
-                        ax, pose_chain[pose_idx], color="red"
+                        ax, pose_chain[pose_chain_idx], color="red"
                     )
                     pose_var_plot_obj.append(var_arrow)
 
