@@ -32,6 +32,13 @@ class PoseVariable:
         )
 
     @property
+    def position_vector(self) -> np.ndarray:
+        """
+        Get the position vector for the measurement
+        """
+        return np.array(self.true_position)
+
+    @property
     def true_x(self) -> float:
         return self.true_position[0]
 

@@ -4,6 +4,9 @@ import pickle
 import pathlib
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
@@ -17,6 +20,13 @@ from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
+)
+from py_factor_graph.utils.plot_utils import (
+    draw_pose_variable,
+    draw_pose_matrix,
+    draw_landmark_variable,
+    draw_loop_closure_measurement,
+    draw_line,
 )
 
 
@@ -316,6 +326,7 @@ class FactorGraphData:
             robot_idx (int): the index of the robot that made the measurement
             odom_meas (PoseMeasurement): the odom measurement to add
         """
+        assert isinstance(odom_meas, PoseMeasurement)
         while len(self.odom_measurements) <= robot_idx:
             self.odom_measurements.append([])
 
@@ -788,3 +799,194 @@ class FactorGraphData:
                 )
 
             fw.close()
+
+    #### plotting functions ####
+
+    def animate_groundtruth(self, pause: float = 0.01) -> None:
+        """
+        Animate the data.
+
+        Args:
+            pause (float): the pause time between frames
+        """
+
+        # set up plot
+        fig, ax = plt.subplots(figsize=(10, 10))
+        assert (
+            self.x_min is not None and self.x_max is not None
+        ), "x_min and x_max must be set"
+        assert (
+            self.y_min is not None and self.y_max is not None
+        ), "y_min and y_max must be set"
+
+        ax.set_xlim(self.x_min - 1, self.x_max + 1)
+        ax.set_ylim(self.y_min - 1, self.y_max + 1)
+
+        # these are for help visualizing the loop closures
+        true_poses_dict = self.pose_variables_dict
+        loop_closures = self.loop_closure_measurements
+        loop_closure_dict = {
+            x.base_pose: true_poses_dict[x.to_pose] for x in loop_closures
+        }
+
+        # go ahead and draw the landmarks
+        for landmark in self.landmark_variables:
+            draw_landmark_variable(ax, landmark)
+
+        pose_var_plot_obj: List[mpatches.FancyArrow] = []
+
+        cnt = 0
+        num_frames_skip = 2
+        max_pose_chain_length = max(
+            [len(pose_chain) for pose_chain in self.pose_variables]
+        )
+        num_poses_show = 5
+
+        num_full_pose_chains = 0
+        for pose_chain in self.pose_variables:
+            if len(pose_chain) > 0:
+                num_full_pose_chains += 1
+
+        # iterate over all the poses and visualize each pose chain at each
+        # timestep
+        for pose_idx in range(max_pose_chain_length):
+            if cnt % num_frames_skip == 0:
+                cnt = 0
+            else:
+                cnt += 1
+                continue
+
+            for pose_chain in self.pose_variables:
+
+                if len(pose_chain) == 0:
+                    continue
+
+                # if past end of pose chain just grab last pose, otherwise use
+                # next in chain
+                if len(pose_chain) <= pose_idx:
+                    pose = pose_chain[-1]
+                else:
+                    pose = pose_chain[pose_idx]
+
+                # draw groundtruth solution
+                var_arrow = draw_pose_variable(ax, pose)
+                pose_var_plot_obj.append(var_arrow)
+
+                # if loop closure draw it
+                if pose.name in loop_closure_dict:
+                    loop_line, loop_pose = draw_loop_closure_measurement(
+                        ax,
+                        pose.position_vector,
+                        loop_closure_dict[pose.name],
+                    )
+                else:
+                    loop_line = None
+                    loop_pose = None
+
+            plt.pause(0.001)
+
+            # if showing loop closures let's not have them hang around forever
+            if loop_line and loop_pose:
+                loop_line.remove()
+                loop_pose.remove()
+
+            # we are keeping a sliding window of poses to show, this starts to
+            # remove the oldest poses after a certain number of frames
+            if pose_idx > num_poses_show:
+                for _ in range(num_full_pose_chains):
+                    pose_var_plot_obj[0].remove()
+                    pose_var_plot_obj.pop(0)
+
+        plt.close()
+
+    def animate_odometry(self, show_gt: bool = False, pause: float = 0.01) -> None:
+        """Makes an animation of the odometric chain for every robot
+
+        Args:
+            show_gt (bool, optional): whether to show the ground truth as well. Defaults to False.
+            pause (float, optional): How long to pause between frames. Defaults to 0.01.
+        """
+
+        # set up plot
+        fig, ax = plt.subplots(figsize=(10, 10))
+        assert (
+            self.x_min is not None and self.x_max is not None
+        ), "x_min and x_max must be set"
+        assert (
+            self.y_min is not None and self.y_max is not None
+        ), "y_min and y_max must be set"
+
+        ax.set_xlim(self.x_min - 1, self.x_max + 1)
+        ax.set_ylim(self.y_min - 1, self.y_max + 1)
+
+        # go ahead and draw the landmarks
+        for landmark in self.landmark_variables:
+            draw_landmark_variable(ax, landmark)
+
+        pose_var_plot_obj: List[mpatches.FancyArrow] = []
+
+        odom_chain_lens = [len(x) for x in self.odom_measurements]
+        pose_chain_lens = [len(x) for x in self.pose_variables]
+        assert len(odom_chain_lens) == len(
+            pose_chain_lens
+        ), "must be same number of odometry and pose chains"
+        assert all(
+            x[0] + 1 == x[1] for x in zip(odom_chain_lens, pose_chain_lens)
+        ), "the length of the odom chains must match with the length of the pose chains"
+
+        num_poses_show = 5
+
+        num_full_odom_chains = 0
+        for odom_chain in self.odom_measurements:
+            if len(odom_chain) > 0:
+                num_full_odom_chains += 1
+
+        # iterate over all the poses and visualize each pose chain at each
+        # timestep
+        cur_poses = [
+            pose_chain[0].transformation_matrix for pose_chain in self.pose_variables
+        ]
+        for pose_idx in range(max(pose_chain_lens)):
+            for robot_idx, odom_and_pose_chain in enumerate(
+                zip(self.odom_measurements, self.pose_variables)
+            ):
+
+                odom_chain, pose_chain = odom_and_pose_chain
+
+                if len(odom_chain) == 0:
+                    continue
+
+                var_arrow = draw_pose_matrix(ax, cur_poses[robot_idx])
+                pose_var_plot_obj.append(var_arrow)
+
+                if show_gt:
+                    var_arrow = draw_pose_variable(
+                        ax, pose_chain[pose_idx], color="red"
+                    )
+                    pose_var_plot_obj.append(var_arrow)
+
+                ## update the odometry pose ##
+
+                # if past end of pose chain just grab last pose, otherwise use
+                # next in chain
+                if len(odom_chain) <= pose_idx:
+                    odom_measure = np.eye(3)
+                else:
+                    odom_measure = odom_chain[pose_idx].transformation_matrix
+
+                # draw groundtruth solution
+                cur_poses[robot_idx] = np.dot(cur_poses[robot_idx], odom_measure)
+
+            plt.pause(0.001)
+
+            if pose_idx > num_poses_show:
+                for _ in range(num_full_odom_chains):
+                    pose_var_plot_obj[0].remove()
+                    pose_var_plot_obj.pop(0)
+
+                    # if showing groundtruth need to remove that pose as well
+                    if show_gt:
+                        pose_var_plot_obj[0].remove()
+                        pose_var_plot_obj.pop(0)
+
+        plt.close()
