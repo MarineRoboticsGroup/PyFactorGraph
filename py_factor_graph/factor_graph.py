@@ -90,6 +90,8 @@ class FactorGraphData:
     x_max: Optional[float] = attr.ib(default=None)
     y_min: Optional[float] = attr.ib(default=None)
     y_max: Optional[float] = attr.ib(default=None)
+    max_measure_weight: Optional[float] = attr.ib(default=None)
+    min_measure_weight: Optional[float] = attr.ib(default=None)
 
     def __str__(self):
         line = "Factor Graph Data\n"
@@ -214,6 +216,37 @@ class FactorGraphData:
         landmark_var_dict = {x.name: x for x in self.landmark_variables}
         return landmark_var_dict
 
+    @property
+    def all_variable_names(self) -> List[str]:
+        """Returns all of the variable names
+
+        Returns:
+            List[str]: a list of all the variable names
+        """
+        var_names = []
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                var_names.append(pose.name)
+
+        for landmark in self.landmark_variables:
+            var_names.append(landmark.name)
+        return var_names
+
+    @property
+    def unconnected_variable_names(self) -> Set[str]:
+        factor_vars: Set[str] = set()
+        for odom_chain in self.odom_measurements:
+            for odom in odom_chain:
+                factor_vars.add(odom.base_pose)
+                factor_vars.add(odom.to_pose)
+
+        for range_measure in self.range_measurements:
+            range_assoc = range_measure.association
+            factor_vars.add(range_assoc[0])
+            factor_vars.add(range_assoc[1])
+
+        return set(self.all_variable_names) - factor_vars
+
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
 
@@ -243,6 +276,14 @@ class FactorGraphData:
                 return False
 
         return True
+
+    def all_variables_have_factors(self) -> bool:
+        """Checks if all variables have factors.
+
+        Returns:
+            bool: whether all variables have factors
+        """
+        return len(self.unconnected_variable_names) == 0
 
     #### Add data
 
@@ -338,6 +379,19 @@ class FactorGraphData:
         to_pose = odom_meas.to_pose
         assert to_pose in self.existing_pose_variables
 
+        # update max and min measurement weights
+        max_odom_weight = max(odom_meas.translation_weight, odom_meas.rotation_weight)
+        if self.max_measure_weight is None:
+            self.max_measure_weight = max_odom_weight
+        elif self.max_measure_weight < max_odom_weight:
+            self.max_measure_weight = max_odom_weight
+
+        min_odom_weight = min(odom_meas.translation_weight, odom_meas.rotation_weight)
+        if self.min_measure_weight is None:
+            self.min_measure_weight = min_odom_weight
+        elif self.min_measure_weight > min_odom_weight:
+            self.min_measure_weight = min_odom_weight
+
     def add_loop_closure(self, loop_closure: PoseMeasurement):
         """Adds a loop closure measurement to the list of loop closure measurements.
 
@@ -351,6 +405,23 @@ class FactorGraphData:
         assert base_pose in self.existing_pose_variables
         to_pose = loop_closure.to_pose
         assert to_pose in self.existing_pose_variables
+
+        # update max and min measurement weights
+        max_odom_weight = max(
+            loop_closure.translation_weight, loop_closure.rotation_weight
+        )
+        if self.max_measure_weight is None:
+            self.max_measure_weight = max_odom_weight
+        elif self.max_measure_weight < max_odom_weight:
+            self.max_measure_weight = max_odom_weight
+
+        min_odom_weight = min(
+            loop_closure.translation_weight, loop_closure.rotation_weight
+        )
+        if self.min_measure_weight is None:
+            self.min_measure_weight = min_odom_weight
+        elif self.min_measure_weight > min_odom_weight:
+            self.min_measure_weight = min_odom_weight
 
     def add_ambiguous_loop_closure(self, measure: AmbiguousPoseMeasurement):
         """Adds an ambiguous loop closure measurement to the list of ambiguous loop closure measurements.
@@ -378,6 +449,19 @@ class FactorGraphData:
             or var2 in self.existing_landmark_variables
         )
         self.range_measurements.append(range_meas)
+
+        # update max and min measurement weights
+        if (
+            self.max_measure_weight is None
+            or self.max_measure_weight < range_meas.weight
+        ):
+            self.max_measure_weight = range_meas.weight
+
+        if (
+            self.min_measure_weight is None
+            or self.min_measure_weight > range_meas.weight
+        ):
+            self.min_measure_weight = range_meas.weight
 
     def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
         """Adds an ambiguous range measurement to the list of ambiguous range measurements.
