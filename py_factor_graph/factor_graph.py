@@ -181,6 +181,17 @@ class FactorGraphData:
         # if there are no pose variables, return True
         return self.num_poses == 0
 
+    def print_summary(self) -> None:
+        """Prints a summary of the factor graph data."""
+        num_robots = len(self.pose_variables)
+        num_poses = self.num_poses
+        num_landmarks = len(self.landmark_variables)
+        num_range_measurements = len(self.range_measurements)
+        num_loop_closures = len(self.loop_closure_measurements)
+        print(
+            f"# robots: {num_robots} # poses: {num_poses} # beacons: {num_landmarks} # range measurements: {num_range_measurements} # loop closures: {num_loop_closures}"
+        )
+
     @property
     def num_poses(self) -> int:
         """Returns the number of pose variables.
@@ -246,6 +257,15 @@ class FactorGraphData:
             factor_vars.add(range_assoc[1])
 
         return set(self.all_variable_names) - factor_vars
+
+    @property
+    def range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
+        measures_dict: Dict[str, List[FGRangeMeasurement]] = {}
+        for measure in self.range_measurements:
+            if measure.association[0] not in measures_dict:
+                measures_dict[measure.association[0]] = []
+            measures_dict[measure.association[0]].append(measure)
+        return measures_dict
 
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
@@ -876,9 +896,10 @@ class FactorGraphData:
             filepath = os.path.join(data_dir, filename)
             fw = open(filepath, "w")
 
-            for pose in pose_chain:
+            for pose_idx, pose in enumerate(pose_chain):
+                timestamp = pose.timestamp if pose.timestamp is not None else pose_idx
                 fw.write(
-                    f"{pose.timestamp} {pose.true_position[0]} {pose.true_position[1]}"
+                    f"{timestamp} {pose.true_position[0]} {pose.true_position[1]}"
                     f" 0 0 0 {np.sin(pose.true_theta/2)} {np.cos(pose.true_theta/2)}\n"
                 )
 
