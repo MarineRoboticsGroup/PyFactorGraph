@@ -205,6 +205,15 @@ class FactorGraphData:
         return sum([len(x) for x in self.pose_variables])
 
     @property
+    def num_landmarks(self) -> int:
+        """Returns the number of landmark variables.
+
+        Returns:
+            int: the number of landmark variables
+        """
+        return len(self.landmark_variables)
+
+    @property
     def pose_variables_dict(self) -> Dict[str, PoseVariable]:
         """Returns the pose variables as a dict.
 
@@ -276,7 +285,29 @@ class FactorGraphData:
         Returns:
             bool: whether pose variables exist
         """
-        return len(self.pose_variables) > 0
+        return pose_var_name in self.existing_pose_variables
+
+    def landmark_exists(self, landmark_var_name: str) -> bool:
+        """Returns whether landmark variables exist.
+
+        Args:
+            landmark_var_name (str): the name of the landmark variable
+
+        Returns:
+            bool: whether landmark variables exist
+        """
+        return landmark_var_name in self.existing_landmark_variables
+
+    def is_pose_or_landmark(self, var_name: str) -> bool:
+        """Returns whether the variable is a pose or landmark.
+
+        Args:
+            var_name (str): the name of the variable
+
+        Returns:
+            bool: whether the variable is a pose or landmark
+        """
+        return self.pose_exists(var_name) or self.landmark_exists(var_name)
 
     def only_good_measurements(self) -> bool:
         """Checks the measurements for validity.
@@ -395,9 +426,9 @@ class FactorGraphData:
 
         # check that we are not adding a measurement between variables that exist
         base_pose = odom_meas.base_pose
-        assert base_pose in self.existing_pose_variables
+        assert self.pose_exists(base_pose)
         to_pose = odom_meas.to_pose
-        assert to_pose in self.existing_pose_variables
+        assert self.pose_exists(to_pose)
 
         # update max and min measurement weights
         max_odom_weight = max(odom_meas.translation_weight, odom_meas.rotation_weight)
@@ -422,9 +453,9 @@ class FactorGraphData:
 
         # check that we are not adding a measurement between variables that exist
         base_pose = loop_closure.base_pose
-        assert base_pose in self.existing_pose_variables
+        assert self.pose_exists(base_pose)
         to_pose = loop_closure.to_pose
-        assert to_pose in self.existing_pose_variables
+        assert self.pose_exists(to_pose)
 
         # update max and min measurement weights
         max_odom_weight = max(
@@ -460,14 +491,8 @@ class FactorGraphData:
 
         # check that we are not adding a measurement between variables that exist
         var1, var2 = range_meas.association
-        assert (
-            var1 in self.existing_pose_variables
-            or var1 in self.existing_landmark_variables
-        )
-        assert (
-            var2 in self.existing_pose_variables
-            or var2 in self.existing_landmark_variables
-        )
+        assert self.is_pose_or_landmark(var1)
+        assert self.is_pose_or_landmark(var2)
         self.range_measurements.append(range_meas)
 
         # update max and min measurement weights

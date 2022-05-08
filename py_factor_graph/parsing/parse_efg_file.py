@@ -147,22 +147,3 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                     )
 
     return new_fg_data
-
-
-def parse_pickle_file(filepath: str) -> FactorGraphData:
-    """
-    Retrieve a pickled FactorGraphData object. Requires that the
-    file ends with .pickle (e.g. "my_file.pickle").
-
-    Args:
-        filepath: The path to the factor graph file.
-
-    Returns:
-        FactorGraphData: The factor graph data.
-    """
-    assert isfile(filepath), f"{filepath} is not a file"
-    assert filepath.endswith(".pickle"), f"{filepath} is not a pickle file"
-
-    with open(filepath, "rb") as f:
-        data = pickle.load(f)
-        return data
