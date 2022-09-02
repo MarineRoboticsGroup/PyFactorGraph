@@ -10,7 +10,7 @@ class PoseMeasurement:
 
     Args:
         base_pose (str): the pose which the measurement is in the reference frame of
-        local_pose (str): the name of the pose the measurement is to
+        to_pose (str): the name of the pose the measurement is to
         x (float): the measured change in x coordinate
         y (float): the measured change in y coordinate
         theta (float): the measured change in theta
