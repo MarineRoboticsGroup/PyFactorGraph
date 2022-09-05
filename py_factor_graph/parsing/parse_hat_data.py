@@ -188,7 +188,7 @@ class HATParser:
         return f"L{num_beacons}"
 
     @staticmethod
-    def _get_diver_velocity_in_diver_frame(msg) -> np.array:
+    def _get_diver_velocity_in_diver_frame(msg) -> np.ndarray:
         """
         Parse the estimated diver velocity for odometry and add it to the factor
         graph. We assume that this is the instantaneous velocity of the diver

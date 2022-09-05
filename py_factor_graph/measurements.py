@@ -144,20 +144,29 @@ class AmbiguousPoseMeasurement:
             ]
         )
 
+def _is_real(instance, attribute, value):
+    if np.isnan(value):
+        raise ValueError(f"{value} cannot be NaN")
+    if np.isinf(value):
+        raise ValueError(f"{value} cannot be Inf")
+    if not np.isreal(value):
+        raise TypeError(f"{value} must be a real number")
+    return value
 
 @attr.s(frozen=True)
 class FGRangeMeasurement:
     """A range measurement
 
     Arguments:
-        association (Tuple[str]): the data associations of the measurement
+        association (Tuple[str, str]): the data associations of the measurement.
+            First association is the pose variable
         dist (float): The measured range
         stddev (float): The standard deviation
         timestamp (float): seconds since epoch
     """
 
     association: Tuple[str, str] = attr.ib()
-    dist: float = attr.ib()
+    dist: float = attr.ib(validator=_is_real)
     stddev: float = attr.ib()
     timestamp: Optional[float] = attr.ib(default=None)
 
