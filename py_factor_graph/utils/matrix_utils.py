@@ -76,6 +76,32 @@ def get_rotation_matrix_from_theta(theta: float) -> np.ndarray:
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
+def get_rotation_matrix_from_rpy(rpy: np.array) -> np.ndarray:
+    """
+    Returns the 3x3 rotation matrix from roll, pitch, yaw angles
+
+    Args:
+        rpy (np.ndarray): the roll, pitch, yaw angles
+
+    Returns:
+        np.ndarray: the rotation matrix
+    """
+    roll, pitch, yaw = rpy
+    alpha = yaw
+    beta = pitch
+    gamma = roll
+    m11 = np.cos(alpha) * np.cos(beta)
+    m12 = np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma)
+    m13 = np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)
+    m21 = np.sin(alpha) * np.cos(beta)
+    m22 = np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma)
+    m23 = np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)
+    m31 = -np.sin(beta)
+    m32 = np.cos(beta) * np.sin(gamma)
+    m33 = np.cos(beta) * np.cos(gamma)
+    return np.array([[m11, m12, m13], [m21, m22, m23], [m31, m32, m33]])
+
+
 def get_rotation_matrix_from_transformation_matrix(T: np.ndarray) -> np.ndarray:
     """Returns the rotation matrix from the transformation matrix
 
@@ -85,7 +111,9 @@ def get_rotation_matrix_from_transformation_matrix(T: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: the rotation matrix
     """
-    return T[:2, :2]
+    _check_square(T)
+    dim = T.shape[0] - 1
+    return T[:dim, :dim]
 
 
 def get_theta_from_transformation_matrix(T: np.ndarray) -> float:
@@ -97,6 +125,7 @@ def get_theta_from_transformation_matrix(T: np.ndarray) -> float:
     Returns:
         float: the angle theta
     """
+    assert T.shape == (3, 3), "transformation matrix must be 3x3"
     return get_theta_from_rotation_matrix(
         get_rotation_matrix_from_transformation_matrix(T)
     )
@@ -111,7 +140,9 @@ def get_translation_from_transformation_matrix(T: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: the translation
     """
-    return T[:2, 2]
+    _check_square(T)
+    dim = T.shape[0] - 1
+    return T[:dim, dim]
 
 
 def get_random_rotation_matrix(dim: int = 2) -> np.ndarray:
@@ -144,9 +175,13 @@ def make_transformation_matrix(R: np.ndarray, t: np.ndarray) -> np.ndarray:
         np.ndarray: the transformation matrix
     """
     _check_rotation_matrix(R)
-    T = np.eye(3)
-    T[:2, :2] = R
-    T[:2, 2] = t
+    assert len(t) == len(
+        R
+    ), f"Rotation and translations have different dimensions: {len(t)} != {len(R)}"
+    dim = len(t)
+    T = np.eye(dim + 1)
+    T[:dim, :dim] = R
+    T[:dim, dim] = t
     _check_transformation_matrix(T)
     return T
 
@@ -167,6 +202,66 @@ def make_transformation_matrix_from_theta(
     """
     R = get_rotation_matrix_from_theta(theta)
     return make_transformation_matrix(R, translation)
+
+
+def make_transformation_matrix_from_rpy(
+    rpy: np.ndarray, trans: np.ndarray
+) -> np.ndarray:
+    """
+    Returns the transformation matrix from rpy
+
+    Args:
+        rpy (np.ndarray): the rpy vector
+
+    Returns:
+        np.ndarray: the transformation matrix
+    """
+    R = get_rotation_matrix_from_theta(rpy[0])
+    return make_transformation_matrix(R, trans)
+
+
+def get_relative_transform_between_poses(
+    pose_0: np.ndarray, pose_1: np.ndarray
+) -> np.ndarray:
+    """Returns the relative transformation between two poses
+    expressed in the same base frame
+
+    Args:
+        pose_0 (np.ndarray): the first pose
+        pose_1 (np.ndarray): the second pose
+
+    Raises:
+        error: _description_
+        ValueError: _description_
+        ValueError: _description_
+    """
+    if pose_0.shape != pose_1.shape:
+        raise ValueError(
+            f"Poses have different shapes: {pose_0.shape} != {pose_1.shape}"
+        )
+
+    pose_0_inv = np.linalg.inv(pose_0)
+    return np.dot(pose_0_inv, pose_1)
+
+
+def get_relative_rot_and_trans_between_poses(
+    pose_0: np.ndarray, pose_1: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Returns the relative rotation matrix and translation vector from pose_0
+    to pose_1, assuming they are expressed in the same base frame
+
+        Args:
+            pose_0 (np.ndarray): the first pose
+            pose_1 (np.ndarray): the second pose
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: relative rotation matrix and translation vector
+    """
+    relative_trans = get_relative_transform_between_poses(pose_0, pose_1)
+    _check_square(relative_trans)
+    rot = get_rotation_matrix_from_transformation_matrix(relative_trans)
+    trans = get_translation_from_transformation_matrix(relative_trans)
+    return (rot, trans)
 
 
 #### test functions ####
