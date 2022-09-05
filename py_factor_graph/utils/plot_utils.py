@@ -5,8 +5,13 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from typing import Tuple
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.utils.matrix_utils import get_theta_from_rotation_matrix
 
+COLORS = ["blue", "red", "green", "yellow", "black", "cyan", "magenta"]
+
+def get_color(i: int) -> str:
+    return COLORS[i % len(COLORS)]
 
 def draw_arrow(
     ax: plt.Axes,
@@ -71,6 +76,11 @@ def draw_line(
     return line
 
 
+def draw_circle(ax: plt.Axes, circle: np.ndarray, color="red") -> mpatches.Circle:
+    assert circle.size == 3
+    return ax.add_patch(mpatches.Circle(circle[0:2], circle[2], color=color, fill=False))
+
+
 def draw_pose_variable(ax: plt.Axes, pose: PoseVariable, color="blue"):
     true_x = pose.true_x
     true_y = pose.true_y
@@ -105,3 +115,22 @@ def draw_loop_closure_measurement(
     arrow = draw_pose_variable(ax, to_pose)
 
     return line, arrow
+
+
+def draw_range_measurement(
+    ax: plt.Axes, range_measure: FGRangeMeasurement, from_pose: PoseVariable, to_landmark: LandmarkVariable
+) -> Tuple[mlines.Line2D, mpatches.Circle]:
+    base_loc = from_pose.true_x, from_pose.true_y
+    to_loc = to_landmark.true_x, to_landmark.true_y
+    dist = range_measure.dist
+
+    x_start, y_start = base_loc
+    x_end, y_end = to_loc
+
+    landmark_idx = int(to_landmark.name[1:])
+    c = get_color(landmark_idx)
+    line = draw_line(ax, x_start, y_start, x_end, y_end, color=c)
+    circle = draw_circle(ax, np.array([x_start, y_start, dist]), color=c)
+    # arrow = draw_landmark_variable(ax, to_landmark)
+
+    return line, circle

@@ -27,6 +27,7 @@ from py_factor_graph.utils.plot_utils import (
     draw_landmark_variable,
     draw_loop_closure_measurement,
     draw_line,
+    draw_range_measurement,
 )
 
 
@@ -1046,8 +1047,12 @@ class FactorGraphData:
             self.y_min is not None and self.y_max is not None
         ), "y_min and y_max must be set"
 
-        ax.set_xlim(self.x_min - 1, self.x_max + 1)
-        ax.set_ylim(self.y_min - 1, self.y_max + 1)
+        x_min = self.x_min - 0.1*abs(self.x_min)
+        x_max = self.x_max + 0.1*abs(self.x_max)
+        y_min = self.y_min - 0.1*abs(self.y_min)
+        y_max = self.y_max + 0.1*abs(self.y_max)
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
 
         # go ahead and draw the landmarks
         for landmark in self.landmark_variables:
@@ -1071,6 +1076,11 @@ class FactorGraphData:
             if len(odom_chain) > 0:
                 num_full_odom_chains += 1
 
+        # for drawing range measurements
+        range_measures_dict = self.range_measures_dict
+        landmark_var_dict = self.landmark_var_dict
+        range_measure_objs = []
+
         # iterate over all the poses and visualize each pose chain at each
         # timestep
         cur_poses = [
@@ -1091,10 +1101,29 @@ class FactorGraphData:
 
                 if show_gt:
                     pose_chain_idx = min(len(pose_chain) - 1, pose_idx)
-                    var_arrow = draw_pose_variable(
-                        ax, pose_chain[pose_chain_idx], color="red"
-                    )
+                    gt_pose = pose_chain[pose_chain_idx]
+                    pose_name = gt_pose.name
+                    var_arrow = draw_pose_variable(ax, gt_pose, color="red")
                     pose_var_plot_obj.append(var_arrow)
+
+                    show_ranges = True
+                    if show_ranges:
+                        if len(range_measure_objs) > 10:
+                            line_to_remove, circle_to_remove = range_measure_objs.pop(0)
+                            line_to_remove.remove()
+                            circle_to_remove.remove()
+
+                        if pose_name in range_measures_dict:
+                            range_measures = range_measures_dict[pose_name]
+                            for range_measure in range_measures:
+                                landmark_var = landmark_var_dict[
+                                    range_measure.landmark_key
+                                ]
+                                range_measure_objs.append(
+                                    draw_range_measurement(
+                                        ax, range_measure, gt_pose, landmark_var
+                                    )
+                                )
 
                 ## update the odometry pose ##
 
@@ -1110,7 +1139,7 @@ class FactorGraphData:
 
             plt.pause(0.001)
 
-            if pose_idx > num_poses_show:
+            if pose_idx > num_poses_show and False:
                 for _ in range(num_full_odom_chains):
                     pose_var_plot_obj[0].remove()
                     pose_var_plot_obj.pop(0)
