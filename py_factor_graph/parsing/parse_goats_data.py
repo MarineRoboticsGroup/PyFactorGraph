@@ -57,8 +57,6 @@ class GoatsParser:
             for idx in range(len(_beacon_loc_df.columns))
         ]
 
-        print(f"{self._data.head()}")
-
         self._check_beacon_num_consistent()
 
         self.pyfg = FactorGraphData()
@@ -273,8 +271,16 @@ if __name__ == "__main__":
         data_file = [x for x in files_in_dir if x != beacon_loc_file][0]
         return data_file, beacon_loc_file
 
-    data_dir = Path("~/data/goats/goats_14").expanduser()
-    data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
-    parser = GoatsParser(data_file, beacon_loc_file)
-    parser.pyfg.animate_odometry(show_gt=True)
-    # parser.pyfg.print_summary()
+    goats_dirs = [14, 15, 16]
+    for dir_num in goats_dirs:
+        data_dir = Path(f"~/data/goats/goats_{dir_num}").expanduser()
+        data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
+
+        # load the factor graph from the parser
+        parser = GoatsParser(data_file, beacon_loc_file)
+        pyfg = parser.pyfg
+
+        # save the factor graph as a .pkl file
+        pyfg_file_path = str(data_file).replace(".csv", ".pkl")
+        pyfg._save_to_pickle_format(pyfg_file_path)
+
