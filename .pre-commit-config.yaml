@@ -4,6 +4,7 @@ repos:
     hooks:
     -   id: check-yaml
     -   id: trailing-whitespace
+        exclude_types: [html]
 -   repo: https://github.com/psf/black
     rev: 21.5b1
     hooks:
@@ -13,11 +14,3 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-attrs==19.1.0]
-# -   repo: local
-#     hooks:
-#     -   id: pdoc
-#         name: pdoc
-#         language: system
-#         entry: pdoc
-#         args: [--html, --force, --output-dir, docs, py_factor_graph]
-#         types: [python]
