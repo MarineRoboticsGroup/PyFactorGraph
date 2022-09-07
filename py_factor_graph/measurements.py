@@ -144,6 +144,7 @@ class AmbiguousPoseMeasurement:
             ]
         )
 
+
 def _is_real(instance, attribute, value):
     if np.isnan(value):
         raise ValueError(f"{value} cannot be NaN")
@@ -152,6 +153,7 @@ def _is_real(instance, attribute, value):
     if not np.isreal(value):
         raise TypeError(f"{value} must be a real number")
     return value
+
 
 @attr.s(frozen=True)
 class FGRangeMeasurement:

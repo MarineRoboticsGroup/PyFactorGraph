@@ -76,7 +76,7 @@ def get_rotation_matrix_from_theta(theta: float) -> np.ndarray:
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
-def get_rotation_matrix_from_rpy(rpy: np.array) -> np.ndarray:
+def get_rotation_matrix_from_rpy(rpy: np.ndarray) -> np.ndarray:
     """
     Returns the 3x3 rotation matrix from roll, pitch, yaw angles
 
@@ -86,7 +86,7 @@ def get_rotation_matrix_from_rpy(rpy: np.array) -> np.ndarray:
     Returns:
         np.ndarray: the rotation matrix
     """
-    roll, pitch, yaw = rpy
+    roll, pitch, yaw = float(rpy[0]), float(rpy[1]), float(rpy[2])
     alpha = yaw
     beta = pitch
     gamma = roll

@@ -29,14 +29,13 @@ def get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
 
     return covar_matrix
 
+
 def get_theta_from_rotation_matrix(mat: np.ndarray) -> float:
-    """
-    """
-    return float(np.arctan2(mat[1,0], mat[0,0]))
+    """ """
+    return float(np.arctan2(mat[1, 0], mat[0, 0]))
 
 
 def get_theta_from_transformation_matrix(mat: np.ndarray) -> float:
-    """
-    """
+    """ """
     rotation_matrix = mat[0:2][0:2]
     return get_theta_from_rotation_matrix(rotation_matrix)

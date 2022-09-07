@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Optional
+from typing import List, Dict, Set, Optional, Tuple
 import attr
 import pickle
 import pathlib
@@ -6,6 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
@@ -270,12 +271,85 @@ class FactorGraphData:
 
     @property
     def range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
+        """Returns a mapping from pose variables to their range measurements.
+
+        Returns:
+            Dict[str, List[FGRangeMeasurement]]: the mapping from pose variables to their range measurements
+        """
         measures_dict: Dict[str, List[FGRangeMeasurement]] = {}
         for measure in self.range_measurements:
-            if measure.association[0] not in measures_dict:
-                measures_dict[measure.association[0]] = []
-            measures_dict[measure.association[0]].append(measure)
+            associated_pose = measure.association[0]
+            if associated_pose not in measures_dict:
+                measures_dict[associated_pose] = []
+            measures_dict[associated_pose].append(measure)
         return measures_dict
+
+    @property
+    def loop_closure_dict(self) -> Dict[str, List[PoseMeasurement]]:
+        """Returns a mapping from pose variables to their loop closure measurements.
+
+        Returns:
+            Dict[str, List[PoseMeasurement]]: the mapping from pose variables to their loop closure measurements
+        """
+        measures_dict: Dict[str, List[PoseMeasurement]] = {}
+        for measure in self.loop_closure_measurements:
+            associated_pose = measure.base_pose
+            if associated_pose not in measures_dict:
+                measures_dict[associated_pose] = []
+            measures_dict[associated_pose].append(measure)
+        return measures_dict
+
+    def condense_odometry(self) -> "FactorGraphData":
+        """Concatenates all poses that only have odometry measurements (i.e. do
+        not have any range measurements or loop closures)
+
+        Example:
+
+        x0 -> x1 -> x2 -> x3 -> x4 -> x5
+              |                 |
+              l1                l2
+
+        becomes
+
+        x0 -> x1 ->  x4 -> x5
+              |      |
+              l1     l2
+
+
+        Returns:
+            FactorGraphData: the condensed factor graph data
+
+        """
+        condensed_data = FactorGraphData()
+        range_measure_dict = self.range_measures_dict
+        loop_closure_dict = self.loop_closure_dict
+        old_pose_variables_dict = self.pose_variables_dict
+
+        def _is_odometry_pose(pose: PoseVariable) -> bool:
+            return (
+                pose.name not in range_measure_dict
+                and pose.name not in loop_closure_dict
+            )
+
+        # iterate over odometry chains
+        for odom_chain in self.odom_measurements:
+            for odom in odom_chain:
+                # if the base pose is an odometry pose, add it to the condensed data
+                if _is_odometry_pose(old_pose_variables_dict[odom.base_pose]):
+                    condensed_data.add_pose_variable(
+                        old_pose_variables_dict[odom.base_pose]
+                    )
+
+                # add the odometry measurement
+                # condensed_data.add_odom_measurement(odom)
+
+                # if the to pose is an odometry pose, add it to the condensed data
+                if _is_odometry_pose(old_pose_variables_dict[odom.to_pose]):
+                    condensed_data.add_pose_variable(
+                        old_pose_variables_dict[odom.to_pose]
+                    )
+
+        raise NotImplementedError
 
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
@@ -1047,10 +1121,10 @@ class FactorGraphData:
             self.y_min is not None and self.y_max is not None
         ), "y_min and y_max must be set"
 
-        x_min = self.x_min - 0.1*abs(self.x_min)
-        x_max = self.x_max + 0.1*abs(self.x_max)
-        y_min = self.y_min - 0.1*abs(self.y_min)
-        y_max = self.y_max + 0.1*abs(self.y_max)
+        x_min = self.x_min - 0.1 * abs(self.x_min)
+        x_max = self.x_max + 0.1 * abs(self.x_max)
+        y_min = self.y_min - 0.1 * abs(self.y_min)
+        y_max = self.y_max + 0.1 * abs(self.y_max)
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
 
@@ -1079,7 +1153,7 @@ class FactorGraphData:
         # for drawing range measurements
         range_measures_dict = self.range_measures_dict
         landmark_var_dict = self.landmark_var_dict
-        range_measure_objs = []
+        range_measure_objs: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
 
         # iterate over all the poses and visualize each pose chain at each
         # timestep

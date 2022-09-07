@@ -1,6 +1,6 @@
 import os
 
-from py_factor_graph import parse_factor_graph as fg_parser
+from py_factor_graph.parsing.parse_efg_file import parse_efg_file
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
 
     # read factor graph data
     data_file = os.path.join(data_dir, "factor_graph.fg")
-    factor_graph = fg_parser.parse_efg_file(data_file)
+    factor_graph = parse_efg_file(data_file)
 
     # write factor graph data
     write_file = os.path.join(data_dir, "factor_graph_out.fg")
