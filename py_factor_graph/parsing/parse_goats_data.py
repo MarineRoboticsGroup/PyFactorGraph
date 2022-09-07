@@ -130,8 +130,8 @@ class GoatsParser:
             to_pose_name = f"A{idx}"
             x, y = relative_trans
             theta = get_theta_from_rotation_matrix(relative_rot)
-            trans_stddev = 0.5
-            rot_stddev = 0.5
+            trans_stddev = 0.01
+            rot_stddev = 0.001
             relative_pose_measurement = PoseMeasurement(
                 base_pose=base_pose_name,
                 to_pose=to_pose_name,
@@ -277,10 +277,13 @@ if __name__ == "__main__":
         data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
 
         # load the factor graph from the parser
-        parser = GoatsParser(data_file, beacon_loc_file)
+        dimension = 2
+        filter_outlier_ranges = True
+        parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)
         pyfg = parser.pyfg
 
         # save the factor graph as a .pkl file
         pyfg_file_path = str(data_file).replace(".csv", ".pkl")
         pyfg._save_to_pickle_format(pyfg_file_path)
+        # pyfg.animate_odometry(show_gt=True)
 
