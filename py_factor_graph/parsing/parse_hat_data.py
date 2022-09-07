@@ -1,3 +1,4 @@
+# type: ignore
 from typing import List, Dict, Tuple, Optional, Any
 from queue import Queue
 from os.path import isfile, join, isdir

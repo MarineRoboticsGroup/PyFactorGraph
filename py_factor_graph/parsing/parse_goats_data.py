@@ -274,11 +274,10 @@ if __name__ == "__main__":
         # load the factor graph from the parser
         dimension = 2
         filter_outlier_ranges = True
-        parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges) # type: ignore
+        parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)  # type: ignore
         pyfg = parser.pyfg
 
         # save the factor graph as a .pkl file
         pyfg_file_path = str(data_file).replace(".csv", ".pkl")
         pyfg._save_to_pickle_format(pyfg_file_path)
         # pyfg.animate_odometry(show_gt=True)
-
