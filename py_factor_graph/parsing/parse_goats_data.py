@@ -3,6 +3,7 @@ from os.path import expanduser, join
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import logging
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement,
@@ -17,6 +18,8 @@ from py_factor_graph.utils.matrix_utils import (
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _verify_path_is_goats_csv(instance, attribute, path: Path):
@@ -36,6 +39,10 @@ class GoatsParser:
     beacon_loc_file_path: Path = field(validator=_verify_path_is_goats_csv)
     dim: int = field(validator=lambda i, a, v: v in [2, 3])
     filter_ranges: bool = field()
+
+    _data = field(init=False)
+    _beacon_locs = field(init=False)
+    pyfg = field(init=False)
 
     def __attrs_post_init__(self):
         print(f"Loading data from {self.data_file_path}")
@@ -82,6 +89,17 @@ class GoatsParser:
 
     def _add_beacon_variables(self):
         for idx, beacon_loc in enumerate(self._beacon_locs):
+            ranges = self._get_ranges(idx)
+
+            # if this beacon has no ranges, then we don't add it to the factor
+            # graph
+            num_nonnan = np.count_nonzero(~np.isnan(ranges))
+            if num_nonnan < self.dim:
+                logger.warning(
+                    f"Beacon {idx} has only {num_nonnan}, so it is not added"
+                )
+                continue
+
             var_name = f"L{idx}"
             var = LandmarkVariable(var_name, beacon_loc)
             self.pyfg.add_landmark_variable(var)
