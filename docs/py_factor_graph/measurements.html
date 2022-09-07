@@ -127,7 +127,7 @@
                     <h1 class="modulename">
 <a href="./../py_factor_graph.html">py_factor_graph</a><wbr>.measurements    </h1>
 
-
+                
                         <input id="measurements-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="measurements-view-source"><span>View Source</span></label>
@@ -278,132 +278,134 @@
 </span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a>            <span class="p">]</span>
 </span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a>        <span class="p">)</span>
 </span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a>
-</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a><span class="k">def</span> <span class="nf">_is_real</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> cannot be NaN&quot;</span><span class="p">)</span>
-</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> cannot be Inf&quot;</span><span class="p">)</span>
-</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> must be a real number&quot;</span><span class="p">)</span>
-</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>    <span class="k">return</span> <span class="n">value</span>
-</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="k">class</span> <span class="nc">FGRangeMeasurement</span><span class="p">:</span>
-</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
-</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>
-</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a><span class="sd">    Arguments:</span>
-</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a><span class="sd">        association (Tuple[str, str]): the data associations of the measurement.</span>
-</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="sd">            First association is the pose variable</span>
-</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a><span class="sd">        dist (float): The measured range</span>
-</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="sd">        stddev (float): The standard deviation</span>
-</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
-</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a>
-</span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>    <span class="n">association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">_is_real</span><span class="p">)</span>
-</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a>
-</span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
-</span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a>
-</span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a><span class="sd">        Args:</span>
-</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a>
-</span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a><span class="sd">        Raises:</span>
-</span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
-</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
-</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
-</span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>            <span class="p">)</span>
-</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
-</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
-</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>
-</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>    <span class="nd">@property</span>
-</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a><span class="sd">        Get the weight of the measurement</span>
-</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>
-</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>    <span class="nd">@property</span>
-</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>    <span class="k">def</span> <span class="nf">pose_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a><span class="sd">        Get the pose key from the association</span>
-</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>
-</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>    <span class="nd">@property</span>
-</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>    <span class="k">def</span> <span class="nf">landmark_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a><span class="sd">        Get the landmark key from the association</span>
-</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>
-</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>
-</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a><span class="k">class</span> <span class="nc">AmbiguousFGRangeMeasurement</span><span class="p">:</span>
-</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
-</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>
-</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a><span class="sd">    Arguments:</span>
-</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a><span class="sd">        var1 (str): one variable the measurement is associated with</span>
-</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a><span class="sd">        var2 (str): the other variable the measurement is associated with</span>
-</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a><span class="sd">        dist (float): The measured range</span>
-</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a><span class="sd">        stddev (float): The standard deviation</span>
-</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
-</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>
-</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>    <span class="n">true_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>    <span class="n">measured_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>
-</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
-</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
-</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>
-</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a><span class="sd">        Args:</span>
-</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>
-</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a><span class="sd">        Raises:</span>
-</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a>            <span class="p">)</span>
-</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
-</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a>
-</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a>            <span class="p">)</span>
-</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
-</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>
-</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>    <span class="nd">@property</span>
-</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a><span class="sd">        Get the weight of the measurement</span>
-</span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a>
+</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a><span class="k">def</span> <span class="nf">_is_real</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> cannot be NaN&quot;</span><span class="p">)</span>
+</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> cannot be Inf&quot;</span><span class="p">)</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> must be a real number&quot;</span><span class="p">)</span>
+</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>    <span class="k">return</span> <span class="n">value</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>
+</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="k">class</span> <span class="nc">FGRangeMeasurement</span><span class="p">:</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
+</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>
+</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="sd">    Arguments:</span>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a><span class="sd">        association (Tuple[str, str]): the data associations of the measurement.</span>
+</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="sd">            First association is the pose variable</span>
+</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="sd">        dist (float): The measured range</span>
+</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a><span class="sd">        stddev (float): The standard deviation</span>
+</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
+</span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a>
+</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>    <span class="n">association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">_is_real</span><span class="p">)</span>
+</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a>
+</span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
+</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a>
+</span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a><span class="sd">        Args:</span>
+</span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a>
+</span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a><span class="sd">        Raises:</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
+</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
+</span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>            <span class="p">)</span>
+</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
+</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
+</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>    <span class="nd">@property</span>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a><span class="sd">        Get the weight of the measurement</span>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>    <span class="nd">@property</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>    <span class="k">def</span> <span class="nf">pose_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a><span class="sd">        Get the pose key from the association</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>    <span class="nd">@property</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>    <span class="k">def</span> <span class="nf">landmark_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a><span class="sd">        Get the landmark key from the association</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a><span class="k">class</span> <span class="nc">AmbiguousFGRangeMeasurement</span><span class="p">:</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>
+</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a><span class="sd">    Arguments:</span>
+</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a><span class="sd">        var1 (str): one variable the measurement is associated with</span>
+</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a><span class="sd">        var2 (str): the other variable the measurement is associated with</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a><span class="sd">        dist (float): The measured range</span>
+</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a><span class="sd">        stddev (float): The standard deviation</span>
+</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>    <span class="n">true_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>    <span class="n">measured_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a><span class="sd">        Args:</span>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a>
+</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a><span class="sd">        Raises:</span>
+</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a>            <span class="p">)</span>
+</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a>
+</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>            <span class="p">)</span>
+</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>
+</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>    <span class="nd">@property</span>
+</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a><span class="sd">        Get the weight of the measurement</span>
+</span><span id="L-273"><a href="#L-273"><span class="linenos">273</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-274"><a href="#L-274"><span class="linenos">274</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -507,7 +509,7 @@
                             <div id="PoseMeasurement.__init__" class="classattr">
                                         <input id="PoseMeasurement.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="name">PoseMeasurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">base_pose</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">to_pose</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">x</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">theta</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">translation_weight</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">rotation_weight</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="PoseMeasurement.__init__-view-source"><span>View Source</span></label>
@@ -537,10 +539,10 @@
                                 <div class="attr variable">
             <span class="name">rotation_matrix</span>
 
-
+        
     </div>
     <a class="headerlink" href="#PoseMeasurement.rotation_matrix"></a>
-
+    
             <div class="docstring"><p>Get the rotation matrix for the measurement</p>
 </div>
 
@@ -550,10 +552,10 @@
                                 <div class="attr variable">
             <span class="name">transformation_matrix</span>
 
-
+        
     </div>
     <a class="headerlink" href="#PoseMeasurement.transformation_matrix"></a>
-
+    
             <div class="docstring"><p>Get the transformation matrix</p>
 </div>
 
@@ -563,10 +565,10 @@
                                 <div class="attr variable">
             <span class="name">translation_vector</span>
 
-
+        
     </div>
     <a class="headerlink" href="#PoseMeasurement.translation_vector"></a>
-
+    
             <div class="docstring"><p>Get the translation vector for the measurement</p>
 </div>
 
@@ -576,10 +578,10 @@
                                 <div class="attr variable">
             <span class="name">covariance</span>
 
-
+        
     </div>
     <a class="headerlink" href="#PoseMeasurement.covariance"></a>
-
+    
             <div class="docstring"><p>Get the covariance matrix</p>
 </div>
 
@@ -688,7 +690,7 @@ timestamp (float): seconds since epoch</p>
                             <div id="AmbiguousPoseMeasurement.__init__" class="classattr">
                                         <input id="AmbiguousPoseMeasurement.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="name">AmbiguousPoseMeasurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">base_pose</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">measured_to_pose</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">true_to_pose</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">x</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">theta</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">translation_weight</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">rotation_weight</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="AmbiguousPoseMeasurement.__init__-view-source"><span>View Source</span></label>
@@ -719,10 +721,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">rotation_matrix</span>
 
-
+        
     </div>
     <a class="headerlink" href="#AmbiguousPoseMeasurement.rotation_matrix"></a>
-
+    
             <div class="docstring"><p>Get the rotation matrix for the measurement</p>
 </div>
 
@@ -732,10 +734,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">transformation_matrix</span>
 
-
+        
     </div>
     <a class="headerlink" href="#AmbiguousPoseMeasurement.transformation_matrix"></a>
-
+    
             <div class="docstring"><p>Get the transformation matrix</p>
 </div>
 
@@ -745,10 +747,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">translation_vector</span>
 
-
+        
     </div>
     <a class="headerlink" href="#AmbiguousPoseMeasurement.translation_vector"></a>
-
+    
             <div class="docstring"><p>Get the translation vector for the measurement</p>
 </div>
 
@@ -758,10 +760,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">covariance</span>
 
-
+        
     </div>
     <a class="headerlink" href="#AmbiguousPoseMeasurement.covariance"></a>
-
+    
             <div class="docstring"><p>Get the covariance matrix</p>
 </div>
 
@@ -780,69 +782,69 @@ timestamp (float): seconds since epoch</p>
 
     </div>
     <a class="headerlink" href="#FGRangeMeasurement"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="FGRangeMeasurement-157"><a href="#FGRangeMeasurement-157"><span class="linenos">157</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-158"><a href="#FGRangeMeasurement-158"><span class="linenos">158</span></a><span class="k">class</span> <span class="nc">FGRangeMeasurement</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement-159"><a href="#FGRangeMeasurement-159"><span class="linenos">159</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
-</span><span id="FGRangeMeasurement-160"><a href="#FGRangeMeasurement-160"><span class="linenos">160</span></a>
-</span><span id="FGRangeMeasurement-161"><a href="#FGRangeMeasurement-161"><span class="linenos">161</span></a><span class="sd">    Arguments:</span>
-</span><span id="FGRangeMeasurement-162"><a href="#FGRangeMeasurement-162"><span class="linenos">162</span></a><span class="sd">        association (Tuple[str, str]): the data associations of the measurement.</span>
-</span><span id="FGRangeMeasurement-163"><a href="#FGRangeMeasurement-163"><span class="linenos">163</span></a><span class="sd">            First association is the pose variable</span>
-</span><span id="FGRangeMeasurement-164"><a href="#FGRangeMeasurement-164"><span class="linenos">164</span></a><span class="sd">        dist (float): The measured range</span>
-</span><span id="FGRangeMeasurement-165"><a href="#FGRangeMeasurement-165"><span class="linenos">165</span></a><span class="sd">        stddev (float): The standard deviation</span>
-</span><span id="FGRangeMeasurement-166"><a href="#FGRangeMeasurement-166"><span class="linenos">166</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
-</span><span id="FGRangeMeasurement-167"><a href="#FGRangeMeasurement-167"><span class="linenos">167</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-168"><a href="#FGRangeMeasurement-168"><span class="linenos">168</span></a>
-</span><span id="FGRangeMeasurement-169"><a href="#FGRangeMeasurement-169"><span class="linenos">169</span></a>    <span class="n">association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="FGRangeMeasurement-170"><a href="#FGRangeMeasurement-170"><span class="linenos">170</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">_is_real</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-171"><a href="#FGRangeMeasurement-171"><span class="linenos">171</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="FGRangeMeasurement-172"><a href="#FGRangeMeasurement-172"><span class="linenos">172</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-173"><a href="#FGRangeMeasurement-173"><span class="linenos">173</span></a>
-</span><span id="FGRangeMeasurement-174"><a href="#FGRangeMeasurement-174"><span class="linenos">174</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="FGRangeMeasurement-175"><a href="#FGRangeMeasurement-175"><span class="linenos">175</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="FGRangeMeasurement-176"><a href="#FGRangeMeasurement-176"><span class="linenos">176</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
-</span><span id="FGRangeMeasurement-177"><a href="#FGRangeMeasurement-177"><span class="linenos">177</span></a>
-</span><span id="FGRangeMeasurement-178"><a href="#FGRangeMeasurement-178"><span class="linenos">178</span></a><span class="sd">        Args:</span>
-</span><span id="FGRangeMeasurement-179"><a href="#FGRangeMeasurement-179"><span class="linenos">179</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="FGRangeMeasurement-180"><a href="#FGRangeMeasurement-180"><span class="linenos">180</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="FGRangeMeasurement-181"><a href="#FGRangeMeasurement-181"><span class="linenos">181</span></a>
-</span><span id="FGRangeMeasurement-182"><a href="#FGRangeMeasurement-182"><span class="linenos">182</span></a><span class="sd">        Raises:</span>
-</span><span id="FGRangeMeasurement-183"><a href="#FGRangeMeasurement-183"><span class="linenos">183</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="FGRangeMeasurement-184"><a href="#FGRangeMeasurement-184"><span class="linenos">184</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="FGRangeMeasurement-185"><a href="#FGRangeMeasurement-185"><span class="linenos">185</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
-</span><span id="FGRangeMeasurement-186"><a href="#FGRangeMeasurement-186"><span class="linenos">186</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
-</span><span id="FGRangeMeasurement-187"><a href="#FGRangeMeasurement-187"><span class="linenos">187</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-188"><a href="#FGRangeMeasurement-188"><span class="linenos">188</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-189"><a href="#FGRangeMeasurement-189"><span class="linenos">189</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement-190"><a href="#FGRangeMeasurement-190"><span class="linenos">190</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="FGRangeMeasurement-191"><a href="#FGRangeMeasurement-191"><span class="linenos">191</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="FGRangeMeasurement-192"><a href="#FGRangeMeasurement-192"><span class="linenos">192</span></a>            <span class="p">)</span>
-</span><span id="FGRangeMeasurement-193"><a href="#FGRangeMeasurement-193"><span class="linenos">193</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-</span><span id="FGRangeMeasurement-194"><a href="#FGRangeMeasurement-194"><span class="linenos">194</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-195"><a href="#FGRangeMeasurement-195"><span class="linenos">195</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
-</span><span id="FGRangeMeasurement-196"><a href="#FGRangeMeasurement-196"><span class="linenos">196</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-197"><a href="#FGRangeMeasurement-197"><span class="linenos">197</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-</span><span id="FGRangeMeasurement-198"><a href="#FGRangeMeasurement-198"><span class="linenos">198</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-199"><a href="#FGRangeMeasurement-199"><span class="linenos">199</span></a>
-</span><span id="FGRangeMeasurement-200"><a href="#FGRangeMeasurement-200"><span class="linenos">200</span></a>    <span class="nd">@property</span>
-</span><span id="FGRangeMeasurement-201"><a href="#FGRangeMeasurement-201"><span class="linenos">201</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement-202"><a href="#FGRangeMeasurement-202"><span class="linenos">202</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-203"><a href="#FGRangeMeasurement-203"><span class="linenos">203</span></a><span class="sd">        Get the weight of the measurement</span>
-</span><span id="FGRangeMeasurement-204"><a href="#FGRangeMeasurement-204"><span class="linenos">204</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-205"><a href="#FGRangeMeasurement-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement-206"><a href="#FGRangeMeasurement-206"><span class="linenos">206</span></a>
-</span><span id="FGRangeMeasurement-207"><a href="#FGRangeMeasurement-207"><span class="linenos">207</span></a>    <span class="nd">@property</span>
-</span><span id="FGRangeMeasurement-208"><a href="#FGRangeMeasurement-208"><span class="linenos">208</span></a>    <span class="k">def</span> <span class="nf">pose_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement-209"><a href="#FGRangeMeasurement-209"><span class="linenos">209</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-210"><a href="#FGRangeMeasurement-210"><span class="linenos">210</span></a><span class="sd">        Get the pose key from the association</span>
-</span><span id="FGRangeMeasurement-211"><a href="#FGRangeMeasurement-211"><span class="linenos">211</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-212"><a href="#FGRangeMeasurement-212"><span class="linenos">212</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="FGRangeMeasurement-213"><a href="#FGRangeMeasurement-213"><span class="linenos">213</span></a>
-</span><span id="FGRangeMeasurement-214"><a href="#FGRangeMeasurement-214"><span class="linenos">214</span></a>    <span class="nd">@property</span>
-</span><span id="FGRangeMeasurement-215"><a href="#FGRangeMeasurement-215"><span class="linenos">215</span></a>    <span class="k">def</span> <span class="nf">landmark_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement-216"><a href="#FGRangeMeasurement-216"><span class="linenos">216</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-217"><a href="#FGRangeMeasurement-217"><span class="linenos">217</span></a><span class="sd">        Get the landmark key from the association</span>
-</span><span id="FGRangeMeasurement-218"><a href="#FGRangeMeasurement-218"><span class="linenos">218</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement-219"><a href="#FGRangeMeasurement-219"><span class="linenos">219</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="FGRangeMeasurement-159"><a href="#FGRangeMeasurement-159"><span class="linenos">159</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-160"><a href="#FGRangeMeasurement-160"><span class="linenos">160</span></a><span class="k">class</span> <span class="nc">FGRangeMeasurement</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement-161"><a href="#FGRangeMeasurement-161"><span class="linenos">161</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
+</span><span id="FGRangeMeasurement-162"><a href="#FGRangeMeasurement-162"><span class="linenos">162</span></a>
+</span><span id="FGRangeMeasurement-163"><a href="#FGRangeMeasurement-163"><span class="linenos">163</span></a><span class="sd">    Arguments:</span>
+</span><span id="FGRangeMeasurement-164"><a href="#FGRangeMeasurement-164"><span class="linenos">164</span></a><span class="sd">        association (Tuple[str, str]): the data associations of the measurement.</span>
+</span><span id="FGRangeMeasurement-165"><a href="#FGRangeMeasurement-165"><span class="linenos">165</span></a><span class="sd">            First association is the pose variable</span>
+</span><span id="FGRangeMeasurement-166"><a href="#FGRangeMeasurement-166"><span class="linenos">166</span></a><span class="sd">        dist (float): The measured range</span>
+</span><span id="FGRangeMeasurement-167"><a href="#FGRangeMeasurement-167"><span class="linenos">167</span></a><span class="sd">        stddev (float): The standard deviation</span>
+</span><span id="FGRangeMeasurement-168"><a href="#FGRangeMeasurement-168"><span class="linenos">168</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
+</span><span id="FGRangeMeasurement-169"><a href="#FGRangeMeasurement-169"><span class="linenos">169</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-170"><a href="#FGRangeMeasurement-170"><span class="linenos">170</span></a>
+</span><span id="FGRangeMeasurement-171"><a href="#FGRangeMeasurement-171"><span class="linenos">171</span></a>    <span class="n">association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="FGRangeMeasurement-172"><a href="#FGRangeMeasurement-172"><span class="linenos">172</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">_is_real</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-173"><a href="#FGRangeMeasurement-173"><span class="linenos">173</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="FGRangeMeasurement-174"><a href="#FGRangeMeasurement-174"><span class="linenos">174</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-175"><a href="#FGRangeMeasurement-175"><span class="linenos">175</span></a>
+</span><span id="FGRangeMeasurement-176"><a href="#FGRangeMeasurement-176"><span class="linenos">176</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="FGRangeMeasurement-177"><a href="#FGRangeMeasurement-177"><span class="linenos">177</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="FGRangeMeasurement-178"><a href="#FGRangeMeasurement-178"><span class="linenos">178</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
+</span><span id="FGRangeMeasurement-179"><a href="#FGRangeMeasurement-179"><span class="linenos">179</span></a>
+</span><span id="FGRangeMeasurement-180"><a href="#FGRangeMeasurement-180"><span class="linenos">180</span></a><span class="sd">        Args:</span>
+</span><span id="FGRangeMeasurement-181"><a href="#FGRangeMeasurement-181"><span class="linenos">181</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="FGRangeMeasurement-182"><a href="#FGRangeMeasurement-182"><span class="linenos">182</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="FGRangeMeasurement-183"><a href="#FGRangeMeasurement-183"><span class="linenos">183</span></a>
+</span><span id="FGRangeMeasurement-184"><a href="#FGRangeMeasurement-184"><span class="linenos">184</span></a><span class="sd">        Raises:</span>
+</span><span id="FGRangeMeasurement-185"><a href="#FGRangeMeasurement-185"><span class="linenos">185</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="FGRangeMeasurement-186"><a href="#FGRangeMeasurement-186"><span class="linenos">186</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="FGRangeMeasurement-187"><a href="#FGRangeMeasurement-187"><span class="linenos">187</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
+</span><span id="FGRangeMeasurement-188"><a href="#FGRangeMeasurement-188"><span class="linenos">188</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
+</span><span id="FGRangeMeasurement-189"><a href="#FGRangeMeasurement-189"><span class="linenos">189</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-190"><a href="#FGRangeMeasurement-190"><span class="linenos">190</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-191"><a href="#FGRangeMeasurement-191"><span class="linenos">191</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement-192"><a href="#FGRangeMeasurement-192"><span class="linenos">192</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="FGRangeMeasurement-193"><a href="#FGRangeMeasurement-193"><span class="linenos">193</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="FGRangeMeasurement-194"><a href="#FGRangeMeasurement-194"><span class="linenos">194</span></a>            <span class="p">)</span>
+</span><span id="FGRangeMeasurement-195"><a href="#FGRangeMeasurement-195"><span class="linenos">195</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+</span><span id="FGRangeMeasurement-196"><a href="#FGRangeMeasurement-196"><span class="linenos">196</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-197"><a href="#FGRangeMeasurement-197"><span class="linenos">197</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
+</span><span id="FGRangeMeasurement-198"><a href="#FGRangeMeasurement-198"><span class="linenos">198</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-199"><a href="#FGRangeMeasurement-199"><span class="linenos">199</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
+</span><span id="FGRangeMeasurement-200"><a href="#FGRangeMeasurement-200"><span class="linenos">200</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-201"><a href="#FGRangeMeasurement-201"><span class="linenos">201</span></a>
+</span><span id="FGRangeMeasurement-202"><a href="#FGRangeMeasurement-202"><span class="linenos">202</span></a>    <span class="nd">@property</span>
+</span><span id="FGRangeMeasurement-203"><a href="#FGRangeMeasurement-203"><span class="linenos">203</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement-204"><a href="#FGRangeMeasurement-204"><span class="linenos">204</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-205"><a href="#FGRangeMeasurement-205"><span class="linenos">205</span></a><span class="sd">        Get the weight of the measurement</span>
+</span><span id="FGRangeMeasurement-206"><a href="#FGRangeMeasurement-206"><span class="linenos">206</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-207"><a href="#FGRangeMeasurement-207"><span class="linenos">207</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement-208"><a href="#FGRangeMeasurement-208"><span class="linenos">208</span></a>
+</span><span id="FGRangeMeasurement-209"><a href="#FGRangeMeasurement-209"><span class="linenos">209</span></a>    <span class="nd">@property</span>
+</span><span id="FGRangeMeasurement-210"><a href="#FGRangeMeasurement-210"><span class="linenos">210</span></a>    <span class="k">def</span> <span class="nf">pose_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement-211"><a href="#FGRangeMeasurement-211"><span class="linenos">211</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-212"><a href="#FGRangeMeasurement-212"><span class="linenos">212</span></a><span class="sd">        Get the pose key from the association</span>
+</span><span id="FGRangeMeasurement-213"><a href="#FGRangeMeasurement-213"><span class="linenos">213</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-214"><a href="#FGRangeMeasurement-214"><span class="linenos">214</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="FGRangeMeasurement-215"><a href="#FGRangeMeasurement-215"><span class="linenos">215</span></a>
+</span><span id="FGRangeMeasurement-216"><a href="#FGRangeMeasurement-216"><span class="linenos">216</span></a>    <span class="nd">@property</span>
+</span><span id="FGRangeMeasurement-217"><a href="#FGRangeMeasurement-217"><span class="linenos">217</span></a>    <span class="k">def</span> <span class="nf">landmark_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement-218"><a href="#FGRangeMeasurement-218"><span class="linenos">218</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-219"><a href="#FGRangeMeasurement-219"><span class="linenos">219</span></a><span class="sd">        Get the landmark key from the association</span>
+</span><span id="FGRangeMeasurement-220"><a href="#FGRangeMeasurement-220"><span class="linenos">220</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement-221"><a href="#FGRangeMeasurement-221"><span class="linenos">221</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">association</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -860,7 +862,7 @@ timestamp (float): seconds since epoch</p>
                             <div id="FGRangeMeasurement.__init__" class="classattr">
                                         <input id="FGRangeMeasurement.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="name">FGRangeMeasurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>,</span><span class="param">	<span class="n">dist</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="FGRangeMeasurement.__init__-view-source"><span>View Source</span></label>
@@ -897,31 +899,31 @@ timestamp (float): seconds since epoch</p>
 
     </div>
     <a class="headerlink" href="#FGRangeMeasurement.check_association"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="FGRangeMeasurement.check_association-174"><a href="#FGRangeMeasurement.check_association-174"><span class="linenos">174</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="FGRangeMeasurement.check_association-175"><a href="#FGRangeMeasurement.check_association-175"><span class="linenos">175</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="FGRangeMeasurement.check_association-176"><a href="#FGRangeMeasurement.check_association-176"><span class="linenos">176</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
-</span><span id="FGRangeMeasurement.check_association-177"><a href="#FGRangeMeasurement.check_association-177"><span class="linenos">177</span></a>
-</span><span id="FGRangeMeasurement.check_association-178"><a href="#FGRangeMeasurement.check_association-178"><span class="linenos">178</span></a><span class="sd">        Args:</span>
-</span><span id="FGRangeMeasurement.check_association-179"><a href="#FGRangeMeasurement.check_association-179"><span class="linenos">179</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="FGRangeMeasurement.check_association-180"><a href="#FGRangeMeasurement.check_association-180"><span class="linenos">180</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="FGRangeMeasurement.check_association-181"><a href="#FGRangeMeasurement.check_association-181"><span class="linenos">181</span></a>
-</span><span id="FGRangeMeasurement.check_association-182"><a href="#FGRangeMeasurement.check_association-182"><span class="linenos">182</span></a><span class="sd">        Raises:</span>
-</span><span id="FGRangeMeasurement.check_association-183"><a href="#FGRangeMeasurement.check_association-183"><span class="linenos">183</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="FGRangeMeasurement.check_association-184"><a href="#FGRangeMeasurement.check_association-184"><span class="linenos">184</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="FGRangeMeasurement.check_association-185"><a href="#FGRangeMeasurement.check_association-185"><span class="linenos">185</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
-</span><span id="FGRangeMeasurement.check_association-186"><a href="#FGRangeMeasurement.check_association-186"><span class="linenos">186</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
-</span><span id="FGRangeMeasurement.check_association-187"><a href="#FGRangeMeasurement.check_association-187"><span class="linenos">187</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="FGRangeMeasurement.check_association-188"><a href="#FGRangeMeasurement.check_association-188"><span class="linenos">188</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement.check_association-189"><a href="#FGRangeMeasurement.check_association-189"><span class="linenos">189</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="FGRangeMeasurement.check_association-190"><a href="#FGRangeMeasurement.check_association-190"><span class="linenos">190</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="FGRangeMeasurement.check_association-191"><a href="#FGRangeMeasurement.check_association-191"><span class="linenos">191</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="FGRangeMeasurement.check_association-192"><a href="#FGRangeMeasurement.check_association-192"><span class="linenos">192</span></a>            <span class="p">)</span>
-</span><span id="FGRangeMeasurement.check_association-193"><a href="#FGRangeMeasurement.check_association-193"><span class="linenos">193</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-</span><span id="FGRangeMeasurement.check_association-194"><a href="#FGRangeMeasurement.check_association-194"><span class="linenos">194</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement.check_association-195"><a href="#FGRangeMeasurement.check_association-195"><span class="linenos">195</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
-</span><span id="FGRangeMeasurement.check_association-196"><a href="#FGRangeMeasurement.check_association-196"><span class="linenos">196</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
-</span><span id="FGRangeMeasurement.check_association-197"><a href="#FGRangeMeasurement.check_association-197"><span class="linenos">197</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-</span><span id="FGRangeMeasurement.check_association-198"><a href="#FGRangeMeasurement.check_association-198"><span class="linenos">198</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="FGRangeMeasurement.check_association-176"><a href="#FGRangeMeasurement.check_association-176"><span class="linenos">176</span></a>    <span class="nd">@association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="FGRangeMeasurement.check_association-177"><a href="#FGRangeMeasurement.check_association-177"><span class="linenos">177</span></a>    <span class="k">def</span> <span class="nf">check_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="FGRangeMeasurement.check_association-178"><a href="#FGRangeMeasurement.check_association-178"><span class="linenos">178</span></a>        <span class="sd">&quot;&quot;&quot;Validates the association attribute</span>
+</span><span id="FGRangeMeasurement.check_association-179"><a href="#FGRangeMeasurement.check_association-179"><span class="linenos">179</span></a>
+</span><span id="FGRangeMeasurement.check_association-180"><a href="#FGRangeMeasurement.check_association-180"><span class="linenos">180</span></a><span class="sd">        Args:</span>
+</span><span id="FGRangeMeasurement.check_association-181"><a href="#FGRangeMeasurement.check_association-181"><span class="linenos">181</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="FGRangeMeasurement.check_association-182"><a href="#FGRangeMeasurement.check_association-182"><span class="linenos">182</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="FGRangeMeasurement.check_association-183"><a href="#FGRangeMeasurement.check_association-183"><span class="linenos">183</span></a>
+</span><span id="FGRangeMeasurement.check_association-184"><a href="#FGRangeMeasurement.check_association-184"><span class="linenos">184</span></a><span class="sd">        Raises:</span>
+</span><span id="FGRangeMeasurement.check_association-185"><a href="#FGRangeMeasurement.check_association-185"><span class="linenos">185</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="FGRangeMeasurement.check_association-186"><a href="#FGRangeMeasurement.check_association-186"><span class="linenos">186</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="FGRangeMeasurement.check_association-187"><a href="#FGRangeMeasurement.check_association-187"><span class="linenos">187</span></a><span class="sd">            ValueError: the first association is not a valid pose key</span>
+</span><span id="FGRangeMeasurement.check_association-188"><a href="#FGRangeMeasurement.check_association-188"><span class="linenos">188</span></a><span class="sd">            ValueError: the second association is not a valid landmark key</span>
+</span><span id="FGRangeMeasurement.check_association-189"><a href="#FGRangeMeasurement.check_association-189"><span class="linenos">189</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="FGRangeMeasurement.check_association-190"><a href="#FGRangeMeasurement.check_association-190"><span class="linenos">190</span></a>        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement.check_association-191"><a href="#FGRangeMeasurement.check_association-191"><span class="linenos">191</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="FGRangeMeasurement.check_association-192"><a href="#FGRangeMeasurement.check_association-192"><span class="linenos">192</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="FGRangeMeasurement.check_association-193"><a href="#FGRangeMeasurement.check_association-193"><span class="linenos">193</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="FGRangeMeasurement.check_association-194"><a href="#FGRangeMeasurement.check_association-194"><span class="linenos">194</span></a>            <span class="p">)</span>
+</span><span id="FGRangeMeasurement.check_association-195"><a href="#FGRangeMeasurement.check_association-195"><span class="linenos">195</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+</span><span id="FGRangeMeasurement.check_association-196"><a href="#FGRangeMeasurement.check_association-196"><span class="linenos">196</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range measurements must have unique variables</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement.check_association-197"><a href="#FGRangeMeasurement.check_association-197"><span class="linenos">197</span></a>        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">):</span>
+</span><span id="FGRangeMeasurement.check_association-198"><a href="#FGRangeMeasurement.check_association-198"><span class="linenos">198</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;First association must be a pose - cannot start with L&quot;</span><span class="p">)</span>
+</span><span id="FGRangeMeasurement.check_association-199"><a href="#FGRangeMeasurement.check_association-199"><span class="linenos">199</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
+</span><span id="FGRangeMeasurement.check_association-200"><a href="#FGRangeMeasurement.check_association-200"><span class="linenos">200</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Second association was not a valid variable: </span><span class="si">{</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -944,10 +946,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">weight</span><span class="annotation">: float</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FGRangeMeasurement.weight"></a>
-
+    
             <div class="docstring"><p>Get the weight of the measurement</p>
 </div>
 
@@ -957,10 +959,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">pose_key</span><span class="annotation">: str</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FGRangeMeasurement.pose_key"></a>
-
+    
             <div class="docstring"><p>Get the pose key from the association</p>
 </div>
 
@@ -970,10 +972,10 @@ timestamp (float): seconds since epoch</p>
                                 <div class="attr variable">
             <span class="name">landmark_key</span><span class="annotation">: str</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FGRangeMeasurement.landmark_key"></a>
-
+    
             <div class="docstring"><p>Get the landmark key from the association</p>
 </div>
 
@@ -992,58 +994,58 @@ timestamp (float): seconds since epoch</p>
 
     </div>
     <a class="headerlink" href="#AmbiguousFGRangeMeasurement"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement-222"><a href="#AmbiguousFGRangeMeasurement-222"><span class="linenos">222</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-223"><a href="#AmbiguousFGRangeMeasurement-223"><span class="linenos">223</span></a><span class="k">class</span> <span class="nc">AmbiguousFGRangeMeasurement</span><span class="p">:</span>
-</span><span id="AmbiguousFGRangeMeasurement-224"><a href="#AmbiguousFGRangeMeasurement-224"><span class="linenos">224</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
-</span><span id="AmbiguousFGRangeMeasurement-225"><a href="#AmbiguousFGRangeMeasurement-225"><span class="linenos">225</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-226"><a href="#AmbiguousFGRangeMeasurement-226"><span class="linenos">226</span></a><span class="sd">    Arguments:</span>
-</span><span id="AmbiguousFGRangeMeasurement-227"><a href="#AmbiguousFGRangeMeasurement-227"><span class="linenos">227</span></a><span class="sd">        var1 (str): one variable the measurement is associated with</span>
-</span><span id="AmbiguousFGRangeMeasurement-228"><a href="#AmbiguousFGRangeMeasurement-228"><span class="linenos">228</span></a><span class="sd">        var2 (str): the other variable the measurement is associated with</span>
-</span><span id="AmbiguousFGRangeMeasurement-229"><a href="#AmbiguousFGRangeMeasurement-229"><span class="linenos">229</span></a><span class="sd">        dist (float): The measured range</span>
-</span><span id="AmbiguousFGRangeMeasurement-230"><a href="#AmbiguousFGRangeMeasurement-230"><span class="linenos">230</span></a><span class="sd">        stddev (float): The standard deviation</span>
-</span><span id="AmbiguousFGRangeMeasurement-231"><a href="#AmbiguousFGRangeMeasurement-231"><span class="linenos">231</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
-</span><span id="AmbiguousFGRangeMeasurement-232"><a href="#AmbiguousFGRangeMeasurement-232"><span class="linenos">232</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-233"><a href="#AmbiguousFGRangeMeasurement-233"><span class="linenos">233</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-234"><a href="#AmbiguousFGRangeMeasurement-234"><span class="linenos">234</span></a>    <span class="n">true_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="AmbiguousFGRangeMeasurement-235"><a href="#AmbiguousFGRangeMeasurement-235"><span class="linenos">235</span></a>    <span class="n">measured_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="AmbiguousFGRangeMeasurement-236"><a href="#AmbiguousFGRangeMeasurement-236"><span class="linenos">236</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="AmbiguousFGRangeMeasurement-237"><a href="#AmbiguousFGRangeMeasurement-237"><span class="linenos">237</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
-</span><span id="AmbiguousFGRangeMeasurement-238"><a href="#AmbiguousFGRangeMeasurement-238"><span class="linenos">238</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-239"><a href="#AmbiguousFGRangeMeasurement-239"><span class="linenos">239</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-240"><a href="#AmbiguousFGRangeMeasurement-240"><span class="linenos">240</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="AmbiguousFGRangeMeasurement-241"><a href="#AmbiguousFGRangeMeasurement-241"><span class="linenos">241</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
-</span><span id="AmbiguousFGRangeMeasurement-242"><a href="#AmbiguousFGRangeMeasurement-242"><span class="linenos">242</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
-</span><span id="AmbiguousFGRangeMeasurement-243"><a href="#AmbiguousFGRangeMeasurement-243"><span class="linenos">243</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-244"><a href="#AmbiguousFGRangeMeasurement-244"><span class="linenos">244</span></a><span class="sd">        Args:</span>
-</span><span id="AmbiguousFGRangeMeasurement-245"><a href="#AmbiguousFGRangeMeasurement-245"><span class="linenos">245</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="AmbiguousFGRangeMeasurement-246"><a href="#AmbiguousFGRangeMeasurement-246"><span class="linenos">246</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="AmbiguousFGRangeMeasurement-247"><a href="#AmbiguousFGRangeMeasurement-247"><span class="linenos">247</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-248"><a href="#AmbiguousFGRangeMeasurement-248"><span class="linenos">248</span></a><span class="sd">        Raises:</span>
-</span><span id="AmbiguousFGRangeMeasurement-249"><a href="#AmbiguousFGRangeMeasurement-249"><span class="linenos">249</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="AmbiguousFGRangeMeasurement-250"><a href="#AmbiguousFGRangeMeasurement-250"><span class="linenos">250</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="AmbiguousFGRangeMeasurement-251"><a href="#AmbiguousFGRangeMeasurement-251"><span class="linenos">251</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-252"><a href="#AmbiguousFGRangeMeasurement-252"><span class="linenos">252</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="AmbiguousFGRangeMeasurement-253"><a href="#AmbiguousFGRangeMeasurement-253"><span class="linenos">253</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="AmbiguousFGRangeMeasurement-254"><a href="#AmbiguousFGRangeMeasurement-254"><span class="linenos">254</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-255"><a href="#AmbiguousFGRangeMeasurement-255"><span class="linenos">255</span></a>            <span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-256"><a href="#AmbiguousFGRangeMeasurement-256"><span class="linenos">256</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="AmbiguousFGRangeMeasurement-257"><a href="#AmbiguousFGRangeMeasurement-257"><span class="linenos">257</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-258"><a href="#AmbiguousFGRangeMeasurement-258"><span class="linenos">258</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-259"><a href="#AmbiguousFGRangeMeasurement-259"><span class="linenos">259</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="AmbiguousFGRangeMeasurement-260"><a href="#AmbiguousFGRangeMeasurement-260"><span class="linenos">260</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="AmbiguousFGRangeMeasurement-261"><a href="#AmbiguousFGRangeMeasurement-261"><span class="linenos">261</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="AmbiguousFGRangeMeasurement-262"><a href="#AmbiguousFGRangeMeasurement-262"><span class="linenos">262</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="AmbiguousFGRangeMeasurement-263"><a href="#AmbiguousFGRangeMeasurement-263"><span class="linenos">263</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-264"><a href="#AmbiguousFGRangeMeasurement-264"><span class="linenos">264</span></a>            <span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-265"><a href="#AmbiguousFGRangeMeasurement-265"><span class="linenos">265</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="AmbiguousFGRangeMeasurement-266"><a href="#AmbiguousFGRangeMeasurement-266"><span class="linenos">266</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement-267"><a href="#AmbiguousFGRangeMeasurement-267"><span class="linenos">267</span></a>
-</span><span id="AmbiguousFGRangeMeasurement-268"><a href="#AmbiguousFGRangeMeasurement-268"><span class="linenos">268</span></a>    <span class="nd">@property</span>
-</span><span id="AmbiguousFGRangeMeasurement-269"><a href="#AmbiguousFGRangeMeasurement-269"><span class="linenos">269</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="AmbiguousFGRangeMeasurement-270"><a href="#AmbiguousFGRangeMeasurement-270"><span class="linenos">270</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-271"><a href="#AmbiguousFGRangeMeasurement-271"><span class="linenos">271</span></a><span class="sd">        Get the weight of the measurement</span>
-</span><span id="AmbiguousFGRangeMeasurement-272"><a href="#AmbiguousFGRangeMeasurement-272"><span class="linenos">272</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement-273"><a href="#AmbiguousFGRangeMeasurement-273"><span class="linenos">273</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement-224"><a href="#AmbiguousFGRangeMeasurement-224"><span class="linenos">224</span></a><span class="nd">@attr</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-225"><a href="#AmbiguousFGRangeMeasurement-225"><span class="linenos">225</span></a><span class="k">class</span> <span class="nc">AmbiguousFGRangeMeasurement</span><span class="p">:</span>
+</span><span id="AmbiguousFGRangeMeasurement-226"><a href="#AmbiguousFGRangeMeasurement-226"><span class="linenos">226</span></a>    <span class="sd">&quot;&quot;&quot;A range measurement</span>
+</span><span id="AmbiguousFGRangeMeasurement-227"><a href="#AmbiguousFGRangeMeasurement-227"><span class="linenos">227</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-228"><a href="#AmbiguousFGRangeMeasurement-228"><span class="linenos">228</span></a><span class="sd">    Arguments:</span>
+</span><span id="AmbiguousFGRangeMeasurement-229"><a href="#AmbiguousFGRangeMeasurement-229"><span class="linenos">229</span></a><span class="sd">        var1 (str): one variable the measurement is associated with</span>
+</span><span id="AmbiguousFGRangeMeasurement-230"><a href="#AmbiguousFGRangeMeasurement-230"><span class="linenos">230</span></a><span class="sd">        var2 (str): the other variable the measurement is associated with</span>
+</span><span id="AmbiguousFGRangeMeasurement-231"><a href="#AmbiguousFGRangeMeasurement-231"><span class="linenos">231</span></a><span class="sd">        dist (float): The measured range</span>
+</span><span id="AmbiguousFGRangeMeasurement-232"><a href="#AmbiguousFGRangeMeasurement-232"><span class="linenos">232</span></a><span class="sd">        stddev (float): The standard deviation</span>
+</span><span id="AmbiguousFGRangeMeasurement-233"><a href="#AmbiguousFGRangeMeasurement-233"><span class="linenos">233</span></a><span class="sd">        timestamp (float): seconds since epoch</span>
+</span><span id="AmbiguousFGRangeMeasurement-234"><a href="#AmbiguousFGRangeMeasurement-234"><span class="linenos">234</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-235"><a href="#AmbiguousFGRangeMeasurement-235"><span class="linenos">235</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-236"><a href="#AmbiguousFGRangeMeasurement-236"><span class="linenos">236</span></a>    <span class="n">true_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="AmbiguousFGRangeMeasurement-237"><a href="#AmbiguousFGRangeMeasurement-237"><span class="linenos">237</span></a>    <span class="n">measured_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="AmbiguousFGRangeMeasurement-238"><a href="#AmbiguousFGRangeMeasurement-238"><span class="linenos">238</span></a>    <span class="n">dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="AmbiguousFGRangeMeasurement-239"><a href="#AmbiguousFGRangeMeasurement-239"><span class="linenos">239</span></a>    <span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">()</span>
+</span><span id="AmbiguousFGRangeMeasurement-240"><a href="#AmbiguousFGRangeMeasurement-240"><span class="linenos">240</span></a>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">ib</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-241"><a href="#AmbiguousFGRangeMeasurement-241"><span class="linenos">241</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-242"><a href="#AmbiguousFGRangeMeasurement-242"><span class="linenos">242</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="AmbiguousFGRangeMeasurement-243"><a href="#AmbiguousFGRangeMeasurement-243"><span class="linenos">243</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
+</span><span id="AmbiguousFGRangeMeasurement-244"><a href="#AmbiguousFGRangeMeasurement-244"><span class="linenos">244</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
+</span><span id="AmbiguousFGRangeMeasurement-245"><a href="#AmbiguousFGRangeMeasurement-245"><span class="linenos">245</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-246"><a href="#AmbiguousFGRangeMeasurement-246"><span class="linenos">246</span></a><span class="sd">        Args:</span>
+</span><span id="AmbiguousFGRangeMeasurement-247"><a href="#AmbiguousFGRangeMeasurement-247"><span class="linenos">247</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="AmbiguousFGRangeMeasurement-248"><a href="#AmbiguousFGRangeMeasurement-248"><span class="linenos">248</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="AmbiguousFGRangeMeasurement-249"><a href="#AmbiguousFGRangeMeasurement-249"><span class="linenos">249</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-250"><a href="#AmbiguousFGRangeMeasurement-250"><span class="linenos">250</span></a><span class="sd">        Raises:</span>
+</span><span id="AmbiguousFGRangeMeasurement-251"><a href="#AmbiguousFGRangeMeasurement-251"><span class="linenos">251</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="AmbiguousFGRangeMeasurement-252"><a href="#AmbiguousFGRangeMeasurement-252"><span class="linenos">252</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="AmbiguousFGRangeMeasurement-253"><a href="#AmbiguousFGRangeMeasurement-253"><span class="linenos">253</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-254"><a href="#AmbiguousFGRangeMeasurement-254"><span class="linenos">254</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="AmbiguousFGRangeMeasurement-255"><a href="#AmbiguousFGRangeMeasurement-255"><span class="linenos">255</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="AmbiguousFGRangeMeasurement-256"><a href="#AmbiguousFGRangeMeasurement-256"><span class="linenos">256</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-257"><a href="#AmbiguousFGRangeMeasurement-257"><span class="linenos">257</span></a>            <span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-258"><a href="#AmbiguousFGRangeMeasurement-258"><span class="linenos">258</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="AmbiguousFGRangeMeasurement-259"><a href="#AmbiguousFGRangeMeasurement-259"><span class="linenos">259</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-260"><a href="#AmbiguousFGRangeMeasurement-260"><span class="linenos">260</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-261"><a href="#AmbiguousFGRangeMeasurement-261"><span class="linenos">261</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="AmbiguousFGRangeMeasurement-262"><a href="#AmbiguousFGRangeMeasurement-262"><span class="linenos">262</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="AmbiguousFGRangeMeasurement-263"><a href="#AmbiguousFGRangeMeasurement-263"><span class="linenos">263</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="AmbiguousFGRangeMeasurement-264"><a href="#AmbiguousFGRangeMeasurement-264"><span class="linenos">264</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="AmbiguousFGRangeMeasurement-265"><a href="#AmbiguousFGRangeMeasurement-265"><span class="linenos">265</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-266"><a href="#AmbiguousFGRangeMeasurement-266"><span class="linenos">266</span></a>            <span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-267"><a href="#AmbiguousFGRangeMeasurement-267"><span class="linenos">267</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="AmbiguousFGRangeMeasurement-268"><a href="#AmbiguousFGRangeMeasurement-268"><span class="linenos">268</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement-269"><a href="#AmbiguousFGRangeMeasurement-269"><span class="linenos">269</span></a>
+</span><span id="AmbiguousFGRangeMeasurement-270"><a href="#AmbiguousFGRangeMeasurement-270"><span class="linenos">270</span></a>    <span class="nd">@property</span>
+</span><span id="AmbiguousFGRangeMeasurement-271"><a href="#AmbiguousFGRangeMeasurement-271"><span class="linenos">271</span></a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="AmbiguousFGRangeMeasurement-272"><a href="#AmbiguousFGRangeMeasurement-272"><span class="linenos">272</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-273"><a href="#AmbiguousFGRangeMeasurement-273"><span class="linenos">273</span></a><span class="sd">        Get the weight of the measurement</span>
+</span><span id="AmbiguousFGRangeMeasurement-274"><a href="#AmbiguousFGRangeMeasurement-274"><span class="linenos">274</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement-275"><a href="#AmbiguousFGRangeMeasurement-275"><span class="linenos">275</span></a>        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stddev</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -1061,7 +1063,7 @@ timestamp (float): seconds since epoch</p>
                             <div id="AmbiguousFGRangeMeasurement.__init__" class="classattr">
                                         <input id="AmbiguousFGRangeMeasurement.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="name">AmbiguousFGRangeMeasurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">true_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>,</span><span class="param">	<span class="n">measured_association</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>,</span><span class="param">	<span class="n">dist</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">stddev</span><span class="p">:</span> <span class="nb">float</span>,</span><span class="param">	<span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="AmbiguousFGRangeMeasurement.__init__-view-source"><span>View Source</span></label>
@@ -1099,24 +1101,24 @@ timestamp (float): seconds since epoch</p>
 
     </div>
     <a class="headerlink" href="#AmbiguousFGRangeMeasurement.check_true_association"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement.check_true_association-240"><a href="#AmbiguousFGRangeMeasurement.check_true_association-240"><span class="linenos">240</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-241"><a href="#AmbiguousFGRangeMeasurement.check_true_association-241"><span class="linenos">241</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-242"><a href="#AmbiguousFGRangeMeasurement.check_true_association-242"><span class="linenos">242</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-243"><a href="#AmbiguousFGRangeMeasurement.check_true_association-243"><span class="linenos">243</span></a>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-244"><a href="#AmbiguousFGRangeMeasurement.check_true_association-244"><span class="linenos">244</span></a><span class="sd">        Args:</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-245"><a href="#AmbiguousFGRangeMeasurement.check_true_association-245"><span class="linenos">245</span></a><span class="sd">            attribute ([type]): [description]</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-246"><a href="#AmbiguousFGRangeMeasurement.check_true_association-246"><span class="linenos">246</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-247"><a href="#AmbiguousFGRangeMeasurement.check_true_association-247"><span class="linenos">247</span></a>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-248"><a href="#AmbiguousFGRangeMeasurement.check_true_association-248"><span class="linenos">248</span></a><span class="sd">        Raises:</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-249"><a href="#AmbiguousFGRangeMeasurement.check_true_association-249"><span class="linenos">249</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-250"><a href="#AmbiguousFGRangeMeasurement.check_true_association-250"><span class="linenos">250</span></a><span class="sd">            ValueError: the associations are identical</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-251"><a href="#AmbiguousFGRangeMeasurement.check_true_association-251"><span class="linenos">251</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-252"><a href="#AmbiguousFGRangeMeasurement.check_true_association-252"><span class="linenos">252</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-253"><a href="#AmbiguousFGRangeMeasurement.check_true_association-253"><span class="linenos">253</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-254"><a href="#AmbiguousFGRangeMeasurement.check_true_association-254"><span class="linenos">254</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-255"><a href="#AmbiguousFGRangeMeasurement.check_true_association-255"><span class="linenos">255</span></a>            <span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-256"><a href="#AmbiguousFGRangeMeasurement.check_true_association-256"><span class="linenos">256</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_true_association-257"><a href="#AmbiguousFGRangeMeasurement.check_true_association-257"><span class="linenos">257</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement.check_true_association-242"><a href="#AmbiguousFGRangeMeasurement.check_true_association-242"><span class="linenos">242</span></a>    <span class="nd">@true_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-243"><a href="#AmbiguousFGRangeMeasurement.check_true_association-243"><span class="linenos">243</span></a>    <span class="k">def</span> <span class="nf">check_true_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-244"><a href="#AmbiguousFGRangeMeasurement.check_true_association-244"><span class="linenos">244</span></a>        <span class="sd">&quot;&quot;&quot;Validates the true_association attribute</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-245"><a href="#AmbiguousFGRangeMeasurement.check_true_association-245"><span class="linenos">245</span></a>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-246"><a href="#AmbiguousFGRangeMeasurement.check_true_association-246"><span class="linenos">246</span></a><span class="sd">        Args:</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-247"><a href="#AmbiguousFGRangeMeasurement.check_true_association-247"><span class="linenos">247</span></a><span class="sd">            attribute ([type]): [description]</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-248"><a href="#AmbiguousFGRangeMeasurement.check_true_association-248"><span class="linenos">248</span></a><span class="sd">            value (Tuple[str, str]): the true_association attribute</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-249"><a href="#AmbiguousFGRangeMeasurement.check_true_association-249"><span class="linenos">249</span></a>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-250"><a href="#AmbiguousFGRangeMeasurement.check_true_association-250"><span class="linenos">250</span></a><span class="sd">        Raises:</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-251"><a href="#AmbiguousFGRangeMeasurement.check_true_association-251"><span class="linenos">251</span></a><span class="sd">            ValueError: is not a 2-tuple</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-252"><a href="#AmbiguousFGRangeMeasurement.check_true_association-252"><span class="linenos">252</span></a><span class="sd">            ValueError: the associations are identical</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-253"><a href="#AmbiguousFGRangeMeasurement.check_true_association-253"><span class="linenos">253</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-254"><a href="#AmbiguousFGRangeMeasurement.check_true_association-254"><span class="linenos">254</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-255"><a href="#AmbiguousFGRangeMeasurement.check_true_association-255"><span class="linenos">255</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-256"><a href="#AmbiguousFGRangeMeasurement.check_true_association-256"><span class="linenos">256</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-257"><a href="#AmbiguousFGRangeMeasurement.check_true_association-257"><span class="linenos">257</span></a>            <span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-258"><a href="#AmbiguousFGRangeMeasurement.check_true_association-258"><span class="linenos">258</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_true_association-259"><a href="#AmbiguousFGRangeMeasurement.check_true_association-259"><span class="linenos">259</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -1145,28 +1147,28 @@ timestamp (float): seconds since epoch</p>
 
     </div>
     <a class="headerlink" href="#AmbiguousFGRangeMeasurement.check_measured_association"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement.check_measured_association-259"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-259"><span class="linenos">259</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-260"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-260"><span class="linenos">260</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-261"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-261"><span class="linenos">261</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-262"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-262"><span class="linenos">262</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-263"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-263"><span class="linenos">263</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-264"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-264"><span class="linenos">264</span></a>            <span class="p">)</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-265"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-265"><span class="linenos">265</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
-</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-266"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-266"><span class="linenos">266</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="AmbiguousFGRangeMeasurement.check_measured_association-261"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-261"><span class="linenos">261</span></a>    <span class="nd">@measured_association</span><span class="o">.</span><span class="n">validator</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-262"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-262"><span class="linenos">262</span></a>    <span class="k">def</span> <span class="nf">check_measured_association</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-263"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-263"><span class="linenos">263</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-264"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-264"><span class="linenos">264</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-265"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-265"><span class="linenos">265</span></a>                <span class="s2">&quot;Range measurements must have exactly two variables associated with.&quot;</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-266"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-266"><span class="linenos">266</span></a>            <span class="p">)</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-267"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-267"><span class="linenos">267</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+</span><span id="AmbiguousFGRangeMeasurement.check_measured_association-268"><a href="#AmbiguousFGRangeMeasurement.check_measured_association-268"><span class="linenos">268</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Range measurements must have unique variables.&quot;</span><span class="p">)</span>
 </span></pre></div>
 
 
-
+    
 
                             </div>
                             <div id="AmbiguousFGRangeMeasurement.weight" class="classattr">
                                 <div class="attr variable">
             <span class="name">weight</span>
 
-
+        
     </div>
     <a class="headerlink" href="#AmbiguousFGRangeMeasurement.weight"></a>
-
+    
             <div class="docstring"><p>Get the weight of the measurement</p>
 </div>
 

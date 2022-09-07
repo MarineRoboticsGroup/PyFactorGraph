@@ -1,5 +1,4 @@
-import attr
-from attr import field
+from attrs import field, define
 from os.path import expanduser, join
 import numpy as np
 import pandas as pd
@@ -30,17 +29,13 @@ def _verify_path_is_goats_csv(instance, attribute, path: Path):
         raise ValueError(f"{path} is not a .csv file")
 
 
-@attr.s()
+@define
 class GoatsParser:
 
     _data_file_path: Path = field(validator=_verify_path_is_goats_csv)
     _beacon_loc_file_path: Path = field(validator=_verify_path_is_goats_csv)
-    _dim: int = field(default=2)
+    _dim: int = field(default=2, validator=lambda i, a, v: v in [2, 3])
     _filter_ranges: bool = field(default=False)
-
-    @_dim.validator
-    def _check_dim(self, attribute, value):
-        assert value in [2, 3], f"dim was {value} but must be 2 or 3"
 
     def __attrs_post_init__(self):
         print(f"Loading data from {self._data_file_path}")
@@ -140,8 +135,8 @@ class GoatsParser:
                 x=x,
                 y=y,
                 theta=theta,
-                translation_weight=(1 / trans_stddev**2),
-                rotation_weight=(1 / rot_stddev**2),
+                translation_weight=(1 / trans_stddev ** 2),
+                rotation_weight=(1 / rot_stddev ** 2),
             )
             self.pyfg.add_odom_measurement(0, relative_pose_measurement)
 
@@ -275,6 +270,6 @@ if __name__ == "__main__":
 
     data_dir = Path("~/data/goats/goats_14").expanduser()
     data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
-    parser = GoatsParser(data_file, beacon_loc_file)
+    parser = GoatsParser(data_file, beacon_loc_file)  # type: ignore
     parser.pyfg.animate_odometry(show_gt=True)
     # parser.pyfg.print_summary()

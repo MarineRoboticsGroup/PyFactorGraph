@@ -148,7 +148,7 @@
                     <h1 class="modulename">
 <a href="./../py_factor_graph.html">py_factor_graph</a><wbr>.factor_graph    </h1>
 
-
+                
                         <input id="factor_graph-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="factor_graph-view-source"><span>View Source</span></label>
@@ -2615,7 +2615,7 @@ was uncertain</p>
                             <div id="FactorGraphData.__init__" class="classattr">
                                         <input id="FactorGraphData.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="name">FactorGraphData</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">pose_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n"><a href="variables.html#PoseVariable">py_factor_graph.variables.PoseVariable</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">landmark_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="variables.html#LandmarkVariable">py_factor_graph.variables.LandmarkVariable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">existing_pose_variables</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">existing_landmark_variables</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">odom_measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n"><a href="measurements.html#PoseMeasurement">py_factor_graph.measurements.PoseMeasurement</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">loop_closure_measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="measurements.html#PoseMeasurement">py_factor_graph.measurements.PoseMeasurement</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">ambiguous_loop_closure_measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="measurements.html#AmbiguousPoseMeasurement">py_factor_graph.measurements.AmbiguousPoseMeasurement</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">range_measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="measurements.html#FGRangeMeasurement">py_factor_graph.measurements.FGRangeMeasurement</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">ambiguous_range_measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="measurements.html#AmbiguousFGRangeMeasurement">py_factor_graph.measurements.AmbiguousFGRangeMeasurement</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">pose_priors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="priors.html#PosePrior">py_factor_graph.priors.PosePrior</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">landmark_priors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="priors.html#LandmarkPrior">py_factor_graph.priors.LandmarkPrior</a></span><span class="p">]</span> <span class="o">=</span> <span class="n">NOTHING</span>,</span><span class="param">	<span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>,</span><span class="param">	<span class="n">x_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">x_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">y_min</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">y_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">max_measure_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">min_measure_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="FactorGraphData.__init__-view-source"><span>View Source</span></label>
@@ -2685,7 +2685,7 @@ was uncertain</p>
                             <div id="FactorGraphData.num_poses_by_robot_idx" class="classattr">
                                         <input id="FactorGraphData.num_poses_by_robot_idx-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">num_poses_by_robot_idx</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">robot_idx</span><span class="p">:</span> <span class="nb">int</span></span><span class="return-annotation">) -> <span class="nb">int</span>:</span></span>
 
@@ -2725,7 +2725,7 @@ was uncertain</p>
                             <div id="FactorGraphData.is_empty" class="classattr">
                                         <input id="FactorGraphData.is_empty-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">is_empty</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -2755,7 +2755,7 @@ was uncertain</p>
                             <div id="FactorGraphData.print_summary" class="classattr">
                                         <input id="FactorGraphData.print_summary-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">print_summary</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -2785,10 +2785,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">num_poses</span><span class="annotation">: int</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.num_poses"></a>
-
+    
             <div class="docstring"><p>Returns the number of pose variables.</p>
 
 <p>Returns:
@@ -2801,10 +2801,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">num_landmarks</span><span class="annotation">: int</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.num_landmarks"></a>
-
+    
             <div class="docstring"><p>Returns the number of landmark variables.</p>
 
 <p>Returns:
@@ -2817,10 +2817,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">pose_variables_dict</span><span class="annotation">: Dict[str, <a href="variables.html#PoseVariable">py_factor_graph.variables.PoseVariable</a>]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.pose_variables_dict"></a>
-
+    
             <div class="docstring"><p>Returns the pose variables as a dict.</p>
 
 <p>Returns:
@@ -2833,10 +2833,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">landmark_var_dict</span><span class="annotation">: Dict[str, <a href="variables.html#LandmarkVariable">py_factor_graph.variables.LandmarkVariable</a>]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.landmark_var_dict"></a>
-
+    
             <div class="docstring"><p>Returns the landmark variables as a dict.</p>
 
 <p>Returns:
@@ -2849,10 +2849,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">all_variable_names</span><span class="annotation">: List[str]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.all_variable_names"></a>
-
+    
             <div class="docstring"><p>Returns all of the variable names</p>
 
 <p>Returns:
@@ -2865,21 +2865,21 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">unconnected_variable_names</span><span class="annotation">: Set[str]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.unconnected_variable_names"></a>
-
-
+    
+    
 
                             </div>
                             <div id="FactorGraphData.range_measures_dict" class="classattr">
                                 <div class="attr variable">
             <span class="name">range_measures_dict</span><span class="annotation">: Dict[str, List[<a href="measurements.html#FGRangeMeasurement">py_factor_graph.measurements.FGRangeMeasurement</a>]]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.range_measures_dict"></a>
-
+    
             <div class="docstring"><p>Returns a mapping from pose variables to their range measurements.</p>
 
 <p>Returns:
@@ -2892,10 +2892,10 @@ was uncertain</p>
                                 <div class="attr variable">
             <span class="name">loop_closure_dict</span><span class="annotation">: Dict[str, List[<a href="measurements.html#PoseMeasurement">py_factor_graph.measurements.PoseMeasurement</a>]]</span>
 
-
+        
     </div>
     <a class="headerlink" href="#FactorGraphData.loop_closure_dict"></a>
-
+    
             <div class="docstring"><p>Returns a mapping from pose variables to their loop closure measurements.</p>
 
 <p>Returns:
@@ -2907,7 +2907,7 @@ was uncertain</p>
                             <div id="FactorGraphData.condense_odometry" class="classattr">
                                         <input id="FactorGraphData.condense_odometry-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">condense_odometry</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n"><a href="#FactorGraphData">py_factor_graph.factor_graph.FactorGraphData</a></span>:</span></span>
 
@@ -2991,7 +2991,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.pose_exists" class="classattr">
                                         <input id="FactorGraphData.pose_exists-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">pose_exists</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">pose_var_name</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -3026,7 +3026,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.landmark_exists" class="classattr">
                                         <input id="FactorGraphData.landmark_exists-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">landmark_exists</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">landmark_var_name</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -3061,7 +3061,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.is_pose_or_landmark" class="classattr">
                                         <input id="FactorGraphData.is_pose_or_landmark-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">is_pose_or_landmark</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">var_name</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -3096,7 +3096,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.only_good_measurements" class="classattr">
                                         <input id="FactorGraphData.only_good_measurements-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">only_good_measurements</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -3136,7 +3136,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.all_variables_have_factors" class="classattr">
                                         <input id="FactorGraphData.all_variables_have_factors-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">all_variables_have_factors</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
 
@@ -3165,7 +3165,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_pose_variable" class="classattr">
                                         <input id="FactorGraphData.add_pose_variable-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_pose_variable</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">pose_var</span><span class="p">:</span> <span class="n"><a href="variables.html#PoseVariable">py_factor_graph.variables.PoseVariable</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3229,7 +3229,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_landmark_variable" class="classattr">
                                         <input id="FactorGraphData.add_landmark_variable-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_landmark_variable</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">landmark_var</span><span class="p">:</span> <span class="n"><a href="variables.html#LandmarkVariable">py_factor_graph.variables.LandmarkVariable</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3290,7 +3290,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_odom_measurement" class="classattr">
                                         <input id="FactorGraphData.add_odom_measurement-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_odom_measurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">robot_idx</span><span class="p">:</span> <span class="nb">int</span>,</span><span class="param">	<span class="n">odom_meas</span><span class="p">:</span> <span class="n"><a href="measurements.html#PoseMeasurement">py_factor_graph.measurements.PoseMeasurement</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3344,7 +3344,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_loop_closure" class="classattr">
                                         <input id="FactorGraphData.add_loop_closure-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_loop_closure</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">loop_closure</span><span class="p">:</span> <span class="n"><a href="measurements.html#PoseMeasurement">py_factor_graph.measurements.PoseMeasurement</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3396,7 +3396,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_ambiguous_loop_closure" class="classattr">
                                         <input id="FactorGraphData.add_ambiguous_loop_closure-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_ambiguous_loop_closure</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">measure</span><span class="p">:</span> <span class="n"><a href="measurements.html#AmbiguousPoseMeasurement">py_factor_graph.measurements.AmbiguousPoseMeasurement</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3425,7 +3425,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_range_measurement" class="classattr">
                                         <input id="FactorGraphData.add_range_measurement-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_range_measurement</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">range_meas</span><span class="p">:</span> <span class="n"><a href="measurements.html#FGRangeMeasurement">py_factor_graph.measurements.FGRangeMeasurement</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3472,7 +3472,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_ambiguous_range_measurement" class="classattr">
                                         <input id="FactorGraphData.add_ambiguous_range_measurement-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_ambiguous_range_measurement</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">measure</span><span class="p">:</span> <span class="n"><a href="measurements.html#AmbiguousFGRangeMeasurement">py_factor_graph.measurements.AmbiguousFGRangeMeasurement</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3501,7 +3501,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_pose_prior" class="classattr">
                                         <input id="FactorGraphData.add_pose_prior-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_pose_prior</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">pose_prior</span><span class="p">:</span> <span class="n"><a href="priors.html#PosePrior">py_factor_graph.priors.PosePrior</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3530,7 +3530,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.add_landmark_prior" class="classattr">
                                         <input id="FactorGraphData.add_landmark_prior-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">add_landmark_prior</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">landmark_prior</span><span class="p">:</span> <span class="n"><a href="priors.html#LandmarkPrior">py_factor_graph.priors.LandmarkPrior</a></span></span><span class="return-annotation">):</span></span>
 
@@ -3559,7 +3559,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.get_pose_chain_names" class="classattr">
                                         <input id="FactorGraphData.get_pose_chain_names-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">get_pose_chain_names</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">):</span></span>
 
@@ -3591,7 +3591,7 @@ not have any range measurements or loop closures)</p>
                             <div id="FactorGraphData.save_to_file" class="classattr">
                                         <input id="FactorGraphData.save_to_file-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">save_to_file</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">):</span></span>
 
@@ -3642,7 +3642,7 @@ extension. We currently support ["fg", "pickle"].</p>
                             <div id="FactorGraphData.write_pose_gt_to_tum" class="classattr">
                                         <input id="FactorGraphData.write_pose_gt_to_tum-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">write_pose_gt_to_tum</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">data_dir</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -3688,7 +3688,7 @@ extension. We currently support ["fg", "pickle"].</p>
                             <div id="FactorGraphData.animate_groundtruth" class="classattr">
                                         <input id="FactorGraphData.animate_groundtruth-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">animate_groundtruth</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">pause</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -3806,7 +3806,7 @@ extension. We currently support ["fg", "pickle"].</p>
                             <div id="FactorGraphData.animate_odometry" class="classattr">
                                         <input id="FactorGraphData.animate_odometry-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-
+            
         <span class="def">def</span>
         <span class="name">animate_odometry</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">show_gt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>, </span><span class="param"><span class="n">pause</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
