@@ -32,23 +32,23 @@ def _verify_path_is_goats_csv(instance, attribute, path: Path):
 @define
 class GoatsParser:
 
-    _data_file_path: Path = field(validator=_verify_path_is_goats_csv)
-    _beacon_loc_file_path: Path = field(validator=_verify_path_is_goats_csv)
-    _dim: int = field(default=2, validator=lambda i, a, v: v in [2, 3])
-    _filter_ranges: bool = field(default=False)
+    data_file_path: Path = field(validator=_verify_path_is_goats_csv)
+    beacon_loc_file_path: Path = field(validator=_verify_path_is_goats_csv)
+    dim: int = field(validator=lambda i, a, v: v in [2, 3])
+    filter_ranges: bool = field()
 
     def __attrs_post_init__(self):
-        print(f"Loading data from {self._data_file_path}")
-        print(f"Loading beacon locations from {self._beacon_loc_file_path}")
+        print(f"Loading data from {self.data_file_path}")
+        print(f"Loading beacon locations from {self.beacon_loc_file_path}")
 
         # read in the sensor data
-        self._data = pd.read_csv(self._data_file_path)
+        self._data = pd.read_csv(self.data_file_path)
 
         # Read in the beacon locations as numpy arrays
-        _beacon_loc_df = pd.read_csv(self._beacon_loc_file_path, header=None)
+        _beacon_loc_df = pd.read_csv(self.beacon_loc_file_path, header=None)
         assert isinstance(_beacon_loc_df, pd.DataFrame)
         self._beacon_locs = [
-            _beacon_loc_df.iloc[: self._dim, idx].to_numpy()
+            _beacon_loc_df.iloc[: self.dim, idx].to_numpy()
             for idx in range(len(_beacon_loc_df.columns))
         ]
 
@@ -94,13 +94,13 @@ class GoatsParser:
             self.pyfg.add_pose_variable(var)
 
     def _get_transformation_matrix(self, rot, trans):
-        if self._dim == 2:
+        if self.dim == 2:
             assert np.isreal(rot), f"Rot must be a number {rot}"
             assert (
                 len(trans) == 2
             ), f"Translation is wrong dimension; should be 2 but is {len(trans)}"
             return make_transformation_matrix_from_theta(rot, trans)
-        elif self._dim == 3:
+        elif self.dim == 3:
             assert (
                 len(rot) == len(trans) == 3
             ), f"Dimension mismatch: rpy = {len(rot)} and trans = {len(trans)}"
@@ -180,7 +180,7 @@ class GoatsParser:
     @property
     def positions(self) -> np.ndarray:
         position_cols = [self._COLUMN_NAMES[x] for x in ["x_pos", "y_pos", "z_pos"]]
-        position_cols = position_cols[: self._dim]  # drop the last column if we are 2D
+        position_cols = position_cols[: self.dim]  # drop the last column if we are 2D
         positions = self._data[position_cols].to_numpy()
         return positions
 
@@ -189,7 +189,7 @@ class GoatsParser:
         position_cols = [
             self._COLUMN_NAMES[x] for x in ["x_pos_gt", "y_pos_gt", "z_pos_gt"]
         ]
-        position_cols = position_cols[: self._dim]
+        position_cols = position_cols[: self.dim]
         positions = self._data[position_cols].to_numpy()
         return positions
 
@@ -216,21 +216,21 @@ class GoatsParser:
 
     @property
     def rotations(self) -> np.ndarray:
-        if self._dim == 2:
+        if self.dim == 2:
             return self._data[self._COLUMN_NAMES["yaw"]].to_numpy()
-        elif self._dim == 3:
+        elif self.dim == 3:
             return self._data[
                 self._COLUMN_NAMES["roll"],
                 self._COLUMN_NAMES["pitch"],
                 self._COLUMN_NAMES["yaw"],
             ].to_numpy()
         else:
-            raise ValueError(f"dim was {self._dim} but must be 2 or 3")
+            raise ValueError(f"dim was {self.dim} but must be 2 or 3")
 
     @property
     def velocities(self) -> np.ndarray:
         vel_cols = [self._COLUMN_NAMES[x] for x in ["x_vel", "y_vel", "z_vel"]]
-        vel_cols = vel_cols[: self._dim]  # drop the last column if we are 2D
+        vel_cols = vel_cols[: self.dim]  # drop the last column if we are 2D
         velocities = self._data[vel_cols].to_numpy()
         return velocities
 
@@ -239,7 +239,7 @@ class GoatsParser:
         return len(self._beacon_locs)
 
     def _get_ranges(self, beacon_num) -> np.ndarray:
-        if self._filter_ranges:
+        if self.filter_ranges:
             return self._get_filtered_range(beacon_num)
         else:
             return self._get_unfiltered_range(beacon_num)
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         # load the factor graph from the parser
         dimension = 2
         filter_outlier_ranges = True
-        parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)
+        parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges) # type: ignore
         pyfg = parser.pyfg
 
         # save the factor graph as a .pkl file
