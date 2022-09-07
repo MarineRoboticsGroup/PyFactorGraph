@@ -33,7 +33,9 @@ def parse_pickle_file(filepath: str) -> FactorGraphData:
         FactorGraphData: The factor graph data.
     """
     assert isfile(filepath), f"{filepath} is not a file"
-    assert filepath.endswith(".pickle"), f"{filepath} is not a pickle file"
+    assert filepath.endswith(".pickle") or filepath.endswith(
+        ".pkl"
+    ), f"{filepath} is not a pickle file"
 
     with open(filepath, "rb") as f:
         data = pickle.load(f)
