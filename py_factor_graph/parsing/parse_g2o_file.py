@@ -105,12 +105,12 @@ def convert_se3_measurement_line_to_pose_measurement(
     # get the rotation
     quat_vals = [float(x) for x in line_items[quat_idx_bounds[0] : quat_idx_bounds[1]]]
     quat = np.array(quat_vals)
+    rot = get_rotation_matrix_from_quat(quat)
 
     # parse covariance
     covar_mat_size = 6
     covar_vals = [float(x) for x in line_items[cov_idx_bounds[0] : cov_idx_bounds[1]]]
     covar = load_symmetric_matrix_column_major(covar_vals, covar_mat_size)
-    print(f"covar:\n{covar}")
     assert (
         covar[0, 0] == covar[1, 1] == covar[2, 2]
         and covar[3, 3] == covar[4, 4] == covar[5, 5]
@@ -123,7 +123,7 @@ def convert_se3_measurement_line_to_pose_measurement(
     trans_weight = 1 / trans_covar
     rot_weight = 1 / rot_covar
     pose_measurement = PoseMeasurement3D(
-        from_pose_name, to_pose_name, translation, quat, trans_weight, rot_weight
+        from_pose_name, to_pose_name, translation, rot, trans_weight, rot_weight
     )
     return pose_measurement
 
@@ -137,7 +137,11 @@ def is_odom_measurement(line_items: List[str]) -> bool:
     Returns:
         True if the line is an odometry measurement, False otherwise.
     """
-    return line_items[0] == EDGE_SE3
+    assert (
+        line_items[0] == EDGE_SE3
+    ), f"Line type is not {EDGE_SE3}, it is {line_items[0]}"
+    from_idx, to_idx = int(line_items[1]), int(line_items[2])
+    return from_idx == to_idx - 1
 
 
 def parse_3d_g2o_file(filepath: str):
@@ -168,9 +172,17 @@ def parse_3d_g2o_file(filepath: str):
             else:
                 raise ValueError(f"Unsupported line type for 3D: {line_type}")
 
-    raise NotImplementedError("This function is not yet implemented")
+    return fg
 
 
 if __name__ == "__main__":
     file = "/home/alan/data/g2o/grid3D.g2o"
-    parse_3d_g2o_file(file)
+    pickle_file = "/home/alan/data/g2o/grid3D.pkl"
+    fg = parse_3d_g2o_file(file)
+    fg._save_to_pickle_format(pickle_file)
+
+    from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
+
+    fg = parse_pickle_file(pickle_file)
+
+    fg.print_summary()
