@@ -159,29 +159,42 @@ def optional_float_validator(instance, attribute, value) -> None:
             raise ValueError(f"{value} is not a float")
 
 
-def pose_name_validator(instance, attribute, value) -> None:
+def make_variable_name_validator(type: str) -> Callable:
     """
-    Return validator for pose name. Should be a string of form
+    Return validator for either pose or landmark names. Should be a string of
+    form
 
-    "<Letter><Number>": e.g. "A1", "B27", "C19"
-
-    Should not start with "L"
+    "<Letter><Number>"
+    Poses should not start with 'L' : Poses = "A1", "B27", "C19"
+    Landmarks should start with 'L' : Landmarks = "L1", "L2", "L3"
 
     Args:
         value (str): value to validate
 
     Returns:
-        None
+        Callable: validator
     """
-    if not isinstance(value, str):
-        raise ValueError(f"{value} is not a string")
+    valid_types = ["pose", "landmark"]
+    assert (
+        type in valid_types
+    ), f"Type {type} is not valid, should be one of {valid_types}"
 
-    first_char = value[0]
-    if first_char == "L":
-        raise ValueError(f"{value} starts with L - reserved for landmarks")
+    def variable_name_validator(instance, attribute, value) -> None:
+        if not isinstance(value, str):
+            raise ValueError(f"{value} is not a string")
 
-    if not first_char.isalpha() or first_char.islower():
-        raise ValueError(f"{value} does not start with a capital letter")
+        first_char = value[0]
+        if type == "pose" and first_char == "L":
+            raise ValueError(f"{value} starts with L - reserved for landmarks")
+        elif type == "landmark" and first_char != "L":
+            raise ValueError(
+                f"{value} does not start with L - landmarks should start with L"
+            )
 
-    if not value[1:].isdigit():
-        raise ValueError(f"{value} does not end with a number")
+        if not first_char.isalpha() or first_char.islower():
+            raise ValueError(f"{value} does not start with a capital letter")
+
+        if not value[1:].isdigit():
+            raise ValueError(f"{value} does not end with a number")
+
+    return variable_name_validator

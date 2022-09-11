@@ -4,7 +4,7 @@ import numpy as np
 from py_factor_graph.utils.attrib_utils import (
     optional_float_validator,
     make_rot_matrix_validator,
-    pose_name_validator,
+    make_variable_name_validator,
 )
 
 
@@ -19,7 +19,7 @@ class PoseVariable2D:
         timestamp (float): seconds since epoch
     """
 
-    name: str = attr.ib(validator=attr.validators.instance_of(str))
+    name: str = attr.ib(validator=make_variable_name_validator("pose"))
     true_position: Tuple[float, float] = attr.ib()
     true_theta: float = attr.ib(validator=attr.validators.instance_of(float))
     timestamp: Optional[float] = attr.ib(default=None)
@@ -83,7 +83,7 @@ class PoseVariable3D:
         timestamp (float): seconds since epoch
     """
 
-    name: str = attr.ib(validator=pose_name_validator)
+    name: str = attr.ib(validator=make_variable_name_validator("pose"))
     true_position: Tuple[float, float, float] = attr.ib()
     true_rotation: np.ndarray = attr.ib(validator=make_rot_matrix_validator(3))
     timestamp: Optional[float] = attr.ib(
@@ -149,7 +149,7 @@ class LandmarkVariable2D:
         true_position (Tuple[float, float]): the true position of the landmark
     """
 
-    name: str = attr.ib(validator=attr.validators.instance_of(str))
+    name: str = attr.ib(validator=make_variable_name_validator("landmark"))
     true_position: Tuple[float, float] = attr.ib()
 
     @true_position.validator
@@ -176,7 +176,7 @@ class LandmarkVariable3D:
         true_position (Tuple[float, float, float]): the true position of the landmark
     """
 
-    name: str = attr.ib(validator=attr.validators.instance_of(str))
+    name: str = attr.ib(validator=make_variable_name_validator("landmark"))
     true_position: Tuple[float, float, float] = attr.ib()
 
     @true_position.validator
