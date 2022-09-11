@@ -41,6 +41,19 @@ from py_factor_graph.utils.plot_utils import (
     draw_range_measurement,
 )
 
+import logging
+import sys
+
+file_handler = logging.FileHandler(filename="analyze_g2o.log")
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+handlers = [file_handler, stdout_handler]
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+    handlers=handlers,
+)
+logger = logging.getLogger(__name__)
+
 
 @attr.s
 class FactorGraphData:
@@ -195,7 +208,8 @@ class FactorGraphData:
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = f"Measurements: {num_odom_measurements} odom, {num_range_measurements} range, {num_loop_closures} loop closures"
-        print(robots_line, variables_line, measurements_line, sep="\n")
+        msg = f"{robots_line} || {variables_line} || {measurements_line}"
+        logger.info(msg)
 
     @property
     def num_robots(self) -> int:
@@ -496,12 +510,12 @@ class FactorGraphData:
         for odom_chain in self.odom_measurements:
             for odom in odom_chain:
                 if odom.translation_weight < 1 or odom.rotation_weight < 1:
-                    print(odom)
+                    logger.info(odom)
                     return False
 
         for range_measure in self.range_measurements:
             if range_measure.weight < 1:
-                print(range_measure)
+                logger.info(range_measure)
                 return False
 
         return True
@@ -573,8 +587,8 @@ class FactorGraphData:
                 self.landmark_variables[-1].name
             )
             if new_landmark_idx <= last_landmark_idx:
-                print(self.landmark_variables)
-                print(landmark_var)
+                logger.info(self.landmark_variables)
+                logger.info(landmark_var)
                 raise ValueError(
                     "Landmark variables must be added in order of increasing robot_idx"
                 )
@@ -755,7 +769,7 @@ class FactorGraphData:
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
-        print(f"Saved data to {filepath}")
+        logger.info(f"Saved data to {filepath}")
 
     def _save_to_efg_format(
         self,
@@ -1005,7 +1019,7 @@ class FactorGraphData:
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()
-        print(f"Saved to {data_file}")
+        logger.info(f"Saved to {data_file}")
 
     def _save_to_plaza_format(self, data_folder: str) -> None:
         """
@@ -1111,14 +1125,13 @@ class FactorGraphData:
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
 
-        print(f"Writing ground truth to TUM format in {data_dir}")
+        logger.info(f"Writing ground truth to TUM format in {data_dir}")
         for i, pose_chain in enumerate(self.pose_variables):
             filename = "gt_traj_" + chr(ord("A") + i) + ".tum"
             filepath = os.path.join(data_dir, filename)
             fw = open(filepath, "w")
 
             for pose_idx, pose in enumerate(pose_chain):
-                assert isinstance(pose, PoseVariable2D)
                 timestamp = pose.timestamp if pose.timestamp is not None else pose_idx
                 qx, qy, qz, qw = pose.true_quat
                 fw.write(
@@ -1128,6 +1141,7 @@ class FactorGraphData:
                 )
 
             fw.close()
+            logger.info(f"Saved to {filepath}")
 
     #### plotting functions ####
 
