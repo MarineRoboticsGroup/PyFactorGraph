@@ -195,7 +195,7 @@ class FactorGraphData:
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = f"Measurements: {num_odom_measurements} odom, {num_range_measurements} range, {num_loop_closures} loop closures"
-        print(robots_line, variables_line, measurements_line, sep="\t")
+        print(robots_line, variables_line, measurements_line, sep="\n")
 
     @property
     def num_robots(self) -> int:
@@ -372,11 +372,13 @@ class FactorGraphData:
         Returns:
             Dict[str, np.ndarray]: the trajectories for each robot obtained from the odometry measurements
         """
-        curr_poses = [np.eye(self.dimension + 1) for _ in range(self.num_robots)]
-        odom_traj = {}
+        curr_poses: List[np.ndarray] = [
+            np.eye(self.dimension + 1) for _ in range(self.num_robots)
+        ]
+        odom_traj: Dict[str, np.ndarray] = {}
         for robot_idx, odom_chain in enumerate(self.odom_measurements):
             first_pose_name = odom_chain[0].base_pose
-            odom_traj[first_pose_name] = [curr_poses[robot_idx]]
+            odom_traj[first_pose_name] = curr_poses[robot_idx]
             for odom in odom_chain:
                 curr_poses[robot_idx] = np.dot(
                     curr_poses[robot_idx], odom.transformation_matrix
@@ -525,6 +527,7 @@ class FactorGraphData:
             (time indices must be ordered to ensure that the list is always
             ordered)
         """
+        self._check_variable_dimension(pose_var)
         robot_idx = get_robot_idx_from_frame_name(pose_var.name)
         while len(self.pose_variables) <= robot_idx:
             self.pose_variables.append([])
@@ -563,6 +566,7 @@ class FactorGraphData:
             (time indices must be ordered to ensure that the list is always
             ordered)
         """
+        self._check_variable_dimension(landmark_var)
         if len(self.landmark_variables) > 0:
             new_landmark_idx = get_time_idx_from_frame_name(landmark_var.name)
             last_landmark_idx = get_time_idx_from_frame_name(
@@ -594,6 +598,7 @@ class FactorGraphData:
             robot_idx (int): the index of the robot that made the measurement
             odom_meas (POSE_MEASUREMENT_TYPES): the odom measurement to add
         """
+        self._check_measurement_dimension(odom_meas)
         while len(self.odom_measurements) <= robot_idx:
             self.odom_measurements.append([])
 
@@ -624,6 +629,7 @@ class FactorGraphData:
         Args:
             loop_closure (POSE_MEASUREMENT_TYPES): the loop closure measurement to add
         """
+        self._check_measurement_dimension(loop_closure)
         self.loop_closure_measurements.append(loop_closure)
 
         # check that we are not adding a measurement between variables that exist
@@ -1114,9 +1120,11 @@ class FactorGraphData:
             for pose_idx, pose in enumerate(pose_chain):
                 assert isinstance(pose, PoseVariable2D)
                 timestamp = pose.timestamp if pose.timestamp is not None else pose_idx
+                qx, qy, qz, qw = pose.true_quat
                 fw.write(
-                    f"{timestamp} {pose.true_position[0]} {pose.true_position[1]}"
-                    f" 0 0 0 {np.sin(pose.true_theta/2)} {np.cos(pose.true_theta/2)}\n"
+                    f"{timestamp} "
+                    f"{pose.true_x} {pose.true_y} {pose.true_z} "
+                    f"{qx} {qy} {qz} {qw}\n"
                 )
 
             fw.close()
@@ -1208,7 +1216,7 @@ class FactorGraphData:
                     loop_line = None
                     loop_pose = None
 
-            plt.pause(0.001)
+            plt.pause(0.001)  # type: ignore
 
             # if showing loop closures let's not have them hang around forever
             if loop_line and loop_pose:
@@ -1336,7 +1344,7 @@ class FactorGraphData:
                 # draw groundtruth solution
                 cur_poses[robot_idx] = np.dot(cur_poses[robot_idx], odom_measure)
 
-            plt.pause(0.001)
+            plt.pause(0.001)  # type: ignore
 
             if pose_idx > num_poses_show and False:
                 for _ in range(num_full_odom_chains):
@@ -1349,3 +1357,63 @@ class FactorGraphData:
                         pose_var_plot_obj.pop(0)
 
         plt.close()
+
+    #### checks on inputs ####
+
+    def _check_variable_dimension(
+        self, pose_var: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]
+    ) -> None:
+        """Checks that the variable is the correct dimension
+
+        Args:
+            pose_var (Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]): The variable to check
+
+        Raises:
+            ValueError: if the variable is not the correct dimension
+        """
+        is_2d = isinstance(pose_var, PoseVariable2D) or isinstance(
+            pose_var, LandmarkVariable2D
+        )
+        is_3d = isinstance(pose_var, PoseVariable3D) or isinstance(
+            pose_var, LandmarkVariable3D
+        )
+        if not (is_2d or is_3d):
+            raise ValueError(
+                f"Variable must be either 2D or 3D, but got {type(pose_var)}"
+            )
+
+        if is_2d and self.dimension != 2:
+            raise ValueError(
+                f"Variable is 2D but the dimension of the graph is {self.dimension}"
+            )
+
+        if is_3d and self.dimension != 3:
+            raise ValueError(
+                f"Variable is 3D but the dimension of the graph is {self.dimension}"
+            )
+
+    def _check_measurement_dimension(self, measure: POSE_MEASUREMENT_TYPES) -> None:
+        """Checks that the measurement is the correct dimension
+
+        Args:
+            measure (POSE_MEASUREMENT_TYPES): The measurement to check
+
+        Raises:
+            ValueError: if the measurement is not the correct dimension
+        """
+        is_2d = isinstance(measure, PoseMeasurement2D)
+        is_3d = isinstance(measure, PoseMeasurement3D)
+        if not (is_2d or is_3d):
+            raise ValueError(
+                f"Measurement must be either 2D or 3D, but got {type(measure)}"
+            )
+
+        if is_2d and self.dimension != 2:
+            raise ValueError(
+                f"Measurement is 2D but the dimension of the graph is {self.dimension}"
+            )
+
+        if is_3d and self.dimension != 3:
+            raise ValueError(
+                f"Measurement is 3D but the dimension of the graph is {self.dimension}"
+            )

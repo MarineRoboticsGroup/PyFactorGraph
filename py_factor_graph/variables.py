@@ -1,6 +1,7 @@
 import attr
 from typing import Tuple, Optional, Union
 import numpy as np
+from py_factor_graph.utils.matrix_utils import get_quat_from_rotation_matrix
 from py_factor_graph.utils.attrib_utils import (
     optional_float_validator,
     make_rot_matrix_validator,
@@ -56,6 +57,17 @@ class PoseVariable2D:
     @property
     def true_y(self) -> float:
         return self.true_position[1]
+
+    @property
+    def true_z(self) -> float:
+        return 0
+
+    @property
+    def true_quat(self) -> np.ndarray:
+        quat = np.array(
+            [0.0, 0.0, np.sin(self.true_theta / 2), np.cos(self.true_theta / 2)]
+        )
+        return quat
 
     @property
     def transformation_matrix(self) -> np.ndarray:
@@ -125,6 +137,12 @@ class PoseVariable3D:
     @property
     def true_z(self) -> float:
         return self.true_position[2]
+
+    @property
+    def true_quat(self) -> np.ndarray:
+        rot = self.rotation_matrix
+        quat = get_quat_from_rotation_matrix(rot)
+        return quat
 
     @property
     def transformation_matrix(self) -> np.ndarray:

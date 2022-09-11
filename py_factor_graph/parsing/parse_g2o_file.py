@@ -1,8 +1,6 @@
 from typing import List, Any, Union, Tuple
 from os.path import isfile
 import numpy as np
-import pickle
-import scipy.spatial
 
 from py_factor_graph.variables import PoseVariable3D, LandmarkVariable2D
 from py_factor_graph.measurements import (
@@ -150,7 +148,7 @@ def parse_3d_g2o_file(filepath: str):
     if not isfile(filepath):
         raise FileNotFoundError(f"File not found: {filepath}")
 
-    fg = FactorGraphData()
+    fg = FactorGraphData(dimension=3)
 
     with open(filepath, "r") as f:
         lines = f.readlines()
@@ -176,10 +174,10 @@ def parse_3d_g2o_file(filepath: str):
 
 
 if __name__ == "__main__":
-    file = "/home/alan/data/g2o/grid3D.g2o"
-    pickle_file = "/home/alan/data/g2o/grid3D.pkl"
-    fg = parse_3d_g2o_file(file)
-    fg._save_to_pickle_format(pickle_file)
+    file = "/home/alan/data/g2o/grid/grid3D.g2o"
+    pickle_file = "/home/alan/data/g2o/grid/grid3D.pkl"
+    # fg = parse_3d_g2o_file(file)
+    # fg._save_to_pickle_format(pickle_file)
 
     from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
 

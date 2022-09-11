@@ -128,11 +128,33 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
     """
     assert quat.shape == (4,)
     rot = scipy.spatial.transform.Rotation.from_quat(quat)
-    rot_mat = rot.as_matrix()
+    assert isinstance(rot, scipy.spatial.transform.Rotation)
 
+    # get as a matrix
+    rot_mat = rot.as_matrix()
+    assert isinstance(rot_mat, np.ndarray)
     assert rot_mat.shape == (3, 3)
+
     _check_rotation_matrix(rot_mat, assert_test=True)
     return rot_mat
+
+
+def get_quat_from_rotation_matrix(rot: np.ndarray) -> np.ndarray:
+    """Returns the quaternion from a rotation matrix
+
+    Args:
+        rot (np.ndarray): the rotation matrix
+
+    Returns:
+        np.ndarray: the quaternion
+    """
+    _check_rotation_matrix(rot, assert_test=True)
+    rot = scipy.spatial.transform.Rotation.from_matrix(rot)
+    assert isinstance(rot, scipy.spatial.transform.Rotation)
+    quat = rot.as_quat()
+    assert isinstance(quat, np.ndarray)
+    assert quat.shape == (4,)
+    return quat
 
 
 def get_theta_from_transformation_matrix(T: np.ndarray) -> float:
