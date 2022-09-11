@@ -19,7 +19,20 @@ from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
 
+import logging, coloredlogs
+
 logger = logging.getLogger(__name__)
+field_styles = {
+    "filename": {"color": "green"},
+    "filename": {"color": "green"},
+    "levelname": {"bold": True, "color": "black"},
+    "name": {"color": "blue"},
+}
+coloredlogs.install(
+    level="INFO",
+    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
+    field_styles=field_styles,
+)
 
 
 def _verify_path_is_goats_csv(instance, attribute, path: Path):

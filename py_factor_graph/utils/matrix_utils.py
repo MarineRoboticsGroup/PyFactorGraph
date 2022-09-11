@@ -1,7 +1,11 @@
 import numpy as np
 import scipy.linalg as la  # type: ignore
 import scipy.spatial
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
@@ -20,6 +24,54 @@ def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
     R_so = S @ Vh
     _check_rotation_matrix(R_so, assert_test=True)
     return R_so
+
+
+def get_measurement_precisions_from_info_matrix(
+    info_mat: np.ndarray, matrix_dim: Optional[int] = None
+) -> Tuple[float, float]:
+    """Computes the optimal measurement precisions from the information matrix
+
+    Based on SE-Sync:SESync_utils.cpp:113-124
+
+    Args:
+        info_mat (np.ndarray): the information matrix
+
+    Returns:
+        Tuple[float, float]: (translation precision, rotation precision)
+    """
+    _check_square(info_mat)
+    dim = info_mat.shape[0]
+    if matrix_dim is not None:
+        assert (
+            matrix_dim == dim
+        ), f"matrix_dim {matrix_dim} must match info_mat dim {dim}"
+
+    assert dim in [3, 6], "information matrix must be 3x3 or 6x6"
+
+    def _get_trans_precision() -> float:
+        if dim == 3:
+            trans_info = info_mat[:2, :2]
+            trans_precision = 2 / (np.trace(np.linalg.inv(trans_info)))
+        elif dim == 6:
+            trans_info = info_mat[:3, :3]
+            trans_precision = 3 / (np.trace(np.linalg.inv(trans_info)))
+        else:
+            raise ValueError(f"Invalid dimension: {dim}")
+        return trans_precision
+
+    def _get_rot_precision() -> float:
+        if dim == 3:
+            rot_precision = info_mat[2, 2]
+        elif dim == 6:
+            rot_info = info_mat[3:, 3:]
+            rot_precision = 3 / (2 * np.trace(np.linalg.inv(rot_info)))
+        else:
+            raise ValueError(f"Invalid dimension: {dim}")
+        return rot_precision
+
+    trans_precision = _get_trans_precision()
+    rot_precision = _get_rot_precision()
+    return (trans_precision, rot_precision)
 
 
 def get_theta_from_rotation_matrix_so_projection(mat: np.ndarray) -> float:
@@ -341,9 +393,13 @@ def _check_symmetric(mat):
 def _check_psd(mat: np.ndarray):
     """Checks that a matrix is positive semi-definite"""
     assert isinstance(mat, np.ndarray)
-    assert (
-        np.min(la.eigvals(mat)) + 1e-1 >= 0.0
-    ), f"min eigenvalue is {np.min(la.eigvals(mat))}"
+    if is_diagonal(mat):
+        assert np.all(np.diag(mat) >= 0)
+    else:
+        min_eigval = np.min(la.eigvalsh(mat))
+        if min_eigval < 0:
+            logger.error(f"Matrix is not positive semi-definite:\n{mat}")
+        assert min_eigval + 1e-1 >= 0.0, f"min eigenvalue is {min_eigval}"
 
 
 def _check_is_laplacian(L: np.ndarray):
@@ -388,6 +444,67 @@ def _check_transformation_matrix(T: np.ndarray, assert_test: bool = True):
     bottom = T[2, :]
     bottom_expected: np.ndarray = np.ndarray([0, 0, 1])
     assert np.allclose(bottom.flatten(), bottom_expected)
+
+
+def is_diagonal(mat: np.ndarray) -> bool:
+    """Checks if a matrix is diagonal
+
+    Args:
+        mat (np.ndarray): the matrix to check
+
+    Returns:
+        bool: True if diagonal, False otherwise
+    """
+    return np.allclose(mat, np.diag(np.diag(mat)))
+
+
+def is_approx_isotropic(mat: np.ndarray, eps: float = 15e-1) -> bool:
+    """Checks that the covariance/info matrix is approximately isotropic in the
+    translation and rotation components
+
+    Args:
+        covar (np.ndarray): the covariance matrix
+    """
+    try:
+        _check_psd(mat)
+    except AssertionError:
+        return False
+
+    dim = mat.shape[0]
+    assert dim in [
+        3,
+        6,
+    ], f"matrix must be 3x3 or 6x6, received {mat.shape}"
+
+    # compute the difference
+    if dim == 3:
+        cutoff_idx = 2
+    elif dim == 6:
+        cutoff_idx = 3
+
+    # construct a diagonal matrix and check that the difference is small
+    trans_covar = min(np.diag(mat[:cutoff_idx, :cutoff_idx]))
+    rot_covar = min(np.diag(mat[cutoff_idx:, cutoff_idx:]))
+
+    if dim == 3:
+        diagonal = [trans_covar] * 2 + [rot_covar]
+    elif dim == 6:
+        diagonal = [trans_covar] * 3 + [rot_covar] * 3
+    diag_mat = np.diag(diagonal)
+
+    translations_close = np.allclose(
+        diag_mat[:cutoff_idx, :cutoff_idx],
+        mat[:cutoff_idx, :cutoff_idx],
+        atol=trans_covar * eps,
+    )
+
+    rotations_close = np.allclose(
+        diag_mat[cutoff_idx:, cutoff_idx:],
+        mat[cutoff_idx:, cutoff_idx:],
+        atol=rot_covar * eps,
+    )
+
+    return translations_close and rotations_close
 
 
 #### print functions ####
