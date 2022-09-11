@@ -3,7 +3,7 @@ from os.path import isfile
 import numpy as np
 import pickle
 
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     AmbiguousPoseMeasurement2D,
@@ -32,14 +32,14 @@ EDGE_SE2 = "EDGE_SE2:QUAT"
 
 def convert_se3_var_line_to_pose_variable(
     line_items: List[str],
-) -> PoseVariable:
-    """converts the g2o line items for a SE3 variable to a PoseVariable object.
+) -> PoseVariable2D:
+    """converts the g2o line items for a SE3 variable to a PoseVariable2D object.
 
     Args:
         line_items (List[str]): List of items in a line of a g2o file.
 
     Returns:
-        PoseVariable: PoseVariable object corresponding to the line items.
+        PoseVariable2D: PoseVariable2D object corresponding to the line items.
     """
     assert (
         line_items[0] == SE3_VARIABLE
@@ -60,7 +60,7 @@ def convert_se3_var_line_to_pose_variable(
     quat_vals = [float(x) for x in line_items[quat_idx_bounds[0] : quat_idx_bounds[1]]]
     quat = np.array(quat_vals)
 
-    pose_var = PoseVariable(
+    pose_var = PoseVariable2D(
         pose_name,
         translation,
         quat,

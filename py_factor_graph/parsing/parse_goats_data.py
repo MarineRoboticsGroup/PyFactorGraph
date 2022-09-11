@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import logging
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
@@ -108,7 +108,7 @@ class GoatsParser:
         for idx, pose in enumerate(zip(self.gt_positions, self.gt_rotations)):
             position, rot = pose
             var_name = f"A{idx}"
-            var = PoseVariable(var_name, tuple(position), rot)
+            var = PoseVariable2D(var_name, tuple(position), rot)
             self.pyfg.add_pose_variable(var)
 
     def _get_transformation_matrix(self, rot, trans):

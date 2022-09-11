@@ -10,7 +10,7 @@ import matplotlib.lines as mlines
 
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
@@ -44,7 +44,7 @@ class FactorGraphData:
     was uncertain
 
     Args:
-        pose_variables (List[List[PoseVariable]]): the pose chains. Each
+        pose_variables (List[List[PoseVariable2D]]): the pose chains. Each
         different robot is a different one of the nested lists.
         landmark_variables (List[LandmarkVariable]): the landmark variables
         odom_measurements (List[List[PoseMeasurement2D]]): the odom measurements.
@@ -64,7 +64,7 @@ class FactorGraphData:
     """
 
     # variables
-    pose_variables: List[List[PoseVariable]] = attr.ib(factory=list)
+    pose_variables: List[List[PoseVariable2D]] = attr.ib(factory=list)
     landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
     existing_pose_variables: Set[str] = attr.ib(factory=set)
     existing_landmark_variables: Set[str] = attr.ib(factory=set)
@@ -229,11 +229,11 @@ class FactorGraphData:
         return len(self.landmark_variables)
 
     @property
-    def pose_variables_dict(self) -> Dict[str, PoseVariable]:
+    def pose_variables_dict(self) -> Dict[str, PoseVariable2D]:
         """Returns the pose variables as a dict.
 
         Returns:
-            Dict[str, PoseVariable]: a dict of the pose variables
+            Dict[str, PoseVariable2D]: a dict of the pose variables
         """
         pose_var_dict = {}
         for pose_chain in self.pose_variables:
@@ -407,7 +407,7 @@ class FactorGraphData:
         loop_closure_dict = self.loop_closure_dict
         old_pose_variables_dict = self.pose_variables_dict
 
-        def _is_odometry_pose(pose: PoseVariable) -> bool:
+        def _is_odometry_pose(pose: PoseVariable2D) -> bool:
             return (
                 pose.name not in range_measure_dict
                 and pose.name not in loop_closure_dict
@@ -495,11 +495,11 @@ class FactorGraphData:
 
     #### Add data
 
-    def add_pose_variable(self, pose_var: PoseVariable):
+    def add_pose_variable(self, pose_var: PoseVariable2D):
         """Adds a pose variable to the list of pose variables.
 
         Args:
-            pose_var (PoseVariable): the pose variable to add
+            pose_var (PoseVariable2D): the pose variable to add
 
         Raises:
             ValueError: if the pose variable is not added in chronological order
@@ -821,7 +821,7 @@ class FactorGraphData:
             # return the formatted string
             return line
 
-        def get_pose_var_string(pose: PoseVariable) -> str:
+        def get_pose_var_string(pose: PoseVariable2D) -> str:
             """
             Takes a pose and returns a string in the desired format
             """

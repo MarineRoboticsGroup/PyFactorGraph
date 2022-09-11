@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from typing import Tuple
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.utils.matrix_utils import get_theta_from_rotation_matrix
 
@@ -85,7 +85,7 @@ def draw_circle(ax: plt.Axes, circle: np.ndarray, color="red") -> mpatches.Circl
     )
 
 
-def draw_pose_variable(ax: plt.Axes, pose: PoseVariable, color="blue"):
+def draw_pose_variable(ax: plt.Axes, pose: PoseVariable2D, color="blue"):
     true_x = pose.true_x
     true_y = pose.true_y
     true_theta = pose.true_theta
@@ -106,7 +106,7 @@ def draw_landmark_variable(ax: plt.Axes, landmark: LandmarkVariable):
 
 
 def draw_loop_closure_measurement(
-    ax: plt.Axes, base_loc: np.ndarray, to_pose: PoseVariable
+    ax: plt.Axes, base_loc: np.ndarray, to_pose: PoseVariable2D
 ) -> Tuple[mlines.Line2D, mpatches.FancyArrow]:
     assert base_loc.size == 2
 
@@ -124,7 +124,7 @@ def draw_loop_closure_measurement(
 def draw_range_measurement(
     ax: plt.Axes,
     range_measure: FGRangeMeasurement,
-    from_pose: PoseVariable,
+    from_pose: PoseVariable2D,
     to_landmark: LandmarkVariable,
 ) -> Tuple[mlines.Line2D, mpatches.Circle]:
     base_loc = from_pose.true_x, from_pose.true_y

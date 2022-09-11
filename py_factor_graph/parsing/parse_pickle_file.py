@@ -3,7 +3,7 @@ from os.path import isfile
 import numpy as np
 import pickle
 
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     AmbiguousPoseMeasurement2D,

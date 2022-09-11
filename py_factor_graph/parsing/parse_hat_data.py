@@ -11,7 +11,7 @@ from rosbags.typesys import get_types_from_msg, register_types
 import pymap3d as pm
 import attr
 
-from py_factor_graph.variables import PoseVariable, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
@@ -331,7 +331,7 @@ class HATParser:
         cur_msg_heading_enu_rad = convert_global_degrees_to_enu_radians(
             msg.diver_heading
         )
-        base_pose = PoseVariable(
+        base_pose = PoseVariable2D(
             name=base_pose_name,
             true_position=(base_pose_xyz.east, base_pose_xyz.north),
             true_theta=cur_msg_heading_enu_rad,
