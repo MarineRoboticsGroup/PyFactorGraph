@@ -14,10 +14,16 @@ class PoseVariable:
         timestamp (float): seconds since epoch
     """
 
-    name: str = attr.ib()
+    name: str = attr.ib(validator=attr.validators.instance_of(str))
     true_position: Tuple[float, float] = attr.ib()
-    true_theta: float = attr.ib()
+    true_theta: float = attr.ib(validator=attr.validators.instance_of(float))
     timestamp: Optional[float] = attr.ib(default=None)
+
+    @true_position.validator
+    def _check_true_position(self, attribute, value):
+        if len(value) != 2:
+            raise ValueError(f"true_position should be a tuple of length 2")
+        assert all(isinstance(x, float) for x in value)
 
     @property
     def rotation_matrix(self) -> np.ndarray:
@@ -70,8 +76,14 @@ class LandmarkVariable:
         true_position (Tuple[float, float]): the true position of the landmark
     """
 
-    name: str = attr.ib()
+    name: str = attr.ib(validator=attr.validators.instance_of(str))
     true_position: Tuple[float, float] = attr.ib()
+
+    @true_position.validator
+    def _check_true_position(self, attribute, value):
+        if len(value) != 2:
+            raise ValueError(f"true_position should be a tuple of length 2")
+        assert all(isinstance(x, float) for x in value)
 
     @property
     def true_x(self):

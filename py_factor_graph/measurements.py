@@ -1,6 +1,9 @@
 import attr
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import numpy as np
+from py_factor_graph.utils.attrib_utils import (
+    positive_float_validator,
+)
 
 
 @attr.s(frozen=True)
@@ -18,13 +21,13 @@ class PoseMeasurement:
         timestamp (float): seconds since epoch
     """
 
-    base_pose: str = attr.ib()
-    to_pose: str = attr.ib()
-    x: float = attr.ib()
-    y: float = attr.ib()
-    theta: float = attr.ib()
-    translation_weight: float = attr.ib()
-    rotation_weight: float = attr.ib()
+    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    x: float = attr.ib(validator=attr.validators.instance_of(float))
+    y: float = attr.ib(validator=attr.validators.instance_of(float))
+    theta: float = attr.ib(validator=attr.validators.instance_of(float))
+    translation_weight: float = attr.ib(validator=positive_float_validator)
+    rotation_weight: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(default=None)
 
     @property
@@ -89,14 +92,14 @@ class AmbiguousPoseMeasurement:
     timestamp (float): seconds since epoch
     """
 
-    base_pose: str = attr.ib()
-    measured_to_pose: str = attr.ib()
-    true_to_pose: str = attr.ib()
-    x: float = attr.ib()
-    y: float = attr.ib()
-    theta: float = attr.ib()
-    translation_weight: float = attr.ib()
-    rotation_weight: float = attr.ib()
+    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    measured_to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    true_to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    x: float = attr.ib(validator=attr.validators.instance_of(float))
+    y: float = attr.ib(validator=attr.validators.instance_of(float))
+    theta: float = attr.ib(validator=attr.validators.instance_of(float))
+    translation_weight: float = attr.ib(validator=positive_float_validator)
+    rotation_weight: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(default=None)
 
     @property
@@ -145,16 +148,6 @@ class AmbiguousPoseMeasurement:
         )
 
 
-def _is_real(instance, attribute, value):
-    if np.isnan(value):
-        raise ValueError(f"{value} cannot be NaN")
-    if np.isinf(value):
-        raise ValueError(f"{value} cannot be Inf")
-    if not np.isreal(value):
-        raise TypeError(f"{value} must be a real number")
-    return value
-
-
 @attr.s(frozen=True)
 class FGRangeMeasurement:
     """A range measurement
@@ -168,12 +161,12 @@ class FGRangeMeasurement:
     """
 
     association: Tuple[str, str] = attr.ib()
-    dist: float = attr.ib(validator=_is_real)
-    stddev: float = attr.ib()
+    dist: float = attr.ib(validator=positive_float_validator)
+    stddev: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(default=None)
 
     @association.validator
-    def check_association(self, attribute, value):
+    def check_association(self, attribute, value: Tuple[str, str]):
         """Validates the association attribute
 
         Args:
