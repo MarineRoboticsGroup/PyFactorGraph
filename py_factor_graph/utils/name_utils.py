@@ -50,6 +50,9 @@ def check_is_valid_frame_name(frame: str):
     """
     Runs assertions if the given frame name is valid.
     """
+    assert isinstance(
+        frame, str
+    ), f"Frame name must be a string, not {type(frame)}: {frame}"
     assert len(re.findall(r"[a-zA-Z][\d+]+", frame)) == 1, (
         "Frame name must identify robot and pose number. "
         "E.g. A0 or B12 are both accaptable. "

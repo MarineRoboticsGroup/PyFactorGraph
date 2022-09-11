@@ -30,6 +30,20 @@ def get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
     return covar_matrix
 
 
+def load_symmetric_matrix_column_major(vals: List[float], size: int) -> np.ndarray:
+    """ """
+    assert len(vals) == size * (size + 1) / 2
+    assert all(isinstance(val, float) for val in vals)
+    mat = np.zeros((size, size))
+    idx = 0
+    for i in range(size):
+        for j in range(i, size):
+            mat[i, j] = vals[idx]
+            mat[j, i] = vals[idx]
+            idx += 1
+    return mat
+
+
 def get_theta_from_rotation_matrix(mat: np.ndarray) -> float:
     """ """
     return float(np.arctan2(mat[1, 0], mat[0, 0]))
