@@ -189,11 +189,13 @@ class FactorGraphData:
         num_robots = len(self.pose_variables)
         num_poses = self.num_poses
         num_landmarks = len(self.landmark_variables)
+        num_odom_measurements = self.num_odom_measurements
         num_range_measurements = len(self.range_measurements)
         num_loop_closures = len(self.loop_closure_measurements)
-        print(
-            f"# robots: {num_robots} # poses: {num_poses} # beacons: {num_landmarks} # range measurements: {num_range_measurements} # loop closures: {num_loop_closures}"
-        )
+        robots_line = f"Robots: {num_robots}"
+        variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
+        measurements_line = f"Measurements: {num_odom_measurements} odom, {num_range_measurements} range, {num_loop_closures} loop closures"
+        print(robots_line, variables_line, measurements_line, sep="\t")
 
     @property
     def num_robots(self) -> int:
@@ -235,6 +237,15 @@ class FactorGraphData:
             int: the number of landmark variables
         """
         return len(self.landmark_variables)
+
+    @property
+    def num_odom_measurements(self) -> int:
+        """Returns the number of odometry measurements.
+
+        Returns:
+            int: the number of odometry measurements
+        """
+        return sum([len(x) for x in self.odom_measurements])
 
     @property
     def pose_variables_dict(self) -> Dict[str, POSE_VARIABLE_TYPES]:
@@ -988,6 +999,7 @@ class FactorGraphData:
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()
+        print(f"Saved to {data_file}")
 
     def _save_to_plaza_format(self, data_folder: str) -> None:
         """
