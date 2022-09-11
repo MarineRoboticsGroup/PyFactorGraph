@@ -1,7 +1,13 @@
 import attr
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 import numpy as np
-from py_factor_graph.utils.attrib_utils import positive_float_validator, is_dimension
+from py_factor_graph.utils.attrib_utils import (
+    positive_float_validator,
+    is_dimension,
+    make_variable_name_validator,
+    make_rot_matrix_validator,
+    optional_float_validator,
+)
 
 
 @attr.s(frozen=True)
@@ -19,14 +25,16 @@ class PoseMeasurement2D:
         timestamp (float): seconds since epoch
     """
 
-    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
-    to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    base_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
+    to_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
     x: float = attr.ib(validator=attr.validators.instance_of(float))
     y: float = attr.ib(validator=attr.validators.instance_of(float))
     theta: float = attr.ib(validator=attr.validators.instance_of(float))
     translation_weight: float = attr.ib(validator=positive_float_validator)
     rotation_weight: float = attr.ib(validator=positive_float_validator)
-    timestamp: Optional[float] = attr.ib(default=None)
+    timestamp: Optional[float] = attr.ib(
+        default=None, validator=optional_float_validator
+    )
 
     @property
     def rotation_matrix(self):
@@ -82,20 +90,69 @@ class PoseMeasurement3D:
     Args:
         base_pose (str): the pose which the measurement is in the reference frame of
         to_pose (str): the name of the pose the measurement is to
-        x (float): the measured change in x coordinate
-        y (float): the measured change in y coordinate
-        theta (float): the measured change in theta
-        covariance (np.ndarray): a 3x3 covariance matrix from the measurement model
+        translation (np.ndarray): the measured change in x, y, z coordinates
+        rotation (np.ndarray): the measured change in rotation
+        translation_weight (float): the weight of the translation measurement
+        rotation_weight (float): the weight of the rotation measurement
         timestamp (float): seconds since epoch
     """
 
-    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
-    to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    base_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
+    to_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
     translation: np.ndarray = attr.ib(validator=attr.validators.instance_of(np.ndarray))
-    theta: float = attr.ib(validator=attr.validators.instance_of(float))
+    rotation: np.ndarray = attr.ib(validator=make_rot_matrix_validator(3))
     translation_weight: float = attr.ib(validator=positive_float_validator)
     rotation_weight: float = attr.ib(validator=positive_float_validator)
-    timestamp: Optional[float] = attr.ib(default=None)
+    timestamp: Optional[float] = attr.ib(
+        default=None, validator=optional_float_validator
+    )
+
+    @property
+    def rotation_matrix(self) -> np.ndarray:
+        """
+        Get the rotation matrix for the measurement
+
+        Returns:
+            np.ndarray: the 3x3 rotation matrix
+        """
+        return self.rotation
+
+    @property
+    def transformation_matrix(self) -> np.ndarray:
+        """
+        Get the transformation matrix
+
+        Returns:
+            np.ndarray: the 4x4 transformation matrix
+        """
+        T = np.eye(4)
+        T[:3, :3] = self.rotation
+        T[:3, 3] = self.translation
+        return T
+
+    @property
+    def translation_vector(self) -> np.ndarray:
+        """
+        Get the translation vector for the measurement
+
+        Returns:
+            np.ndarray: the 3x1 translation vector
+        """
+        return self.translation
+
+    @property
+    def covariance(self):
+        """
+        Get the 6x6 covariance matrix. Right now uses isotropic covariance
+        for the translation and rotation respectively
+
+        Returns:
+            np.ndarray: the 6x6 covariance matrix
+        """
+        trans_cov = 1 / self.translation_weight
+        rot_cov = 1 / self.rotation_weight
+        cov = np.diag([trans_cov, trans_cov, trans_cov, rot_cov, rot_cov, rot_cov])
+        return cov
 
 
 @attr.s(frozen=True)
@@ -114,15 +171,17 @@ class AmbiguousPoseMeasurement2D:
     timestamp (float): seconds since epoch
     """
 
-    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
-    measured_to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
-    true_to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    base_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
+    measured_to_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
+    true_to_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
     x: float = attr.ib(validator=attr.validators.instance_of(float))
     y: float = attr.ib(validator=attr.validators.instance_of(float))
     theta: float = attr.ib(validator=attr.validators.instance_of(float))
     translation_weight: float = attr.ib(validator=positive_float_validator)
     rotation_weight: float = attr.ib(validator=positive_float_validator)
-    timestamp: Optional[float] = attr.ib(default=None)
+    timestamp: Optional[float] = attr.ib(
+        default=None, validator=optional_float_validator
+    )
 
     @property
     def rotation_matrix(self):
@@ -287,3 +346,6 @@ class AmbiguousFGRangeMeasurement:
         Get the weight of the measurement
         """
         return 1 / (self.stddev ** 2)
+
+
+POSE_MEASUREMENT_TYPES = Union[PoseMeasurement2D, PoseMeasurement3D]

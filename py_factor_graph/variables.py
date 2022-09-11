@@ -78,7 +78,7 @@ class PoseVariable3D:
 
     Args:
         name (str): the name of the variable (defines the frame)
-        true_position (Tuple[float, float]): the true position of the robot
+        true_position (Tuple[float, float, float]): the true position of the robot
         true_rotation (np.ndarray): the true orientation of the robot
         timestamp (float): seconds since epoch
     """
@@ -198,5 +198,5 @@ class LandmarkVariable3D:
         return self.true_position[2]
 
 
-POSE_VARIABLE = Union[PoseVariable2D, PoseVariable3D]
-LANDMARK_VARIABLE = Union[LandmarkVariable2D, LandmarkVariable3D]
+POSE_VARIABLE_TYPES = Union[PoseVariable2D, PoseVariable3D]
+LANDMARK_VARIABLE_TYPES = Union[LandmarkVariable2D, LandmarkVariable3D]

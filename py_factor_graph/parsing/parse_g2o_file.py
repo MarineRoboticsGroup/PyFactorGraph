@@ -2,8 +2,9 @@ from typing import List, Any, Union, Tuple
 from os.path import isfile
 import numpy as np
 import pickle
+import scipy.spatial
 
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
+from py_factor_graph.variables import PoseVariable3D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     AmbiguousPoseMeasurement2D,
@@ -15,6 +16,7 @@ from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
+from py_factor_graph.utils.matrix_utils import get_rotation_matrix_from_quat
 from py_factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
@@ -32,14 +34,14 @@ EDGE_SE2 = "EDGE_SE2:QUAT"
 
 def convert_se3_var_line_to_pose_variable(
     line_items: List[str],
-) -> PoseVariable2D:
-    """converts the g2o line items for a SE3 variable to a PoseVariable2D object.
+) -> PoseVariable3D:
+    """converts the g2o line items for a SE3 variable to a PoseVariable3D object.
 
     Args:
         line_items (List[str]): List of items in a line of a g2o file.
 
     Returns:
-        PoseVariable2D: PoseVariable2D object corresponding to the line items.
+        PoseVariable3D: PoseVariable3D object corresponding to the line items.
     """
     assert (
         line_items[0] == SE3_VARIABLE
@@ -59,12 +61,9 @@ def convert_se3_var_line_to_pose_variable(
     # get the rotation
     quat_vals = [float(x) for x in line_items[quat_idx_bounds[0] : quat_idx_bounds[1]]]
     quat = np.array(quat_vals)
+    rot = get_rotation_matrix_from_quat(quat)
 
-    pose_var = PoseVariable2D(
-        pose_name,
-        translation,
-        quat,
-    )
+    pose_var = PoseVariable3D(pose_name, translation, rot)
     return pose_var
 
 

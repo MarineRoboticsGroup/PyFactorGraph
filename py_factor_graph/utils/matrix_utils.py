@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.linalg as la  # type: ignore
+import scipy.spatial
 from typing import List, Tuple
 
 
@@ -114,6 +115,24 @@ def get_rotation_matrix_from_transformation_matrix(T: np.ndarray) -> np.ndarray:
     _check_square(T)
     dim = T.shape[0] - 1
     return T[:dim, :dim]
+
+
+def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
+    """Returns the rotation matrix from a quaternion
+
+    Args:
+        quat (np.ndarray): the quaternion
+
+    Returns:
+        np.ndarray: the rotation matrix
+    """
+    assert quat.shape == (4,)
+    rot = scipy.spatial.transform.Rotation.from_quat(quat)
+    rot_mat = rot.as_matrix()
+
+    assert rot_mat.shape == (3, 3)
+    _check_rotation_matrix(rot_mat, assert_test=True)
+    return rot_mat
 
 
 def get_theta_from_transformation_matrix(T: np.ndarray) -> float:

@@ -10,13 +10,21 @@ import matplotlib.lines as mlines
 
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
+from py_factor_graph.variables import (
+    PoseVariable2D,
+    PoseVariable3D,
+    LandmarkVariable2D,
+    LandmarkVariable3D,
+    POSE_VARIABLE_TYPES,
+    LANDMARK_VARIABLE_TYPES,
+)
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
     AmbiguousPoseMeasurement2D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
+    POSE_MEASUREMENT_TYPES,
 )
 from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.utils.name_utils import (
@@ -44,9 +52,9 @@ class FactorGraphData:
     was uncertain
 
     Args:
-        pose_variables (List[List[PoseVariable2D]]): the pose chains. Each
+        pose_variables (List[List[POSE_VARIABLE_TYPES]]): the pose chains. Each
         different robot is a different one of the nested lists.
-        landmark_variables (List[LandmarkVariable2D]): the landmark variables
+        landmark_variables (List[LANDMARK_VARIABLE_TYPES]): the landmark variables
         odom_measurements (List[List[PoseMeasurement2D]]): the odom measurements.
         Same structure as pose_variables.
         loop_closure_measurements (List[PoseMeasurement2D]): the loop closures
@@ -64,14 +72,14 @@ class FactorGraphData:
     """
 
     # variables
-    pose_variables: List[List[PoseVariable2D]] = attr.ib(factory=list)
-    landmark_variables: List[LandmarkVariable2D] = attr.ib(factory=list)
+    pose_variables: List[List[POSE_VARIABLE_TYPES]] = attr.ib(factory=list)
+    landmark_variables: List[LANDMARK_VARIABLE_TYPES] = attr.ib(factory=list)
     existing_pose_variables: Set[str] = attr.ib(factory=set)
     existing_landmark_variables: Set[str] = attr.ib(factory=set)
 
     # pose measurements
-    odom_measurements: List[List[PoseMeasurement2D]] = attr.ib(factory=list)
-    loop_closure_measurements: List[PoseMeasurement2D] = attr.ib(factory=list)
+    odom_measurements: List[List[POSE_MEASUREMENT_TYPES]] = attr.ib(factory=list)
+    loop_closure_measurements: List[POSE_MEASUREMENT_TYPES] = attr.ib(factory=list)
     ambiguous_loop_closure_measurements: List[AmbiguousPoseMeasurement2D] = attr.ib(
         factory=list
     )
@@ -229,11 +237,11 @@ class FactorGraphData:
         return len(self.landmark_variables)
 
     @property
-    def pose_variables_dict(self) -> Dict[str, PoseVariable2D]:
+    def pose_variables_dict(self) -> Dict[str, POSE_VARIABLE_TYPES]:
         """Returns the pose variables as a dict.
 
         Returns:
-            Dict[str, PoseVariable2D]: a dict of the pose variables
+            Dict[str, POSE_VARIABLE_TYPES]: a dict of the pose variables
         """
         pose_var_dict = {}
         for pose_chain in self.pose_variables:
@@ -242,11 +250,11 @@ class FactorGraphData:
         return pose_var_dict
 
     @property
-    def landmark_var_dict(self) -> Dict[str, LandmarkVariable2D]:
+    def landmark_var_dict(self) -> Dict[str, LANDMARK_VARIABLE_TYPES]:
         """Returns the landmark variables as a dict.
 
         Returns:
-            Dict[str, LandmarkVariable2D]: a dict of the landmark variables
+            Dict[str, LANDMARK_VARIABLE_TYPES]: a dict of the landmark variables
         """
         landmark_var_dict = {x.name: x for x in self.landmark_variables}
         return landmark_var_dict
@@ -367,13 +375,13 @@ class FactorGraphData:
         return odom_traj
 
     @property
-    def loop_closure_dict(self) -> Dict[str, List[PoseMeasurement2D]]:
+    def loop_closure_dict(self) -> Dict[str, List[POSE_MEASUREMENT_TYPES]]:
         """Returns a mapping from pose variables to their loop closure measurements.
 
         Returns:
-            Dict[str, List[PoseMeasurement2D]]: the mapping from pose variables to their loop closure measurements
+            Dict[str, List[POSE_MEASUREMENT_TYPES]]: the mapping from pose variables to their loop closure measurements
         """
-        measures_dict: Dict[str, List[PoseMeasurement2D]] = {}
+        measures_dict: Dict[str, List[POSE_MEASUREMENT_TYPES]] = {}
         for measure in self.loop_closure_measurements:
             associated_pose = measure.base_pose
             if associated_pose not in measures_dict:
@@ -407,7 +415,7 @@ class FactorGraphData:
         loop_closure_dict = self.loop_closure_dict
         old_pose_variables_dict = self.pose_variables_dict
 
-        def _is_odometry_pose(pose: PoseVariable2D) -> bool:
+        def _is_odometry_pose(pose: POSE_VARIABLE_TYPES) -> bool:
             return (
                 pose.name not in range_measure_dict
                 and pose.name not in loop_closure_dict
@@ -495,11 +503,11 @@ class FactorGraphData:
 
     #### Add data
 
-    def add_pose_variable(self, pose_var: PoseVariable2D):
+    def add_pose_variable(self, pose_var: POSE_VARIABLE_TYPES):
         """Adds a pose variable to the list of pose variables.
 
         Args:
-            pose_var (PoseVariable2D): the pose variable to add
+            pose_var (POSE_VARIABLE_TYPES): the pose variable to add
 
         Raises:
             ValueError: if the pose variable is not added in chronological order
@@ -533,11 +541,11 @@ class FactorGraphData:
         if self.y_max is None or self.y_max < pose_var.true_y:
             self.y_max = pose_var.true_y
 
-    def add_landmark_variable(self, landmark_var: LandmarkVariable2D):
+    def add_landmark_variable(self, landmark_var: LANDMARK_VARIABLE_TYPES):
         """Adds a landmark variable to the list of landmark variables.
 
         Args:
-            landmark_var (LandmarkVariable2D): the landmark variable to add
+            landmark_var (LANDMARK_VARIABLE_TYPES): the landmark variable to add
 
         Raises:
             ValueError: if the pose variable is not added in chronological order
@@ -568,16 +576,13 @@ class FactorGraphData:
         if self.y_max is None or self.y_max < landmark_var.true_y:
             self.y_max = landmark_var.true_y
 
-    def add_odom_measurement(
-        self, robot_idx: int, odom_meas: Union[PoseMeasurement2D, PoseMeasurement3D]
-    ):
+    def add_odom_measurement(self, robot_idx: int, odom_meas: POSE_MEASUREMENT_TYPES):
         """Adds an odom measurement to the list of odom measurements.
 
         Args:
             robot_idx (int): the index of the robot that made the measurement
-            odom_meas (PoseMeasurement2D): the odom measurement to add
+            odom_meas (POSE_MEASUREMENT_TYPES): the odom measurement to add
         """
-        assert isinstance(odom_meas, PoseMeasurement2D)
         while len(self.odom_measurements) <= robot_idx:
             self.odom_measurements.append([])
 
@@ -602,15 +607,12 @@ class FactorGraphData:
         elif self.min_measure_weight > min_odom_weight:
             self.min_measure_weight = min_odom_weight
 
-    def add_loop_closure(
-        self, loop_closure: Union[PoseMeasurement2D, PoseMeasurement3D]
-    ):
+    def add_loop_closure(self, loop_closure: POSE_MEASUREMENT_TYPES):
         """Adds a loop closure measurement to the list of loop closure measurements.
 
         Args:
-            loop_closure (PoseMeasurement2D): the loop closure measurement to add
+            loop_closure (POSE_MEASUREMENT_TYPES): the loop closure measurement to add
         """
-        assert isinstance(loop_closure, PoseMeasurement2D)
         self.loop_closure_measurements.append(loop_closure)
 
         # check that we are not adding a measurement between variables that exist
@@ -748,6 +750,8 @@ class FactorGraphData:
         Args:
             data_file (str): the path of the file to write to
         """
+
+        assert self.dimension == 2, "Only 2D factor graphs are supported for EFG format"
 
         def get_normal_pose_measurement_string(pose_measure: PoseMeasurement2D) -> str:
             """This is a utility function to get a formatted string to write to EFG
@@ -936,10 +940,12 @@ class FactorGraphData:
 
         for pose_chain in self.pose_variables:
             for pose in pose_chain:
+                assert isinstance(pose, PoseVariable2D)
                 line = get_pose_var_string(pose)
                 file_writer.write(line)
 
         for beacon in self.landmark_variables:
+            assert isinstance(beacon, LandmarkVariable2D)
             line = get_beacon_var_string(beacon)
             file_writer.write(line)
 
@@ -949,22 +955,27 @@ class FactorGraphData:
 
         for odom_chain in self.odom_measurements:
             for odom_measure in odom_chain:
+                assert isinstance(odom_measure, PoseMeasurement2D)
                 line = get_normal_pose_measurement_string(odom_measure)
                 file_writer.write(line)
 
         for loop_closure in self.loop_closure_measurements:
+            assert isinstance(loop_closure, PoseMeasurement2D)
             line = get_normal_pose_measurement_string(loop_closure)
             file_writer.write(line)
 
         for amb_odom_measure in self.ambiguous_loop_closure_measurements:
+            assert isinstance(amb_odom_measure, AmbiguousPoseMeasurement2D)
             line = get_ambiguous_pose_measurement_string(amb_odom_measure)
             file_writer.write(line)
 
         for range_measure in self.range_measurements:
+            assert isinstance(range_measure, FGRangeMeasurement)
             line = get_range_measurement_string(range_measure)
             file_writer.write(line)
 
         for amb_range_measure in self.ambiguous_range_measurements:
+            assert isinstance(amb_range_measure, AmbiguousFGRangeMeasurement)
             line = get_ambiguous_range_measurement_string(amb_range_measure)
             file_writer.write(line)
 
@@ -988,6 +999,7 @@ class FactorGraphData:
         assert (
             len(self.pose_variables) == 1
         ), ".plaza file format only supports one robot"
+        assert self.dimension == 2, ".plaza file format only supports 2D"
 
         def save_GT_plaza() -> None:
             """
@@ -997,6 +1009,7 @@ class FactorGraphData:
             filewriter = open(filename, "w")
 
             for pose in self.pose_variables[0]:
+                assert isinstance(pose, PoseVariable2D)
                 line = f"{pose.timestamp} {pose.true_position[0]} {pose.true_position[1]} {pose.true_theta}"
                 filewriter.write(line)
 
@@ -1010,7 +1023,9 @@ class FactorGraphData:
             filewriter = open(filename, "w")
 
             for odom in self.odom_measurements[0]:
-                # We only take odom.x because plaza assumes we are moving in the direction of the robot's heading
+                # We only take odom.x because plaza assumes we are moving in the
+                # direction of the robot's heading
+                assert isinstance(odom, PoseMeasurement2D)
                 line = f"{odom.timestamp} {odom.x} {odom.theta}"
                 filewriter.write(line)
 
@@ -1027,6 +1042,7 @@ class FactorGraphData:
             dr_pose = init_pose.transformation_matrix
 
             for odom in self.odom_measurements[0]:
+                assert isinstance(odom, PoseMeasurement2D)
                 dr_pose = dr_pose @ odom.transformation_matrix
                 dr_theta = get_theta_from_transformation_matrix(dr_pose)
                 line = f"{odom.timestamp} {dr_pose[0,2]} {dr_pose[1,2]} {dr_theta}"
@@ -1084,6 +1100,7 @@ class FactorGraphData:
             fw = open(filepath, "w")
 
             for pose_idx, pose in enumerate(pose_chain):
+                assert isinstance(pose, PoseVariable2D)
                 timestamp = pose.timestamp if pose.timestamp is not None else pose_idx
                 fw.write(
                     f"{timestamp} {pose.true_position[0]} {pose.true_position[1]}"
@@ -1101,6 +1118,8 @@ class FactorGraphData:
         Args:
             pause (float): the pause time between frames
         """
+
+        assert self.dimension == 2, "Only 2D data can be animated"
 
         # set up plot
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -1123,6 +1142,7 @@ class FactorGraphData:
 
         # go ahead and draw the landmarks
         for landmark in self.landmark_variables:
+            assert isinstance(landmark, LandmarkVariable2D)
             draw_landmark_variable(ax, landmark)
 
         pose_var_plot_obj: List[mpatches.FancyArrow] = []
@@ -1161,15 +1181,16 @@ class FactorGraphData:
                     pose = pose_chain[pose_idx]
 
                 # draw groundtruth solution
+                assert isinstance(pose, PoseVariable2D)
                 var_arrow = draw_pose_variable(ax, pose)
                 pose_var_plot_obj.append(var_arrow)
 
                 # if loop closure draw it
                 if pose.name in loop_closure_dict:
+                    true_to_pose = loop_closure_dict[pose.name]
+                    assert isinstance(true_to_pose, PoseVariable2D)
                     loop_line, loop_pose = draw_loop_closure_measurement(
-                        ax,
-                        pose.position_vector,
-                        loop_closure_dict[pose.name],
+                        ax, pose.position_vector, true_to_pose
                     )
                 else:
                     loop_line = None
@@ -1198,6 +1219,7 @@ class FactorGraphData:
             show_gt (bool, optional): whether to show the ground truth as well. Defaults to False.
             pause (float, optional): How long to pause between frames. Defaults to 0.01.
         """
+        assert self.dimension == 2, "Only 2D data can be animated"
 
         # set up plot
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -1217,6 +1239,7 @@ class FactorGraphData:
 
         # go ahead and draw the landmarks
         for landmark in self.landmark_variables:
+            assert isinstance(landmark, LandmarkVariable2D)
             draw_landmark_variable(ax, landmark)
 
         pose_var_plot_obj: List[mpatches.FancyArrow] = []
@@ -1264,6 +1287,7 @@ class FactorGraphData:
                     pose_chain_idx = min(len(pose_chain) - 1, pose_idx)
                     gt_pose = pose_chain[pose_chain_idx]
                     pose_name = gt_pose.name
+                    assert isinstance(gt_pose, PoseVariable2D)
                     var_arrow = draw_pose_variable(ax, gt_pose, color="red")
                     pose_var_plot_obj.append(var_arrow)
 
@@ -1280,6 +1304,8 @@ class FactorGraphData:
                                 landmark_var = landmark_var_dict[
                                     range_measure.landmark_key
                                 ]
+                                assert isinstance(landmark_var, LandmarkVariable2D)
+                                assert isinstance(gt_pose, PoseVariable2D)
                                 range_measure_objs.append(
                                     draw_range_measurement(
                                         ax, range_measure, gt_pose, landmark_var
