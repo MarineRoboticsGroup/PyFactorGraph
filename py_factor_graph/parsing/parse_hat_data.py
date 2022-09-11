@@ -11,7 +11,7 @@ from rosbags.typesys import get_types_from_msg, register_types
 import pymap3d as pm
 import attr
 
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
@@ -403,7 +403,7 @@ class HATParser:
             )
             beacon_xy = self._convert_latlon_to_enu(beacon_latlon)
             beacon_position = (beacon_xy.east, beacon_xy.north)
-            beacon_var = LandmarkVariable(
+            beacon_var = LandmarkVariable2D(
                 name=beacon_name, true_position=beacon_position
             )
             self._factor_graph.add_landmark_variable(beacon_var)

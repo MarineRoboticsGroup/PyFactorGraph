@@ -10,7 +10,7 @@ import matplotlib.lines as mlines
 
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
@@ -46,7 +46,7 @@ class FactorGraphData:
     Args:
         pose_variables (List[List[PoseVariable2D]]): the pose chains. Each
         different robot is a different one of the nested lists.
-        landmark_variables (List[LandmarkVariable]): the landmark variables
+        landmark_variables (List[LandmarkVariable2D]): the landmark variables
         odom_measurements (List[List[PoseMeasurement2D]]): the odom measurements.
         Same structure as pose_variables.
         loop_closure_measurements (List[PoseMeasurement2D]): the loop closures
@@ -65,7 +65,7 @@ class FactorGraphData:
 
     # variables
     pose_variables: List[List[PoseVariable2D]] = attr.ib(factory=list)
-    landmark_variables: List[LandmarkVariable] = attr.ib(factory=list)
+    landmark_variables: List[LandmarkVariable2D] = attr.ib(factory=list)
     existing_pose_variables: Set[str] = attr.ib(factory=set)
     existing_landmark_variables: Set[str] = attr.ib(factory=set)
 
@@ -242,11 +242,11 @@ class FactorGraphData:
         return pose_var_dict
 
     @property
-    def landmark_var_dict(self) -> Dict[str, LandmarkVariable]:
+    def landmark_var_dict(self) -> Dict[str, LandmarkVariable2D]:
         """Returns the landmark variables as a dict.
 
         Returns:
-            Dict[str, LandmarkVariable]: a dict of the landmark variables
+            Dict[str, LandmarkVariable2D]: a dict of the landmark variables
         """
         landmark_var_dict = {x.name: x for x in self.landmark_variables}
         return landmark_var_dict
@@ -533,11 +533,11 @@ class FactorGraphData:
         if self.y_max is None or self.y_max < pose_var.true_y:
             self.y_max = pose_var.true_y
 
-    def add_landmark_variable(self, landmark_var: LandmarkVariable):
+    def add_landmark_variable(self, landmark_var: LandmarkVariable2D):
         """Adds a landmark variable to the list of landmark variables.
 
         Args:
-            landmark_var (LandmarkVariable): the landmark variable to add
+            landmark_var (LandmarkVariable2D): the landmark variable to add
 
         Raises:
             ValueError: if the pose variable is not added in chronological order
@@ -835,7 +835,7 @@ class FactorGraphData:
 
             return line
 
-        def get_beacon_var_string(beacon: LandmarkVariable) -> str:
+        def get_beacon_var_string(beacon: LandmarkVariable2D) -> str:
             """Takes in a beacon and returns a string formatted as desired
 
             Args:

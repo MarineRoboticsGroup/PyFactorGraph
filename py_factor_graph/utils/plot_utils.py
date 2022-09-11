@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from typing import Tuple
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.utils.matrix_utils import get_theta_from_rotation_matrix
 
@@ -99,7 +99,7 @@ def draw_pose_matrix(ax: plt.Axes, pose_matrix: np.ndarray, color="blue"):
     return draw_arrow(ax, true_x, true_y, true_theta, color=color)
 
 
-def draw_landmark_variable(ax: plt.Axes, landmark: LandmarkVariable):
+def draw_landmark_variable(ax: plt.Axes, landmark: LandmarkVariable2D):
     true_x = landmark.true_x
     true_y = landmark.true_y
     ax.scatter(true_x, true_y, color="green", marker=(5, 2))
@@ -125,7 +125,7 @@ def draw_range_measurement(
     ax: plt.Axes,
     range_measure: FGRangeMeasurement,
     from_pose: PoseVariable2D,
-    to_landmark: LandmarkVariable,
+    to_landmark: LandmarkVariable2D,
 ) -> Tuple[mlines.Line2D, mpatches.Circle]:
     base_loc = from_pose.true_x, from_pose.true_y
     to_loc = to_landmark.true_x, to_landmark.true_y

@@ -141,7 +141,7 @@ class PoseVariable3D:
 
 
 @attr.s(frozen=True)
-class LandmarkVariable:
+class LandmarkVariable2D:
     """A variable which is a landmark
 
     Arguments:
@@ -167,4 +167,36 @@ class LandmarkVariable:
         return self.true_position[1]
 
 
+@attr.s(frozen=True)
+class LandmarkVariable3D:
+    """A variable which is a landmark
+
+    Arguments:
+        name (str): the name of the variable
+        true_position (Tuple[float, float, float]): the true position of the landmark
+    """
+
+    name: str = attr.ib(validator=attr.validators.instance_of(str))
+    true_position: Tuple[float, float, float] = attr.ib()
+
+    @true_position.validator
+    def _check_true_position(self, attribute, value):
+        if len(value) != 3:
+            raise ValueError(f"true_position should be a tuple of length 3")
+        assert all(isinstance(x, float) for x in value)
+
+    @property
+    def true_x(self):
+        return self.true_position[0]
+
+    @property
+    def true_y(self):
+        return self.true_position[1]
+
+    @property
+    def true_z(self):
+        return self.true_position[2]
+
+
 POSE_VARIABLE = Union[PoseVariable2D, PoseVariable3D]
+LANDMARK_VARIABLE = Union[LandmarkVariable2D, LandmarkVariable3D]

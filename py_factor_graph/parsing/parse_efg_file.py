@@ -3,7 +3,7 @@ from os.path import isfile
 import numpy as np
 import pickle
 
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     AmbiguousPoseMeasurement2D,
@@ -60,7 +60,7 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 landmark_name = line_items[3]
                 x = float(line_items[4])
                 y = float(line_items[5])
-                landmark_var = LandmarkVariable(landmark_name, (x, y))
+                landmark_var = LandmarkVariable2D(landmark_name, (x, y))
                 new_fg_data.add_landmark_variable(landmark_var)
             elif line.startswith(pose_measure_header):
                 line_items = line.split()

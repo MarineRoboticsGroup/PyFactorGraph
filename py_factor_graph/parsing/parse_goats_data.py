@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import logging
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable
+from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
@@ -101,7 +101,7 @@ class GoatsParser:
                 continue
 
             var_name = f"L{idx}"
-            var = LandmarkVariable(var_name, beacon_loc)
+            var = LandmarkVariable2D(var_name, beacon_loc)
             self.pyfg.add_landmark_variable(var)
 
     def _add_pose_variables(self):
