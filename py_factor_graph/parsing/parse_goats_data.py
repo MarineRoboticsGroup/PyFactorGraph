@@ -6,7 +6,7 @@ from pathlib import Path
 import logging
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
-    PoseMeasurement,
+    PoseMeasurement2D,
     FGRangeMeasurement,
 )
 from py_factor_graph.utils.matrix_utils import (
@@ -145,7 +145,7 @@ class GoatsParser:
             theta = get_theta_from_rotation_matrix(relative_rot)
             trans_stddev = 0.01
             rot_stddev = 0.001
-            relative_pose_measurement = PoseMeasurement(
+            relative_pose_measurement = PoseMeasurement2D(
                 base_pose=base_pose_name,
                 to_pose=to_pose_name,
                 x=x,

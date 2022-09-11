@@ -5,8 +5,8 @@ import pickle
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
-    PoseMeasurement,
-    AmbiguousPoseMeasurement,
+    PoseMeasurement2D,
+    AmbiguousPoseMeasurement2D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
 )
@@ -74,7 +74,7 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 # assert covar[0, 0] == covar[1, 1]
                 trans_weight = 1 / (covar[0, 0])
                 rot_weight = 1 / (covar[2, 2])
-                measure = PoseMeasurement(
+                measure = PoseMeasurement2D(
                     base_pose,
                     local_pose,
                     delta_x,

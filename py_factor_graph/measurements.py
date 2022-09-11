@@ -1,13 +1,11 @@
 import attr
 from typing import Optional, Tuple, List
 import numpy as np
-from py_factor_graph.utils.attrib_utils import (
-    positive_float_validator,
-)
+from py_factor_graph.utils.attrib_utils import positive_float_validator, is_dimension
 
 
 @attr.s(frozen=True)
-class PoseMeasurement:
+class PoseMeasurement2D:
     """
     An pose measurement
 
@@ -77,7 +75,31 @@ class PoseMeasurement:
 
 
 @attr.s(frozen=True)
-class AmbiguousPoseMeasurement:
+class PoseMeasurement3D:
+    """
+    An pose measurement
+
+    Args:
+        base_pose (str): the pose which the measurement is in the reference frame of
+        to_pose (str): the name of the pose the measurement is to
+        x (float): the measured change in x coordinate
+        y (float): the measured change in y coordinate
+        theta (float): the measured change in theta
+        covariance (np.ndarray): a 3x3 covariance matrix from the measurement model
+        timestamp (float): seconds since epoch
+    """
+
+    base_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    to_pose: str = attr.ib(validator=attr.validators.instance_of(str))
+    translation: np.ndarray = attr.ib(validator=attr.validators.instance_of(np.ndarray))
+    theta: float = attr.ib(validator=attr.validators.instance_of(float))
+    translation_weight: float = attr.ib(validator=positive_float_validator)
+    rotation_weight: float = attr.ib(validator=positive_float_validator)
+    timestamp: Optional[float] = attr.ib(default=None)
+
+
+@attr.s(frozen=True)
+class AmbiguousPoseMeasurement2D:
     """
     An ambiguous odom measurement
 

@@ -5,8 +5,8 @@ import pickle
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
-    PoseMeasurement,
-    AmbiguousPoseMeasurement,
+    PoseMeasurement2D,
+    AmbiguousPoseMeasurement2D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
 )

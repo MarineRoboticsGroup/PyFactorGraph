@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Optional, Tuple
+from typing import List, Dict, Set, Optional, Tuple, Union
 import attr
 import pickle
 import pathlib
@@ -12,8 +12,9 @@ from py_factor_graph.utils.data_utils import get_theta_from_transformation_matri
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
-    PoseMeasurement,
-    AmbiguousPoseMeasurement,
+    PoseMeasurement2D,
+    PoseMeasurement3D,
+    AmbiguousPoseMeasurement2D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
 )
@@ -46,10 +47,10 @@ class FactorGraphData:
         pose_variables (List[List[PoseVariable]]): the pose chains. Each
         different robot is a different one of the nested lists.
         landmark_variables (List[LandmarkVariable]): the landmark variables
-        odom_measurements (List[List[PoseMeasurement]]): the odom measurements.
+        odom_measurements (List[List[PoseMeasurement2D]]): the odom measurements.
         Same structure as pose_variables.
-        loop_closure_measurements (List[PoseMeasurement]): the loop closures
-        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement]): a
+        loop_closure_measurements (List[PoseMeasurement2D]): the loop closures
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement2D]): a
         list of ambiguous loop closures.
         range_measurements (List[FGRangeMeasurement]): the range measurements
         ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
@@ -69,9 +70,9 @@ class FactorGraphData:
     existing_landmark_variables: Set[str] = attr.ib(factory=set)
 
     # pose measurements
-    odom_measurements: List[List[PoseMeasurement]] = attr.ib(factory=list)
-    loop_closure_measurements: List[PoseMeasurement] = attr.ib(factory=list)
-    ambiguous_loop_closure_measurements: List[AmbiguousPoseMeasurement] = attr.ib(
+    odom_measurements: List[List[PoseMeasurement2D]] = attr.ib(factory=list)
+    loop_closure_measurements: List[PoseMeasurement2D] = attr.ib(factory=list)
+    ambiguous_loop_closure_measurements: List[AmbiguousPoseMeasurement2D] = attr.ib(
         factory=list
     )
 
@@ -366,13 +367,13 @@ class FactorGraphData:
         return odom_traj
 
     @property
-    def loop_closure_dict(self) -> Dict[str, List[PoseMeasurement]]:
+    def loop_closure_dict(self) -> Dict[str, List[PoseMeasurement2D]]:
         """Returns a mapping from pose variables to their loop closure measurements.
 
         Returns:
-            Dict[str, List[PoseMeasurement]]: the mapping from pose variables to their loop closure measurements
+            Dict[str, List[PoseMeasurement2D]]: the mapping from pose variables to their loop closure measurements
         """
-        measures_dict: Dict[str, List[PoseMeasurement]] = {}
+        measures_dict: Dict[str, List[PoseMeasurement2D]] = {}
         for measure in self.loop_closure_measurements:
             associated_pose = measure.base_pose
             if associated_pose not in measures_dict:
@@ -567,14 +568,16 @@ class FactorGraphData:
         if self.y_max is None or self.y_max < landmark_var.true_y:
             self.y_max = landmark_var.true_y
 
-    def add_odom_measurement(self, robot_idx: int, odom_meas: PoseMeasurement):
+    def add_odom_measurement(
+        self, robot_idx: int, odom_meas: Union[PoseMeasurement2D, PoseMeasurement3D]
+    ):
         """Adds an odom measurement to the list of odom measurements.
 
         Args:
             robot_idx (int): the index of the robot that made the measurement
-            odom_meas (PoseMeasurement): the odom measurement to add
+            odom_meas (PoseMeasurement2D): the odom measurement to add
         """
-        assert isinstance(odom_meas, PoseMeasurement)
+        assert isinstance(odom_meas, PoseMeasurement2D)
         while len(self.odom_measurements) <= robot_idx:
             self.odom_measurements.append([])
 
@@ -599,12 +602,15 @@ class FactorGraphData:
         elif self.min_measure_weight > min_odom_weight:
             self.min_measure_weight = min_odom_weight
 
-    def add_loop_closure(self, loop_closure: PoseMeasurement):
+    def add_loop_closure(
+        self, loop_closure: Union[PoseMeasurement2D, PoseMeasurement3D]
+    ):
         """Adds a loop closure measurement to the list of loop closure measurements.
 
         Args:
-            loop_closure (PoseMeasurement): the loop closure measurement to add
+            loop_closure (PoseMeasurement2D): the loop closure measurement to add
         """
+        assert isinstance(loop_closure, PoseMeasurement2D)
         self.loop_closure_measurements.append(loop_closure)
 
         # check that we are not adding a measurement between variables that exist
@@ -630,11 +636,11 @@ class FactorGraphData:
         elif self.min_measure_weight > min_odom_weight:
             self.min_measure_weight = min_odom_weight
 
-    def add_ambiguous_loop_closure(self, measure: AmbiguousPoseMeasurement):
+    def add_ambiguous_loop_closure(self, measure: AmbiguousPoseMeasurement2D):
         """Adds an ambiguous loop closure measurement to the list of ambiguous loop closure measurements.
 
         Args:
-            measure (AmbiguousPoseMeasurement): the ambiguous loop closure measurement to add
+            measure (AmbiguousPoseMeasurement2D): the ambiguous loop closure measurement to add
         """
         self.ambiguous_loop_closure_measurements.append(measure)
 
@@ -743,13 +749,13 @@ class FactorGraphData:
             data_file (str): the path of the file to write to
         """
 
-        def get_normal_pose_measurement_string(pose_measure: PoseMeasurement) -> str:
+        def get_normal_pose_measurement_string(pose_measure: PoseMeasurement2D) -> str:
             """This is a utility function to get a formatted string to write to EFG
             formats for measurements which can be represented by poses (i.e.
             odometry and loop closures.
 
             Args:
-                pose (PoseMeasurement): the measurement
+                pose (PoseMeasurement2D): the measurement
 
             Returns:
                 str: the formatted string representation of the pose measurement
@@ -777,7 +783,7 @@ class FactorGraphData:
             return line
 
         def get_ambiguous_pose_measurement_string(
-            pose_measure: AmbiguousPoseMeasurement,
+            pose_measure: AmbiguousPoseMeasurement2D,
         ) -> str:
             """This is a utility function to get a formatted string to write to EFG
             formats for measurements which can be represented by poses (i.e.

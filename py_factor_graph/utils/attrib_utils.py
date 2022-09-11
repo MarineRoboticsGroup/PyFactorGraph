@@ -2,6 +2,22 @@ from typing import List, Optional, Callable
 import attr
 
 
+def is_dimension(instance, attribute, value) -> None:
+    """
+    Return validator for dimension.
+
+    Args:
+        value (int): value to validate
+
+    Returns:
+        None
+    """
+    if not isinstance(value, int):
+        raise ValueError(f"{value} is not an int")
+    if not value in [2, 3]:
+        raise ValueError(f"Value {value} is not 2 or 3")
+
+
 def range_validator(instance, attribute, value):
     if value < 0:
         raise ValueError(f"Value {value} should not be negative")

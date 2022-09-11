@@ -13,7 +13,7 @@ import attr
 
 from py_factor_graph.variables import PoseVariable, LandmarkVariable
 from py_factor_graph.measurements import (
-    PoseMeasurement,
+    PoseMeasurement2D,
     FGRangeMeasurement,
 )
 from py_factor_graph.priors import PosePrior, LandmarkPrior
@@ -374,7 +374,7 @@ class HATParser:
             # make the odometry message
             translation_variance = 5.0  # this is a lot lower than what Jesse used
             rotation_variance = 0.0436 * 2  # it seemed like this value worked for Jesse
-            odometry = PoseMeasurement(
+            odometry = PoseMeasurement2D(
                 base_pose=base_pose_name,
                 to_pose=next_pose_name,
                 x=diver_delta_xy[0],
