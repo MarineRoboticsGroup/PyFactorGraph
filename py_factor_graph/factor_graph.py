@@ -19,6 +19,7 @@ from py_factor_graph.measurements import (
 )
 from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.utils.name_utils import (
+    get_robot_char_from_number,
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
 )
@@ -174,15 +175,6 @@ class FactorGraphData:
 
         return len(self.pose_variables[robot_idx])
 
-    def is_empty(self) -> bool:
-        """Returns whether the factor graph data is empty.
-
-        Returns:
-            bool: whether the factor graph data is empty
-        """
-        # if there are no pose variables, return True
-        return self.num_poses == 0
-
     def print_summary(self) -> None:
         """Prints a summary of the factor graph data."""
         num_robots = len(self.pose_variables)
@@ -193,6 +185,26 @@ class FactorGraphData:
         print(
             f"# robots: {num_robots} # poses: {num_poses} # beacons: {num_landmarks} # range measurements: {num_range_measurements} # loop closures: {num_loop_closures}"
         )
+
+    @property
+    def num_robots(self) -> int:
+        """Returns the number of robots.
+
+        Returns:
+            int: the number of robots
+        """
+        non_zero_odom_chains = [x for x in self.odom_measurements if len(x) > 0]
+        return len(non_zero_odom_chains)
+
+    @property
+    def is_empty(self) -> bool:
+        """Returns whether the factor graph data is empty.
+
+        Returns:
+            bool: whether the factor graph data is empty
+        """
+        # if there are no pose variables, return True
+        return self.num_poses == 0
 
     @property
     def num_poses(self) -> int:
@@ -270,7 +282,7 @@ class FactorGraphData:
         return set(self.all_variable_names) - factor_vars
 
     @property
-    def range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
+    def pose_to_range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
         """Returns a mapping from pose variables to their range measurements.
 
         Returns:
@@ -283,6 +295,75 @@ class FactorGraphData:
                 measures_dict[associated_pose] = []
             measures_dict[associated_pose].append(measure)
         return measures_dict
+
+    @property
+    def both_poses_to_range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
+        """Returns a mapping from both pose variables to their range
+        measurements.
+
+        Ex. ("A1", "B3"): [range measurement] -> {"A1": [range measurement], "B3": [range measurement]}
+
+        Returns:
+            Dict[str, List[FGRangeMeasurement]]: the mapping from both pose variables to their range measurements
+        """
+        measures_dict: Dict[str, List[FGRangeMeasurement]] = {}
+        for measure in self.range_measurements:
+            association_1 = measure.association[0]
+            association_2 = measure.association[1]
+            if association_1 not in measures_dict:
+                measures_dict[association_1] = []
+            measures_dict[association_1].append(measure)
+            if association_2 not in measures_dict:
+                measures_dict[association_2] = []
+            measures_dict[association_2].append(measure)
+        return measures_dict
+
+    @property
+    def association_to_range_measures_dict(
+        self,
+    ) -> Dict[Tuple[str, str], List[FGRangeMeasurement]]:
+        measures_dict: Dict[Tuple[str, str], List[FGRangeMeasurement]] = {}
+        for measure in self.range_measurements:
+            association = measure.association
+            if association not in measures_dict:
+                measures_dict[association] = []
+            measures_dict[association].append(measure)
+        return measures_dict
+
+    @property
+    def odometry_trajectories(self) -> List[List[np.ndarray]]:
+        """Returns the trajectories for each robot obtained from the odometry measurements.
+
+        Returns:
+            List[List[np.ndarray]]: the trajectories for each robot obtained from the odometry measurements
+        """
+        start_poses = [np.eye(self.dimension + 1) for _ in range(self.num_robots)]
+        odom_traj = [start_poses]
+        for robot_idx, odom_chain in enumerate(self.odom_measurements):
+            for odom in odom_chain:
+                curr_pose = odom_traj[robot_idx][-1]
+                odom_traj[robot_idx].append(curr_pose @ odom.transformation_matrix)
+        return odom_traj
+
+    @property
+    def odometry_trajectories_as_dict(self) -> Dict[str, np.ndarray]:
+        """Returns the trajectories for each robot obtained from the odometry measurements.
+
+        Returns:
+            Dict[str, np.ndarray]: the trajectories for each robot obtained from the odometry measurements
+        """
+        curr_poses = [np.eye(self.dimension + 1) for _ in range(self.num_robots)]
+        odom_traj = {}
+        for robot_idx, odom_chain in enumerate(self.odom_measurements):
+            first_pose_name = odom_chain[0].base_pose
+            odom_traj[first_pose_name] = [curr_poses[robot_idx]]
+            for odom in odom_chain:
+                curr_poses[robot_idx] = np.dot(
+                    curr_poses[robot_idx], odom.transformation_matrix
+                )
+                pose_name = odom.to_pose
+                odom_traj[pose_name] = curr_poses[robot_idx]
+        return odom_traj
 
     @property
     def loop_closure_dict(self) -> Dict[str, List[PoseMeasurement]]:
@@ -321,7 +402,7 @@ class FactorGraphData:
 
         """
         condensed_data = FactorGraphData()
-        range_measure_dict = self.range_measures_dict
+        range_measure_dict = self.pose_to_range_measures_dict
         loop_closure_dict = self.loop_closure_dict
         old_pose_variables_dict = self.pose_variables_dict
 
@@ -1151,7 +1232,7 @@ class FactorGraphData:
                 num_full_odom_chains += 1
 
         # for drawing range measurements
-        range_measures_dict = self.range_measures_dict
+        pose_to_range_measures_dict = self.pose_to_range_measures_dict
         landmark_var_dict = self.landmark_var_dict
         range_measure_objs: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
 
@@ -1187,8 +1268,8 @@ class FactorGraphData:
                             line_to_remove.remove()
                             circle_to_remove.remove()
 
-                        if pose_name in range_measures_dict:
-                            range_measures = range_measures_dict[pose_name]
+                        if pose_name in pose_to_range_measures_dict:
+                            range_measures = pose_to_range_measures_dict[pose_name]
                             for range_measure in range_measures:
                                 landmark_var = landmark_var_dict[
                                     range_measure.landmark_key
