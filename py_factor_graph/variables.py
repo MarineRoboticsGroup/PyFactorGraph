@@ -1,5 +1,5 @@
 import attr
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 import numpy as np
 from py_factor_graph.utils.attrib_utils import (
     optional_float_validator,
@@ -165,3 +165,6 @@ class LandmarkVariable:
     @property
     def true_y(self):
         return self.true_position[1]
+
+
+POSE_VARIABLE = Union[PoseVariable2D, PoseVariable3D]
