@@ -78,7 +78,7 @@ def convert_se3_var_line_to_pose_variable(
     ), f"Line type is not {SE3_VARIABLE}, it is {line_items[0]}"
     pose_num_idx = 1
     translation_idx_bounds = (2, 5)
-    quat_idx_bounds = (5, 9)
+    quat_idx_bounds = (5,)
     pose_name = f"A{line_items[pose_num_idx]}"
 
     # get the translation
@@ -90,7 +90,7 @@ def convert_se3_var_line_to_pose_variable(
     translation = (translation_vals[0], translation_vals[1], translation_vals[2])
 
     # get the rotation
-    quat_vals = [float(x) for x in line_items[quat_idx_bounds[0] : quat_idx_bounds[1]]]
+    quat_vals = [float(x) for x in line_items[quat_idx_bounds[0] :]]
     quat = np.array(quat_vals)
     rot = get_rotation_matrix_from_quat(quat)
 
@@ -232,6 +232,10 @@ if __name__ == "__main__":
     from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
     from pathlib import Path
 
+    logger.warning(
+        "g2o files do not contain ground truth!! Right now no ground truth implemented"
+    )
+
     np.set_printoptions(precision=3, suppress=True)
 
     def _get_list_of_g2o_files(dim: int) -> List[str]:
@@ -258,10 +262,16 @@ if __name__ == "__main__":
         raise FileNotFoundError("No g2o files found")
 
     for file in g2o_files:
-        # if "garage" not in file:
-        #     continue
 
         pickle_file = file.replace(".g2o", ".pickle")
+        if isfile(pickle_file):
+            use_choice = ""
+            while use_choice not in ["y", "n"]:
+                use_choice = input(f"Use existing pickle file? {pickle_file} [y/n]: ")
+            if use_choice == "y":
+                logger.info(f"Skipping {file}, pickle file already exists")
+                continue
+
         try:
             fg = parse_3d_g2o_file(file)
             fg._save_to_pickle_format(pickle_file)
@@ -271,10 +281,4 @@ if __name__ == "__main__":
             continue
 
         fg = parse_pickle_file(pickle_file)
-        fg.print_summary()
-        # poses = fg.odometry_trajectories[0]
-        # true_poses = fg.true_trajectories[0]
-        # for odom_pose, true_pose in zip(poses, true_poses):
-        #     print(odom_pose - true_pose)
-        #     print()
-        # logger.info(fg.odometry_trajectories)
+        # fg.print_summary()
