@@ -8,6 +8,10 @@ from py_factor_graph.utils.attrib_utils import (
     make_rot_matrix_validator,
     optional_float_validator,
 )
+from py_factor_graph.utils.matrix_utils import (
+    get_covariance_matrix_from_measurement_precisions,
+    get_info_matrix_from_measurement_precisions,
+)
 
 
 @attr.s(frozen=True)
@@ -30,8 +34,8 @@ class PoseMeasurement2D:
     x: float = attr.ib(validator=attr.validators.instance_of(float))
     y: float = attr.ib(validator=attr.validators.instance_of(float))
     theta: float = attr.ib(validator=attr.validators.instance_of(float))
-    translation_weight: float = attr.ib(validator=positive_float_validator)
-    rotation_weight: float = attr.ib(validator=positive_float_validator)
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    rotation_precision: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(
         default=None, validator=optional_float_validator
     )
@@ -73,12 +77,8 @@ class PoseMeasurement2D:
         """
         Get the covariance matrix
         """
-        return np.array(
-            [
-                [1 / self.translation_weight, 0, 0],
-                [0, 1 / self.translation_weight, 0],
-                [0, 0, 1 / self.rotation_weight],
-            ]
+        get_covariance_matrix_from_measurement_precisions(
+            self.translation_precision, self.rotation_precision, mat_dim=3
         )
 
 
@@ -92,8 +92,8 @@ class PoseMeasurement3D:
         to_pose (str): the name of the pose the measurement is to
         translation (np.ndarray): the measured change in x, y, z coordinates
         rotation (np.ndarray): the measured change in rotation
-        translation_weight (float): the weight of the translation measurement
-        rotation_weight (float): the weight of the rotation measurement
+        translation_precision (float): the weight of the translation measurement
+        rotation_precision (float): the weight of the rotation measurement
         timestamp (float): seconds since epoch
     """
 
@@ -101,8 +101,8 @@ class PoseMeasurement3D:
     to_pose: str = attr.ib(validator=make_variable_name_validator("pose"))
     translation: np.ndarray = attr.ib(validator=attr.validators.instance_of(np.ndarray))
     rotation: np.ndarray = attr.ib(validator=make_rot_matrix_validator(3))
-    translation_weight: float = attr.ib(validator=positive_float_validator)
-    rotation_weight: float = attr.ib(validator=positive_float_validator)
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    rotation_precision: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(
         default=None, validator=optional_float_validator
     )
@@ -179,10 +179,9 @@ class PoseMeasurement3D:
         Returns:
             np.ndarray: the 6x6 covariance matrix
         """
-        trans_cov = 1 / self.translation_weight
-        rot_cov = 1 / self.rotation_weight
-        cov = np.diag([trans_cov, trans_cov, trans_cov, rot_cov, rot_cov, rot_cov])
-        return cov
+        return get_covariance_matrix_from_measurement_precisions(
+            self.translation_precision, self.rotation_precision, mat_dim=6
+        )
 
 
 @attr.s(frozen=True)
@@ -207,8 +206,8 @@ class AmbiguousPoseMeasurement2D:
     x: float = attr.ib(validator=attr.validators.instance_of(float))
     y: float = attr.ib(validator=attr.validators.instance_of(float))
     theta: float = attr.ib(validator=attr.validators.instance_of(float))
-    translation_weight: float = attr.ib(validator=positive_float_validator)
-    rotation_weight: float = attr.ib(validator=positive_float_validator)
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    rotation_precision: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(
         default=None, validator=optional_float_validator
     )
@@ -250,12 +249,8 @@ class AmbiguousPoseMeasurement2D:
         """
         Get the covariance matrix
         """
-        return np.array(
-            [
-                [1 / self.translation_weight, 0, 0],
-                [0, 1 / self.translation_weight, 0],
-                [0, 0, 1 / self.rotation_weight],
-            ]
+        return get_covariance_matrix_from_measurement_precisions(
+            self.translation_precision, self.rotation_precision, mat_dim=3
         )
 
 

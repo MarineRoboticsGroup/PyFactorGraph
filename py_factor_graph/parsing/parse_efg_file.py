@@ -6,9 +6,7 @@ import pickle
 from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
-    AmbiguousPoseMeasurement2D,
     FGRangeMeasurement,
-    AmbiguousFGRangeMeasurement,
 )
 from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.factor_graph import (
@@ -19,6 +17,9 @@ from py_factor_graph.utils.name_utils import (
     get_time_idx_from_frame_name,
 )
 from py_factor_graph.utils.data_utils import get_covariance_matrix_from_list
+from py_factor_graph.utils.matrix_utils import (
+    get_measurement_precisions_from_covariance_matrix,
+)
 
 
 def parse_efg_file(filepath: str) -> FactorGraphData:
@@ -71,17 +72,20 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 delta_theta = float(line_items[6])
                 covar_list = [float(x) for x in line_items[8:]]
                 covar = get_covariance_matrix_from_list(covar_list)
-                # assert covar[0, 0] == covar[1, 1]
-                trans_weight = 1 / (covar[0, 0])
-                rot_weight = 1 / (covar[2, 2])
+                (
+                    trans_precision,
+                    rot_precision,
+                ) = get_measurement_precisions_from_covariance_matrix(
+                    covar, matrix_dim=3
+                )
                 measure = PoseMeasurement2D(
                     base_pose,
                     local_pose,
                     delta_x,
                     delta_y,
                     delta_theta,
-                    trans_weight,
-                    rot_weight,
+                    trans_precision,
+                    rot_precision,
                 )
 
                 base_pose_idx = get_robot_idx_from_frame_name(base_pose)

@@ -20,7 +20,10 @@ from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
-from py_factor_graph.utils.matrix_utils import get_rotation_matrix_from_theta
+from py_factor_graph.utils.matrix_utils import (
+    get_rotation_matrix_from_theta,
+    get_measurement_precisions_from_covariances,
+)
 from py_factor_graph.parsing.bagmerge import merge_bags
 
 
@@ -374,14 +377,20 @@ class HATParser:
             # make the odometry message
             translation_variance = 5.0  # this is a lot lower than what Jesse used
             rotation_variance = 0.0436 * 2  # it seemed like this value worked for Jesse
+            (
+                trans_precision,
+                rot_precision,
+            ) = get_measurement_precisions_from_covariances(
+                translation_variance, rotation_variance
+            )
             odometry = PoseMeasurement2D(
                 base_pose=base_pose_name,
                 to_pose=next_pose_name,
                 x=diver_delta_xy[0],
                 y=diver_delta_xy[1],
                 theta=delta_heading,
-                translation_weight=1.0 / translation_variance,
-                rotation_weight=1.0 / rotation_variance,
+                translation_precision=trans_precision,
+                rotation_precision=rot_precision,
                 timestamp=msg.time_stamp,
             )
 

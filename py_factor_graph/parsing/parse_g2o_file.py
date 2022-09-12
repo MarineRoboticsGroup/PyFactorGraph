@@ -2,15 +2,10 @@ from typing import List, Any, Union, Tuple, Optional
 from os.path import isfile
 import numpy as np
 
-from py_factor_graph.variables import PoseVariable3D, LandmarkVariable2D
+from py_factor_graph.variables import PoseVariable3D
 from py_factor_graph.measurements import (
-    PoseMeasurement2D,
-    AmbiguousPoseMeasurement2D,
     PoseMeasurement3D,
-    FGRangeMeasurement,
-    AmbiguousFGRangeMeasurement,
 )
-from py_factor_graph.priors import PosePrior, LandmarkPrior
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
@@ -18,12 +13,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_quat,
     get_measurement_precisions_from_info_matrix,
 )
-from py_factor_graph.utils.name_utils import (
-    get_robot_idx_from_frame_name,
-    get_time_idx_from_frame_name,
-)
 from py_factor_graph.utils.data_utils import (
-    get_covariance_matrix_from_list,
     load_symmetric_matrix_column_major,
 )
 
@@ -227,7 +217,7 @@ def parse_3d_g2o_file(filepath: str):
 
 
 if __name__ == "__main__":
-    from os.path import join, expanduser
+    from os.path import join, expanduser, isdir
     from os import listdir
     from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
     from pathlib import Path
@@ -246,8 +236,14 @@ if __name__ == "__main__":
         """
         assert dim in [2, 3], f"Dimension must be 2 or 3, not {dim}"
 
-        base_data_dir = Path(expanduser(f"~/data/g2o/{dim}d"))
-        subdirs = [base_data_dir.joinpath(x) for x in listdir(base_data_dir)]
+        base_data_dir = Path(
+            expanduser(join("~", "data", "slam-data-sets", "g2o", "se_sync_gt"))
+        )
+        subdirs = [
+            base_data_dir.joinpath(x)
+            for x in listdir(base_data_dir)
+            if isdir(base_data_dir.joinpath(x))
+        ]
         g2o_files = []
         for subdir in subdirs:
             g2o_files += [

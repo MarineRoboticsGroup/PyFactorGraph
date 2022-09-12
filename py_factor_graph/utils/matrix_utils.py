@@ -47,33 +47,101 @@ def get_measurement_precisions_from_info_matrix(
         ), f"matrix_dim {matrix_dim} must match info_mat dim {dim}"
 
     assert dim in [3, 6], "information matrix must be 3x3 or 6x6"
+    covar_mat = la.inv(info_mat)
+    trans_precision, rot_precision = get_measurement_precisions_from_covariance_matrix(
+        covar_mat, matrix_dim
+    )
+    return (trans_precision, rot_precision)
+
+
+def get_measurement_precisions_from_covariance_matrix(
+    covar_mat: np.ndarray, matrix_dim: Optional[int] = None
+) -> Tuple[float, float]:
+    """Computes the optimal measurement precisions from the covariance matrix
+
+    Based on SE-Sync:SESync_utils.cpp:113-124
+
+    Args:
+        covar_mat (np.ndarray): the covariance matrix
+
+    Returns:
+        Tuple[float, float]: (translation precision, rotation precision)
+    """
+    _check_square(covar_mat)
+    dim = covar_mat.shape[0]
+    if matrix_dim is not None:
+        assert (
+            matrix_dim == dim
+        ), f"matrix_dim {matrix_dim} must match info_mat dim {dim}"
+
+    assert dim in [3, 6], "information matrix must be 3x3 or 6x6"
 
     def _get_trans_precision() -> float:
         if dim == 3:
-            trans_info = info_mat[:2, :2]
-            trans_precision = 2 / (np.trace(np.linalg.inv(trans_info)))
+            trans_covar = covar_mat[:2, :2]
+            trans_precision = 2 / (np.trace(trans_covar))
         elif dim == 6:
-            trans_info = info_mat[:3, :3]
-            trans_cov = np.linalg.inv(trans_info)
-            trans_precision = 3 / (np.trace(trans_cov))
+            trans_covar = covar_mat[:3, :3]
+            trans_precision = 3 / (np.trace(trans_covar))
         else:
             raise ValueError(f"Invalid dimension: {dim}")
         return trans_precision
 
     def _get_rot_precision() -> float:
         if dim == 3:
-            rot_precision = info_mat[2, 2]
+            rot_precision = 1 / covar_mat[2, 2]
         elif dim == 6:
-            rot_info = info_mat[3:, 3:]
-            rot_cov = np.linalg.inv(rot_info)
-            rot_precision = 3 / (np.trace(rot_cov))
+            rot_cov = covar_mat[3:, 3:]
+            rot_precision = 3 / (2 * np.trace(rot_cov))
         else:
             raise ValueError(f"Invalid dimension: {dim}")
         return rot_precision
 
     trans_precision = _get_trans_precision()
     rot_precision = _get_rot_precision()
-    return (trans_precision, rot_precision)
+    return trans_precision, rot_precision
+
+
+def get_measurement_precisions_from_covariances(
+    trans_cov: float, rot_cov: float
+) -> Tuple[float, float]:
+    """Converts the trans covariance and rot covariance to measurement
+    precisions (assuming isotropic noise)
+
+    Args:
+        trans_cov (float): covariance of translation measurements
+        rot_cov (float): covariance of rotation measurements
+
+    Returns:
+        Tuple[float, float]: (trans precision, rot precision)
+    """
+    trans_precision = 1 / trans_cov
+    rot_precision = 1 / (2 * rot_cov)
+    return trans_precision, rot_precision
+
+
+def get_info_matrix_from_measurement_precisions(
+    trans_precision: float, rot_precision: float, mat_dim: int
+) -> np.ndarray:
+    assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
+    if mat_dim == 3:
+        trans_info = [trans_precision] * 2
+        rot_info = [2 * rot_precision]
+    if mat_dim == 6:
+        trans_info = [trans_precision] * 3
+        rot_info = [2 * rot_precision] * 3
+    info_mat = np.diag(trans_info + rot_info)
+    return info_mat
+
+
+def get_covariance_matrix_from_measurement_precisions(
+    trans_precision: float, rot_precision: float, mat_dim: int
+) -> np.ndarray:
+    info_mat = get_info_matrix_from_measurement_precisions(
+        trans_precision, rot_precision, mat_dim
+    )
+    cov_mat = la.inv(info_mat)
+    return cov_mat
 
 
 def get_theta_from_rotation_matrix_so_projection(mat: np.ndarray) -> float:

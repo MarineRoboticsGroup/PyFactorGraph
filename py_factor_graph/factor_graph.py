@@ -527,7 +527,7 @@ class FactorGraphData:
         """
         for odom_chain in self.odom_measurements:
             for odom in odom_chain:
-                if odom.translation_weight < 1 or odom.rotation_weight < 1:
+                if odom.translation_precision < 1 or odom.rotation_precision < 1:
                     logger.info(odom)
                     return False
 
@@ -643,13 +643,17 @@ class FactorGraphData:
         assert self.pose_exists(to_pose)
 
         # update max and min measurement weights
-        max_odom_weight = max(odom_meas.translation_weight, odom_meas.rotation_weight)
+        max_odom_weight = max(
+            odom_meas.translation_precision, odom_meas.rotation_precision
+        )
         if self.max_measure_weight is None:
             self.max_measure_weight = max_odom_weight
         elif self.max_measure_weight < max_odom_weight:
             self.max_measure_weight = max_odom_weight
 
-        min_odom_weight = min(odom_meas.translation_weight, odom_meas.rotation_weight)
+        min_odom_weight = min(
+            odom_meas.translation_precision, odom_meas.rotation_precision
+        )
         if self.min_measure_weight is None:
             self.min_measure_weight = min_odom_weight
         elif self.min_measure_weight > min_odom_weight:
@@ -672,7 +676,7 @@ class FactorGraphData:
 
         # update max and min measurement weights
         max_odom_weight = max(
-            loop_closure.translation_weight, loop_closure.rotation_weight
+            loop_closure.translation_precision, loop_closure.rotation_precision
         )
         if self.max_measure_weight is None:
             self.max_measure_weight = max_odom_weight
@@ -680,7 +684,7 @@ class FactorGraphData:
             self.max_measure_weight = max_odom_weight
 
         min_odom_weight = min(
-            loop_closure.translation_weight, loop_closure.rotation_weight
+            loop_closure.translation_precision, loop_closure.rotation_precision
         )
         if self.min_measure_weight is None:
             self.min_measure_weight = min_odom_weight

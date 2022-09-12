@@ -14,6 +14,7 @@ from py_factor_graph.utils.matrix_utils import (
     make_transformation_matrix_from_rpy,
     get_relative_rot_and_trans_between_poses,
     get_theta_from_rotation_matrix,
+    get_measurement_precisions_from_covariances,
 )
 from py_factor_graph.factor_graph import (
     FactorGraphData,
@@ -50,7 +51,7 @@ class GoatsParser:
 
     data_file_path: Path = field(validator=_verify_path_is_goats_csv)
     beacon_loc_file_path: Path = field(validator=_verify_path_is_goats_csv)
-    dim: int = field(validator=lambda i, a, v: v in [2, 3])
+    dim: int = field(validator=lambda i, a, v: v in [2, 3])  # type: ignore
     filter_ranges: bool = field()
 
     _data = field(init=False)
@@ -156,16 +157,20 @@ class GoatsParser:
             to_pose_name = f"A{idx}"
             x, y = relative_trans
             theta = get_theta_from_rotation_matrix(relative_rot)
-            trans_stddev = 0.01
-            rot_stddev = 0.001
+            trans_cov = 0.01 ** 2
+            rot_cov = 0.001 ** 2
+            (
+                trans_precision,
+                rot_precision,
+            ) = get_measurement_precisions_from_covariances(trans_cov, rot_cov)
             relative_pose_measurement = PoseMeasurement2D(
                 base_pose=base_pose_name,
                 to_pose=to_pose_name,
                 x=x,
                 y=y,
                 theta=theta,
-                translation_weight=(1 / trans_stddev ** 2),
-                rotation_weight=(1 / rot_stddev ** 2),
+                translation_precision=trans_precision,
+                rotation_precision=rot_precision,
             )
             self.pyfg.add_odom_measurement(0, relative_pose_measurement)
 
