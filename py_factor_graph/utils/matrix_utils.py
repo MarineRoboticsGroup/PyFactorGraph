@@ -54,7 +54,8 @@ def get_measurement_precisions_from_info_matrix(
             trans_precision = 2 / (np.trace(np.linalg.inv(trans_info)))
         elif dim == 6:
             trans_info = info_mat[:3, :3]
-            trans_precision = 3 / (np.trace(np.linalg.inv(trans_info)))
+            trans_cov = np.linalg.inv(trans_info)
+            trans_precision = 3 / (np.trace(trans_cov))
         else:
             raise ValueError(f"Invalid dimension: {dim}")
         return trans_precision
@@ -64,7 +65,8 @@ def get_measurement_precisions_from_info_matrix(
             rot_precision = info_mat[2, 2]
         elif dim == 6:
             rot_info = info_mat[3:, 3:]
-            rot_precision = 3 / (2 * np.trace(np.linalg.inv(rot_info)))
+            rot_cov = np.linalg.inv(rot_info)
+            rot_precision = 3 / (np.trace(rot_cov))
         else:
             raise ValueError(f"Invalid dimension: {dim}")
         return rot_precision

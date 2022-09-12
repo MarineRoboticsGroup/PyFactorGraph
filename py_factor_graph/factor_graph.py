@@ -368,6 +368,21 @@ class FactorGraphData:
         return measures_dict
 
     @property
+    def true_trajectories(self) -> List[List[np.ndarray]]:
+        """Returns the trajectories of ground truth poses.
+
+        Returns:
+            List[List[np.ndarray]]: the trajectories of ground truth poses
+        """
+        true_trajectories = []
+        for pose_chain in self.pose_variables:
+            true_trajectory = []
+            for pose in pose_chain:
+                true_trajectory.append(pose.transformation_matrix)
+            true_trajectories.append(true_trajectory)
+        return true_trajectories
+
+    @property
     def odometry_trajectories(self) -> List[List[np.ndarray]]:
         """Returns the trajectories for each robot obtained from the odometry measurements.
 

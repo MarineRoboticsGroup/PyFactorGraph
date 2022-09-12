@@ -155,6 +155,7 @@ class PoseVariable3D:
         T = np.eye(self.dimension + 1)
         T[: self.dimension, : self.dimension] = self.true_rotation
         T[: self.dimension, self.dimension] = self.true_position
+        assert T.shape == (4, 4)
         return T
 
 

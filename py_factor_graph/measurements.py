@@ -141,6 +141,36 @@ class PoseMeasurement3D:
         return self.translation
 
     @property
+    def x(self) -> float:
+        """
+        Get the x translation
+
+        Returns:
+            float: the x translation
+        """
+        return self.translation[0]
+
+    @property
+    def y(self) -> float:
+        """
+        Get the y translation
+
+        Returns:
+            float: the y translation
+        """
+        return self.translation[1]
+
+    @property
+    def z(self) -> float:
+        """
+        Get the z translation
+
+        Returns:
+            float: the z translation
+        """
+        return self.translation[2]
+
+    @property
     def covariance(self):
         """
         Get the 6x6 covariance matrix. Right now uses isotropic covariance

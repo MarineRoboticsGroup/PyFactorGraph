@@ -33,7 +33,6 @@ import logging, coloredlogs
 logger = logging.getLogger(__name__)
 field_styles = {
     "filename": {"color": "green"},
-    "filename": {"color": "green"},
     "levelname": {"bold": True, "color": "black"},
     "name": {"color": "blue"},
 }
@@ -47,6 +46,20 @@ SE3_VARIABLE = "VERTEX_SE3:QUAT"
 SE2_VARIABLE = "VERTEX_SE2:QUAT"
 EDGE_SE3 = "EDGE_SE3:QUAT"
 EDGE_SE2 = "EDGE_SE2:QUAT"
+
+from attrs import define, field
+
+
+@define
+class Counter:
+
+    count: int = field(default=0)
+
+    def increment(self):
+        self.count += 1
+
+
+C = Counter()
 
 
 def convert_se3_var_line_to_pose_variable(
@@ -131,7 +144,8 @@ def convert_se3_measurement_line_to_pose_measurement(
     no_translation = np.allclose(translation, np.zeros(3))
     no_rotation = np.allclose(rot, np.eye(3))
     if no_translation and no_rotation:
-        return None
+        pass
+        # return None
 
     # parse information matrix
     info_mat_size = 6
@@ -140,6 +154,13 @@ def convert_se3_measurement_line_to_pose_measurement(
     trans_precision, rot_precision = get_measurement_precisions_from_info_matrix(
         info_mat, matrix_dim=info_mat_size
     )
+
+    if trans_precision < 0.5 or rot_precision < 0.5:
+        err = f"Low precisions! Trans: {trans_precision}, Rot: {rot_precision}"
+        C.increment()
+        logger.warning(err + f"low-precision factor {C.count}")
+        # return None
+        # raise ValueError(err)
 
     # form pose measurement
     pose_measurement = PoseMeasurement3D(
@@ -186,6 +207,11 @@ def parse_3d_g2o_file(filepath: str):
                     items
                 )
                 if new_pose_measurement is None:
+                    pose_0 = items[1]
+                    pose_1 = items[2]
+                    logger.warning(
+                        f"Skipping measurement between: {pose_0} and {pose_1}"
+                    )
                     continue
 
                 if is_odom_measurement(items):
@@ -206,14 +232,25 @@ if __name__ == "__main__":
     from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
     from pathlib import Path
 
+    np.set_printoptions(precision=3, suppress=True)
+
     def _get_list_of_g2o_files(dim: int) -> List[str]:
         """Gets a list of all the g2o files in the sesync dataset.
 
         Returns:
             List[str]: List of paths to the g2o files.
         """
+        assert dim in [2, 3], f"Dimension must be 2 or 3, not {dim}"
+
         base_data_dir = Path(expanduser(f"~/data/g2o/{dim}d"))
-        g2o_files = [str(f) for f in base_data_dir.glob("*.g2o")]
+        subdirs = [base_data_dir.joinpath(x) for x in listdir(base_data_dir)]
+        g2o_files = []
+        for subdir in subdirs:
+            g2o_files += [
+                str(subdir.joinpath(x))
+                for x in listdir(subdir)
+                if x.endswith(".g2o") and not x.startswith(".")
+            ]
         return g2o_files
 
     g2o_files = _get_list_of_g2o_files(dim=3)
@@ -221,14 +258,23 @@ if __name__ == "__main__":
         raise FileNotFoundError("No g2o files found")
 
     for file in g2o_files:
+        # if "garage" not in file:
+        #     continue
 
         pickle_file = file.replace(".g2o", ".pickle")
         try:
             fg = parse_3d_g2o_file(file)
+            fg._save_to_pickle_format(pickle_file)
+            pass
         except ValueError as e:
             logger.error(f"Failed parsing file: {file} with error: {e}")
             continue
 
-        fg._save_to_pickle_format(pickle_file)
         fg = parse_pickle_file(pickle_file)
         fg.print_summary()
+        # poses = fg.odometry_trajectories[0]
+        # true_poses = fg.true_trajectories[0]
+        # for odom_pose, true_pose in zip(poses, true_poses):
+        #     print(odom_pose - true_pose)
+        #     print()
+        # logger.info(fg.odometry_trajectories)
