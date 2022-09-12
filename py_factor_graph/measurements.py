@@ -318,6 +318,20 @@ class FGRangeMeasurement:
         """
         return self.association[1]
 
+    @property
+    def variance(self) -> float:
+        """
+        Get the variance of the measurement
+        """
+        return self.stddev ** 2
+
+    @property
+    def precision(self) -> float:
+        """
+        Get the precision of the measurement
+        """
+        return 1 / self.variance
+
 
 @attr.s(frozen=True)
 class AmbiguousFGRangeMeasurement:
