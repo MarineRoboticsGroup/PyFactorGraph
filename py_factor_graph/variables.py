@@ -1,7 +1,13 @@
 import attr
 from typing import Tuple, Optional, Union
 import numpy as np
-from py_factor_graph.utils.matrix_utils import get_quat_from_rotation_matrix
+from py_factor_graph.utils.matrix_utils import (
+    get_quat_from_rotation_matrix,
+    _check_transformation_matrix,
+    get_rotation_matrix_from_transformation_matrix,
+    get_translation_from_transformation_matrix,
+    get_theta_from_transformation_matrix,
+)
 from py_factor_graph.utils.attrib_utils import (
     optional_float_validator,
     make_rot_matrix_validator,
@@ -83,6 +89,21 @@ class PoseVariable2D:
         T[1, 2] = self.true_y
         return T
 
+    def transform(self, T: np.ndarray) -> "PoseVariable2D":
+        """Returns the transformation matrix representing the true latent pose
+        of this variable
+
+        Returns:
+            PoseVariable2D: the transformed pose
+        """
+        _check_transformation_matrix(T)
+        assert T.shape == (3, 3)
+        current_transformation = self.transformation_matrix
+        new_transformation = current_transformation @ T
+        new_position = get_translation_from_transformation_matrix(new_transformation)
+        new_theta = get_theta_from_transformation_matrix(new_transformation)
+        return PoseVariable2D(self.name, new_position, new_theta, self.timestamp)
+
 
 @attr.s(frozen=True)
 class PoseVariable3D:
@@ -157,6 +178,23 @@ class PoseVariable3D:
         T[: self.dimension, self.dimension] = self.true_position
         assert T.shape == (4, 4)
         return T
+
+    def transform(self, T: np.ndarray) -> "PoseVariable3D":
+        """Returns the transformation matrix representing the true latent pose
+        of this variable
+
+        Returns:
+            PoseVariable3D: the transformed pose
+        """
+        _check_transformation_matrix(T)
+        assert T.shape == (4, 4)
+        current_transformation = self.transformation_matrix
+        new_transformation = current_transformation @ T
+        new_position = get_translation_from_transformation_matrix(new_transformation)
+        new_rotation = get_rotation_matrix_from_transformation_matrix(
+            new_transformation
+        )
+        return PoseVariable3D(self.name, new_position, new_rotation, self.timestamp)
 
 
 @attr.s(frozen=True)

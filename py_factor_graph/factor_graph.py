@@ -40,6 +40,7 @@ from py_factor_graph.utils.plot_utils import (
     draw_line,
     draw_range_measurement,
 )
+from py_factor_graph.utils.attrib_utils import is_dimension
 
 
 import logging, coloredlogs
@@ -87,6 +88,9 @@ class FactorGraphData:
         ValueError: inputs do not match criteria
     """
 
+    # latent dimension of the space (e.g. 2D or 3D)
+    dimension: int = attr.ib(validator=is_dimension)
+
     # variables
     pose_variables: List[List[POSE_VARIABLE_TYPES]] = attr.ib(factory=list)
     landmark_variables: List[LANDMARK_VARIABLE_TYPES] = attr.ib(factory=list)
@@ -109,9 +113,6 @@ class FactorGraphData:
     # priors
     pose_priors: List[PosePrior] = attr.ib(factory=list)
     landmark_priors: List[LandmarkPrior] = attr.ib(factory=list)
-
-    # latent dimension of the space (e.g. 2D or 3D)
-    dimension: int = attr.ib(default=2)
 
     # useful helper values
     x_min: Optional[float] = attr.ib(default=None)
@@ -202,15 +203,21 @@ class FactorGraphData:
 
     def print_summary(self) -> None:
         """Prints a summary of the factor graph data."""
-        num_robots = len(self.pose_variables)
+        num_robots = self.num_robots
         num_poses = self.num_poses
-        num_landmarks = len(self.landmark_variables)
+        num_landmarks = self.num_landmarks
         num_odom_measurements = self.num_odom_measurements
-        num_range_measurements = len(self.range_measurements)
-        num_loop_closures = len(self.loop_closure_measurements)
+        num_range_measurements = self.num_range_measurements
+        num_loop_closures = self.num_loop_closures
+        num_interrobot_loop_closures = self.num_interrobot_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
-        measurements_line = f"Measurements: {num_odom_measurements} odom, {num_range_measurements} range, {num_loop_closures} loop closures"
+        measurements_line = (
+            f"Measurements: {num_odom_measurements} odom, "
+            f"{num_range_measurements} range, {num_loop_closures} loop closures "
+            f"({num_interrobot_loop_closures} interrobot closures) "
+            f"loop closures: {self.interrobot_loop_closure_info}"
+        )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
         logger.info(msg)
 
@@ -263,6 +270,60 @@ class FactorGraphData:
             int: the number of odometry measurements
         """
         return sum([len(x) for x in self.odom_measurements])
+
+    @property
+    def num_loop_closures(self) -> int:
+        """Returns the number of loop closure measurements.
+
+        Returns:
+            int: the number of loop closure measurements
+        """
+        return len(self.loop_closure_measurements)
+
+    @property
+    def num_interrobot_loop_closures(self) -> int:
+        """Returns the number of inter-robot loop closure measurements.
+
+        Returns:
+            int: the number of inter-robot loop closure measurements
+        """
+        return len(self.interrobot_loop_closures)
+
+    @property
+    def interrobot_loop_closure_info(self) -> str:
+        """Returns a string containing information about the inter-robot loop closures.
+
+        Returns:
+            str: a string containing information about the inter-robot loop closures
+        """
+        if len(self.interrobot_loop_closures) == 0:
+            return "No inter-robot loop closures"
+
+        loop_closure_counts: Dict[Tuple[str, str], int] = {}
+        for closure in self.interrobot_loop_closures:
+            base_pose_char = closure.base_pose[0]
+            to_pose_char = closure.to_pose[0]
+            if base_pose_char > to_pose_char:
+                base_pose_char, to_pose_char = to_pose_char, base_pose_char
+            association = (base_pose_char, to_pose_char)
+            loop_closure_counts[association] = (
+                loop_closure_counts.get(association, 0) + 1
+            )
+
+        info = ""
+        for assoc, cnt in loop_closure_counts.items():
+            info += f"{assoc}: {cnt} loop closures"
+
+        return info
+
+    @property
+    def num_range_measurements(self) -> int:
+        """Returns the number of range measurements.
+
+        Returns:
+            int: the number of range measurements
+        """
+        return len(self.range_measurements)
 
     @property
     def pose_variables_dict(self) -> Dict[str, POSE_VARIABLE_TYPES]:
@@ -420,6 +481,22 @@ class FactorGraphData:
         return odom_traj
 
     @property
+    def interrobot_loop_closures(self) -> List[POSE_MEASUREMENT_TYPES]:
+        """Returns the loop closure measurements between robots.
+
+        Returns:
+            List[POSE_MEASUREMENT_TYPES]: the loop closure measurements between robots
+        """
+        loop_closures = []
+        for measure in self.loop_closure_measurements:
+            base_pose_char = measure.base_pose[0]
+            to_pose_char = measure.to_pose[0]
+            if base_pose_char != to_pose_char:
+                loop_closures.append(measure)
+
+        return loop_closures
+
+    @property
     def loop_closure_dict(self) -> Dict[str, List[POSE_MEASUREMENT_TYPES]]:
         """Returns a mapping from pose variables to their loop closure measurements.
 
@@ -433,58 +510,6 @@ class FactorGraphData:
                 measures_dict[associated_pose] = []
             measures_dict[associated_pose].append(measure)
         return measures_dict
-
-    def condense_odometry(self) -> "FactorGraphData":
-        """Concatenates all poses that only have odometry measurements (i.e. do
-        not have any range measurements or loop closures)
-
-        Example:
-
-        x0 -> x1 -> x2 -> x3 -> x4 -> x5
-              |                 |
-              l1                l2
-
-        becomes
-
-        x0 -> x1 ->  x4 -> x5
-              |      |
-              l1     l2
-
-
-        Returns:
-            FactorGraphData: the condensed factor graph data
-
-        """
-        condensed_data = FactorGraphData()
-        range_measure_dict = self.pose_to_range_measures_dict
-        loop_closure_dict = self.loop_closure_dict
-        old_pose_variables_dict = self.pose_variables_dict
-
-        def _is_odometry_pose(pose: POSE_VARIABLE_TYPES) -> bool:
-            return (
-                pose.name not in range_measure_dict
-                and pose.name not in loop_closure_dict
-            )
-
-        # iterate over odometry chains
-        for odom_chain in self.odom_measurements:
-            for odom in odom_chain:
-                # if the base pose is an odometry pose, add it to the condensed data
-                if _is_odometry_pose(old_pose_variables_dict[odom.base_pose]):
-                    condensed_data.add_pose_variable(
-                        old_pose_variables_dict[odom.base_pose]
-                    )
-
-                # add the odometry measurement
-                # condensed_data.add_odom_measurement(odom)
-
-                # if the to pose is an odometry pose, add it to the condensed data
-                if _is_odometry_pose(old_pose_variables_dict[odom.to_pose]):
-                    condensed_data.add_pose_variable(
-                        old_pose_variables_dict[odom.to_pose]
-                    )
-
-        raise NotImplementedError
 
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
@@ -1036,8 +1061,13 @@ class FactorGraphData:
 
     def _save_to_pickle_format(self, data_file: str) -> None:
         """
-        Save to efg pickle format.
+        Save to pickle format.
         """
+        file_dir = os.path.dirname(data_file)
+        if not os.path.exists(file_dir):
+            logger.info(f"Creating directory {file_dir}")
+            os.makedirs(file_dir)
+
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()

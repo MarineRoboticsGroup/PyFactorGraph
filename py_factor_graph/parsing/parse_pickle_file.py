@@ -2,10 +2,13 @@ from typing import List
 from os.path import isfile
 import numpy as np
 import pickle
+import logging
 
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def parse_pickle_file(filepath: str) -> FactorGraphData:
@@ -26,4 +29,5 @@ def parse_pickle_file(filepath: str) -> FactorGraphData:
 
     with open(filepath, "rb") as f:
         data = pickle.load(f)
+        logger.info(f"Loaded factor graph data from {filepath}")
         return data
