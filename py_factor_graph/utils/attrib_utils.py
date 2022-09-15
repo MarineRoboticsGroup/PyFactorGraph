@@ -50,8 +50,8 @@ def positive_float_validator(instance, attribute, value):
     Returns:
         None
     """
-    if not isinstance(value, float):
-        raise ValueError(f"{value} is not a float")
+    if not isinstance(value, float) and not isinstance(value, int):
+        raise ValueError(f"{value} is not a float (ints are also accepted)")
     if value < 0:
         raise ValueError(f"Value {value} is not positive")
 

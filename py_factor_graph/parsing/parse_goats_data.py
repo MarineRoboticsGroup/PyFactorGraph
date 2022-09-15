@@ -59,8 +59,8 @@ class GoatsParser:
     pyfg = field(init=False)
 
     def __attrs_post_init__(self):
-        print(f"Loading data from {self.data_file_path}")
-        print(f"Loading beacon locations from {self.beacon_loc_file_path}")
+        logger.info(f"Loading data from {self.data_file_path}")
+        logger.info(f"Loading beacon locations from {self.beacon_loc_file_path}")
 
         # read in the sensor data
         self._data = pd.read_csv(self.data_file_path)
@@ -75,7 +75,7 @@ class GoatsParser:
 
         self._check_beacon_num_consistent()
 
-        self.pyfg = FactorGraphData()
+        self.pyfg = FactorGraphData(dimension=self.dim)
         self._fill_factor_graph()
 
     def _check_beacon_num_consistent(self):
@@ -101,6 +101,19 @@ class GoatsParser:
         self._add_odometry_measurements()
         self._add_range_measurements()
 
+    def _remap_beacon_idx(self, idx) -> int:
+        logger.warning("Beacon indices are being remapped")
+        if idx == 0:
+            return 2
+        elif idx == 1:
+            return 3
+        elif idx == 2:
+            return 0
+        elif idx == 3:
+            return 1
+        else:
+            raise ValueError(f"Invalid beacon idx {idx}")
+
     def _add_beacon_variables(self):
         for idx, beacon_loc in enumerate(self._beacon_locs):
             ranges = self._get_ranges(idx)
@@ -120,6 +133,12 @@ class GoatsParser:
 
     def _add_pose_variables(self):
         for idx, pose in enumerate(zip(self.gt_positions, self.gt_rotations)):
+            if not self._row_has_range_measures(idx) and idx != 0:
+                logger.debug(
+                    f"Pose {idx} has no range measurements, so it is not added"
+                )
+                continue
+
             position, rot = pose
             var_name = f"A{idx}"
             var = PoseVariable2D(var_name, tuple(position), rot)
@@ -140,10 +159,22 @@ class GoatsParser:
         else:
             raise ValueError()
 
+    def _row_has_range_measures(self, row: int) -> bool:
+        beacon_ranges = (self._get_ranges(idx) for idx in range(self.num_beacons))
+        range_data_at_row = np.array([x[row] for x in beacon_ranges])
+        return np.any(~np.isnan(range_data_at_row))
+
     def _add_odometry_measurements(self):
-        curr_pose = None
+        start_pos = self.positions[0]
+        start_rot = self.rotations[0]
+        curr_pose = self._get_transformation_matrix(start_rot, start_pos)
+        prev_pose = self._get_transformation_matrix(start_rot, start_pos)
+        base_pose_name = "A0"
         for idx, (position, rot) in enumerate(zip(self.positions, self.rotations)):
-            prev_pose = curr_pose
+
+            if not self._row_has_range_measures(idx):
+                continue
+
             curr_pose = self._get_transformation_matrix(rot, position)
 
             # if first pose, then we don't have an odometry measurement
@@ -153,16 +184,17 @@ class GoatsParser:
             relative_rot, relative_trans = get_relative_rot_and_trans_between_poses(
                 prev_pose, curr_pose
             )
-            base_pose_name = f"A{idx-1}"
             to_pose_name = f"A{idx}"
             x, y = relative_trans
             theta = get_theta_from_rotation_matrix(relative_rot)
-            trans_cov = 0.01 ** 2
-            rot_cov = 0.001 ** 2
+            trans_cov = 0.02 ** 2
+            rot_cov = 0.002 ** 2
             (
                 trans_precision,
                 rot_precision,
             ) = get_measurement_precisions_from_covariances(trans_cov, rot_cov)
+            # trans_precision = 100.
+            # rot_precision = 400.
             relative_pose_measurement = PoseMeasurement2D(
                 base_pose=base_pose_name,
                 to_pose=to_pose_name,
@@ -174,14 +206,24 @@ class GoatsParser:
             )
             self.pyfg.add_odom_measurement(0, relative_pose_measurement)
 
+            base_pose_name = to_pose_name
+            prev_pose = curr_pose
+
     def _add_range_measurements(self):
-        range_stddev = 1.0
+        range_precision = 10.0
+        range_stddev = (1.0 / range_precision) ** 0.5
+        range_stddev = 0.75
         for beacon_idx in range(self.num_beacons):
             ranges = self._get_ranges(beacon_idx)
             beacon_name = f"L{beacon_idx}"
             for pose_idx, dist in enumerate(ranges):
-                if np.isnan(dist) or np.isinf(dist) or not np.isreal(dist) or dist < 0:
+                if np.isnan(dist) or np.isinf(dist) or not np.isreal(dist):
                     continue
+
+                if dist < 2.0 or dist > 150.0:
+                    pass
+                    # logger.info(f"Range {dist} is out of bounds for beacon {beacon_idx}")
+                    # continue
 
                 pose_name = f"A{pose_idx}"
                 association = (pose_name, beacon_name)
@@ -231,8 +273,8 @@ class GoatsParser:
 
     @property
     def gt_rotations(self) -> np.ndarray:
-        print(
-            "WARNING: GT rotations are just taken from the corrected"
+        logger.warning(
+            "GT rotations are just taken from the corrected"
             " INS data so are same as orientations used to derive odometry"
         )
         return self.rotations
@@ -316,4 +358,5 @@ if __name__ == "__main__":
         # save the factor graph as a .pkl file
         pyfg_file_path = str(data_file).replace(".csv", ".pkl")
         pyfg._save_to_pickle_format(pyfg_file_path)
-        # pyfg.animate_odometry(show_gt=True)
+        # if dir_num == 14:
+        #     pyfg.plot_ranges()

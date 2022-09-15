@@ -14,7 +14,7 @@ from py_factor_graph.utils.matrix_utils import (
 )
 
 
-@attr.s(frozen=True)
+@attr.s(frozen=False)
 class PoseMeasurement2D:
     """
     An pose measurement
@@ -41,7 +41,7 @@ class PoseMeasurement2D:
     )
 
     @property
-    def rotation_matrix(self):
+    def rotation_matrix(self) -> np.ndarray:
         """
         Get the rotation matrix for the measurement
         """
@@ -53,7 +53,7 @@ class PoseMeasurement2D:
         )
 
     @property
-    def transformation_matrix(self):
+    def transformation_matrix(self) -> np.ndarray:
         """
         Get the transformation matrix
         """
@@ -66,23 +66,23 @@ class PoseMeasurement2D:
         )
 
     @property
-    def translation_vector(self):
+    def translation_vector(self) -> np.ndarray:
         """
         Get the translation vector for the measurement
         """
         return np.array([self.x, self.y])
 
     @property
-    def covariance(self):
+    def covariance(self) -> np.ndarray:
         """
         Get the covariance matrix
         """
-        get_covariance_matrix_from_measurement_precisions(
+        return get_covariance_matrix_from_measurement_precisions(
             self.translation_precision, self.rotation_precision, mat_dim=3
         )
 
 
-@attr.s(frozen=True)
+@attr.s(frozen=False)
 class PoseMeasurement3D:
     """
     An pose measurement
@@ -254,7 +254,7 @@ class AmbiguousPoseMeasurement2D:
         )
 
 
-@attr.s(frozen=True)
+@attr.s(frozen=False)
 class FGRangeMeasurement:
     """A range measurement
 

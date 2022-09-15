@@ -119,6 +119,8 @@ class FactorGraphData:
     x_max: Optional[float] = attr.ib(default=None)
     y_min: Optional[float] = attr.ib(default=None)
     y_max: Optional[float] = attr.ib(default=None)
+    z_min: Optional[float] = attr.ib(default=None)
+    z_max: Optional[float] = attr.ib(default=None)
     max_measure_weight: Optional[float] = attr.ib(default=None)
     min_measure_weight: Optional[float] = attr.ib(default=None)
 
@@ -209,14 +211,12 @@ class FactorGraphData:
         num_odom_measurements = self.num_odom_measurements
         num_range_measurements = self.num_range_measurements
         num_loop_closures = self.num_loop_closures
-        num_interrobot_loop_closures = self.num_interrobot_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
             f"{num_range_measurements} range, {num_loop_closures} loop closures "
-            f"({num_interrobot_loop_closures} interrobot closures) "
-            f"loop closures: {self.interrobot_loop_closure_info}"
+            f"interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
         logger.info(msg)
@@ -279,6 +279,19 @@ class FactorGraphData:
             int: the number of loop closure measurements
         """
         return len(self.loop_closure_measurements)
+
+    @property
+    def odom_precisions(self) -> List[Tuple[float, float]]:
+        """Returns the odometry precisions.
+
+        Returns:
+            List[Tuple[float, float]]: the odometry precisions
+        """
+        precisions = []
+        for odom_chain in self.odom_measurements:
+            for odom in odom_chain:
+                precisions.append((odom.translation_precision, odom.rotation_precision))
+        return precisions
 
     @property
     def num_interrobot_loop_closures(self) -> int:
@@ -571,6 +584,23 @@ class FactorGraphData:
         """
         return len(self.unconnected_variable_names) == 0
 
+    def get_ranges_by_beacon(self) -> List[List[float]]:
+        """Returns the range measurements.
+
+        Returns:
+            List[float]: the range measurements
+        """
+        ranges: List[List[float]] = [[] for _ in range(self.num_landmarks)]
+        for range_measure in self.range_measurements:
+            beacon_key = range_measure.landmark_key
+            if "L" in beacon_key:
+                beacon_idx = int(beacon_key[1:])
+            else:
+                continue
+
+            ranges[beacon_idx].append(range_measure.dist)
+        return ranges
+
     #### Add data
 
     def add_pose_variable(self, pose_var: POSE_VARIABLE_TYPES):
@@ -612,6 +642,12 @@ class FactorGraphData:
         if self.y_max is None or self.y_max < pose_var.true_y:
             self.y_max = pose_var.true_y
 
+        if isinstance(pose_var, PoseVariable3D):
+            if self.z_min is None or self.z_min > pose_var.true_z:
+                self.z_min = pose_var.true_z
+            if self.z_max is None or self.z_max < pose_var.true_z:
+                self.z_max = pose_var.true_z
+
     def add_landmark_variable(self, landmark_var: LANDMARK_VARIABLE_TYPES):
         """Adds a landmark variable to the list of landmark variables.
 
@@ -647,6 +683,12 @@ class FactorGraphData:
             self.y_min = landmark_var.true_y
         if self.y_max is None or self.y_max < landmark_var.true_y:
             self.y_max = landmark_var.true_y
+
+        if isinstance(landmark_var, LandmarkVariable3D):
+            if self.z_min is None or self.z_min > landmark_var.true_z:
+                self.z_min = landmark_var.true_z
+            if self.z_max is None or self.z_max < landmark_var.true_z:
+                self.z_max = landmark_var.true_z
 
     def add_odom_measurement(self, robot_idx: int, odom_meas: POSE_MEASUREMENT_TYPES):
         """Adds an odom measurement to the list of odom measurements.
@@ -1196,6 +1238,44 @@ class FactorGraphData:
             logger.info(f"Saved to {filepath}")
 
     #### plotting functions ####
+
+    def plot_odom_precisions(self) -> None:
+        """
+        Plot the translation and rotation precisions on two separate
+        subplots.
+        """
+        trans_precisions = []
+        rot_precisions = []
+        for odom_chain in self.odom_measurements:
+            for odom_measure in odom_chain:
+                trans_precisions.append(odom_measure.translation_precision)
+                rot_precisions.append(odom_measure.rotation_precision)
+
+        fig, axs = plt.subplots(2, 1, figsize=(10, 10))
+
+        # plot translation precisions on top subplot
+        axs[0].plot(trans_precisions)
+
+        # plot rotation precisions on bottom
+        axs[1].plot(rot_precisions)
+
+        plt.show(block=True)
+
+    def plot_ranges(self) -> None:
+        num_beacons = self.num_landmarks
+        ranges = self.get_ranges_by_beacon()
+        fig, axs = plt.subplots(num_beacons, 1, figsize=(10, 10))
+
+        max_range = 0.0
+        for idx in range(num_beacons):
+            if len(ranges[idx]) > 0:
+                max_range = max(max(ranges[idx]), max_range)
+            axs[idx].plot(ranges[idx])
+
+        for idx in range(num_beacons):
+            axs[idx].set_ylim([0, max_range])
+
+        plt.show(block=True)
 
     def animate_groundtruth(self, pause: float = 0.01) -> None:
         """

@@ -148,7 +148,7 @@ def convert_se3_measurement_line_to_pose_measurement(
     if trans_precision < 0.5 or rot_precision < 0.5:
         err = f"Low precisions! Trans: {trans_precision}, Rot: {rot_precision}"
         C.increment()
-        logger.warning(err + f"low-precision factor {C.count}")
+        logger.warning(err + f" low-precision factor {C.count}")
         # return None
         # raise ValueError(err)
 
@@ -276,5 +276,6 @@ if __name__ == "__main__":
             logger.error(f"Failed parsing file: {file} with error: {e}")
             continue
 
-        fg = parse_pickle_file(pickle_file)
+        # fg.plot_odom_precisions()
+        # fg = parse_pickle_file(pickle_file)
         # fg.print_summary()
