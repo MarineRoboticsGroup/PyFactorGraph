@@ -48,10 +48,10 @@ assert isdir(hat_msg_dir), f"{hat_msg_dir} is not a directory"
 add_types = {}
 
 msg_paths = [p for p in hat_msg_dir.glob("**/*.msg") if is_ros_msg_file(p)]
-for pathstr in msg_paths:
-    msgpath = Path(pathstr)
-    msgdef = msgpath.read_text(encoding="utf-8")
-    add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
+for path_str in msg_paths:
+    msg_path = Path(path_str)
+    msg_def = msg_path.read_text(encoding="utf-8")
+    add_types.update(get_types_from_msg(msg_def, guess_msgtype(msg_path)))
 
 register_types(add_types)
 from rosbags.typesys.types import ros_hat__msg__BeaconData as BeaconData
@@ -480,12 +480,12 @@ class HATParser:
         with Reader(self._bag_path) as reader:
             expected_topics = self._TOPIC_LIST
             connections = [x for x in reader.connections if x.topic in expected_topics]
-            for connection, timestamp, rawdata in reader.messages(
+            for connection, timestamp, raw_data in reader.messages(
                 connections=connections
             ):
                 topic = connection.topic
                 msgtype = connection.msgtype
-                msg = deserialize_cdr(ros1_to_cdr(rawdata, msgtype), msgtype)
+                msg = deserialize_cdr(ros1_to_cdr(raw_data, msgtype), msgtype)
                 self._update_msg_lists(topic, msg, timestamp)
 
         self._fill_factor_graph_from_msg_lists()

@@ -11,6 +11,7 @@ import numpy as np
 import copy
 import itertools
 from attrs import define, field
+from os.path import expanduser, join
 
 from py_factor_graph.variables import (
     PoseVariable2D,
@@ -114,7 +115,7 @@ def _dist_between_variables(
     else:
         raise ValueError(f"Variable {var2} not supported")
 
-    dist = np.linalg.norm(pos1 - pos2)
+    dist = np.linalg.norm(pos1 - pos2).astype(float)
     return dist
 
 
@@ -140,9 +141,15 @@ def add_landmark_at_position(
     new_landmark_name = f"L{new_fg.num_landmarks}"
     new_landmark: LANDMARK_VARIABLE_TYPES
     if dim == 2:
-        new_landmark = LandmarkVariable2D(new_landmark_name, landmark_position)
+        pos2d = (float(landmark_position[0]), float(landmark_position[1]))
+        new_landmark = LandmarkVariable2D(new_landmark_name, pos2d)
     elif dim == 3:
-        new_landmark = LandmarkVariable3D(new_landmark_name, landmark_position)
+        pos3d = (
+            float(landmark_position[0]),
+            float(landmark_position[1]),
+            float(landmark_position[2]),
+        )
+        new_landmark = LandmarkVariable3D(new_landmark_name, pos3d)
     else:
         raise ValueError(f"Dimension {dim} not supported")
     new_fg.add_landmark_variable(new_landmark)
@@ -158,6 +165,7 @@ def add_landmark_at_position(
                 range_measure = range_measurement_model.make_measurement(
                     association, pose_to_landmark_dist, pose.timestamp
                 )
+                # logger.warning(f"True range {pose_to_landmark_dist}, noisy range {range_measure.dist}")
                 new_fg.add_range_measurement(range_measure)
 
     return new_fg
@@ -205,9 +213,20 @@ def add_random_landmarks(
     """
     new_fg = copy.deepcopy(fg)
     for _ in range(num_landmarks):
-        rand_x = np.random.uniform(fg.x_min, fg.x_max)
-        rand_y = np.random.uniform(fg.y_min, fg.y_max)
-        rand_z = np.random.uniform(fg.z_min, fg.z_max)
+
+        x_min = fg.x_min
+        x_max = fg.x_max
+        y_min = fg.y_min
+        y_max = fg.y_max
+        z_min = fg.z_min
+        z_max = fg.z_max
+        assert x_min is not None and x_max is not None
+        assert y_min is not None and y_max is not None
+        assert z_min is not None and z_max is not None
+
+        rand_x = np.random.uniform(x_min, x_max)
+        rand_y = np.random.uniform(y_min, y_max)
+        rand_z = np.random.uniform(z_min, z_max)
 
         if fg.dimension == 2:
             landmark_position = np.array([rand_x, rand_y])
@@ -492,10 +511,16 @@ def make_single_robot_into_multi_via_transform(
         new_translation = get_translation_from_transformation_matrix(new_transform)
         if isinstance(pose, PoseVariable2D):
             new_theta = get_theta_from_transformation_matrix(new_transform)
-            return PoseVariable2D(new_name, new_translation, new_theta, pose.timestamp)
+            pos2d = (float(new_translation[0]), float(new_translation[1]))
+            return PoseVariable2D(new_name, pos2d, new_theta, pose.timestamp)
         elif isinstance(pose, PoseVariable3D):
             new_rot = get_rotation_matrix_from_transformation_matrix(new_transform)
-            return PoseVariable3D(new_name, new_translation, new_rot, pose.timestamp)
+            pos3d = (
+                float(new_translation[0]),
+                float(new_translation[1]),
+                float(new_translation[2]),
+            )
+            return PoseVariable3D(new_name, pos3d, new_rot, pose.timestamp)
         else:
             raise ValueError(f"Invalid pose type: {type(pose)}")
 
@@ -594,111 +619,27 @@ def set_all_precisions(
     return new_fg
 
 
+def perturb_all_odom_measures(
+    fg: FactorGraphData, trans_stddev: float, rot_stddev: float
+) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+
+    for odom_chain in new_fg.odom_measurements:
+        for odom in odom_chain:
+            x_perturb = np.random.normal(0, trans_stddev)
+            y_perturb = np.random.normal(0, trans_stddev)
+            if isinstance(odom, PoseMeasurement2D):
+                theta_perturb = np.random.normal(0, rot_stddev)
+                odom.x = odom.x + x_perturb
+                odom.y = odom.y + y_perturb
+                odom.theta = odom.theta + theta_perturb
+            elif isinstance(odom, PoseMeasurement3D):
+                raise NotImplementedError("3D odometry not implemented")
+            else:
+                raise ValueError(f"Invalid odom type: {type(odom)}")
+
+    return new_fg
+
+
 if __name__ == "__main__":
-    from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
-    import os
-
-    np.random.seed(0)
-
-    def _get_pickle_file_path_in_dir(dir_path: str) -> str:
-        files = os.listdir(dir_path)
-        pickle_files = [f for f in files if f.endswith(".pickle")]
-        assert (
-            len(pickle_files) == 1
-        ), f"Expected 1 pickle file, but got {len(pickle_files)}"
-        pickle_file = pickle_files[0]
-        pickle_file_path = os.path.join(dir_path, pickle_file)
-        return pickle_file_path
-
-    options = [
-        # "cubicle",
-        "garage",
-        "grid",
-        "smallGrid",
-        "sphere2500",
-        # "sphereBigNoise",
-        "tinyGrid",
-        "torus",
-    ]
-    sensing_horizon = {
-        "cubicle": 20.0,
-        "garage": 250.0,
-        "grid": 30.0,
-        "smallGrid": 15.0,
-        "sphere2500": 100.0,
-        "sphereBigNoise": 350.0,
-        "tinyGrid": 15.0,
-        "torus": 12.0,
-    }
-
-    modifications = {
-        1: "split_single_to_multi",
-        2: "split_single_to_multi_with_ranges",
-        3: "add_landmark_at_center",
-        4: "add_landmark_at_center_and_remove_loop_closures",
-        5: "add_random_landmarks",
-    }
-    mod_choice = 4
-    mod = modifications[mod_choice]
-
-    num_random_landmarks = 5
-    range_stddev = 0.75
-    range_prob = 0.2
-    num_robots = 3
-
-    for option in options:
-        # if "sphere" not in option:
-        #     continue
-
-        fg_data_dir = f"/home/alan/data/slam-data-sets/g2o/se_sync_gt/{option}"
-        fg_data_file = _get_pickle_file_path_in_dir(fg_data_dir)
-        new_fg_path = fg_data_file.replace("se_sync_gt", f"se_sync_gt_{mod}")
-
-        if os.path.isfile(new_fg_path):
-            user_skip = "n"
-            while user_skip not in ["y", "n"]:
-                user_skip = input(f"File already exists: {new_fg_path}. Skip? [y/n] ")
-            if user_skip == "y":
-                continue
-
-        range_measurement_model = RangeMeasurementModel(  # type: ignore
-            sensing_horizon[option], range_stddev, range_prob
-        )
-        fg = parse_pickle_file(fg_data_file)
-
-        if mod == "add_landmark_at_center":
-            new_fg = add_landmark_at_trajectory_center(fg, range_measurement_model)
-        elif mod == "split_single_to_multi":
-            new_fg = split_single_robot_into_multi(fg, num_robots=num_robots)
-        elif mod == "split_single_to_multi_with_ranges":
-            new_fg = split_single_robot_into_multi_and_add_ranges(
-                fg, num_robots=num_robots, range_model=range_measurement_model
-            )
-        elif mod == "add_landmark_at_center_and_remove_loop_closures":
-            int_fg = add_landmark_at_trajectory_center(fg, range_measurement_model)
-            # new_fg = reduce_number_of_loop_closures(int_fg, percent_to_keep=0.1)
-            new_fg = remove_loop_closures(int_fg)
-        elif mod == "add_random_landmarks":
-            new_fg = add_random_landmarks(
-                fg,
-                num_landmarks=num_random_landmarks,
-                range_model=range_measurement_model,
-            )
-            new_fg = remove_loop_closures(new_fg)
-        else:
-            raise ValueError(f"Invalid mod: {mod_choice}")
-
-        # new_fg.plot_odom_precisions()
-        odom_precisions = new_fg.odom_precisions
-        min_trans_precision = min(odom_precisions, key=lambda t: t[0])[0]
-        min_rot_precision = min(odom_precisions, key=lambda t: t[1])[1]
-        max_trans_precision = max(odom_precisions, key=lambda t: t[0])[0]
-        max_rot_precision = max(odom_precisions, key=lambda t: t[1])[1]
-        logger.info(
-            f"Min translation precision: {min_trans_precision} Min rot precision: {min_rot_precision}"
-        )
-        logger.info(
-            f"Max translation precision: {max_trans_precision} Max rot precision: {max_rot_precision}"
-        )
-        new_fg.print_summary()
-        new_fg._save_to_pickle_format(new_fg_path)
+    pass

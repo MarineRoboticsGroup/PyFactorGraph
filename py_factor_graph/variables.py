@@ -102,7 +102,8 @@ class PoseVariable2D:
         new_transformation = current_transformation @ T
         new_position = get_translation_from_transformation_matrix(new_transformation)
         new_theta = get_theta_from_transformation_matrix(new_transformation)
-        return PoseVariable2D(self.name, new_position, new_theta, self.timestamp)
+        pos2d = (float(new_position[0]), float(new_position[1]))
+        return PoseVariable2D(self.name, pos2d, new_theta, self.timestamp)
 
 
 @attr.s(frozen=True)
@@ -194,7 +195,8 @@ class PoseVariable3D:
         new_rotation = get_rotation_matrix_from_transformation_matrix(
             new_transformation
         )
-        return PoseVariable3D(self.name, new_position, new_rotation, self.timestamp)
+        pos3d = (float(new_position[0]), float(new_position[1]), float(new_position[2]))
+        return PoseVariable3D(self.name, pos3d, new_rotation, self.timestamp)
 
 
 @attr.s(frozen=True)

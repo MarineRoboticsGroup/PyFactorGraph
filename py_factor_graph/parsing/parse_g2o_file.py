@@ -147,10 +147,7 @@ def convert_se3_measurement_line_to_pose_measurement(
 
     if trans_precision < 0.5 or rot_precision < 0.5:
         err = f"Low precisions! Trans: {trans_precision}, Rot: {rot_precision}"
-        C.increment()
         logger.warning(err + f" low-precision factor {C.count}")
-        # return None
-        # raise ValueError(err)
 
     # form pose measurement
     pose_measurement = PoseMeasurement3D(
@@ -217,65 +214,4 @@ def parse_3d_g2o_file(filepath: str):
 
 
 if __name__ == "__main__":
-    from os.path import join, expanduser, isdir
-    from os import listdir
-    from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
-    from pathlib import Path
-
-    logger.warning(
-        "g2o files do not contain ground truth!! Right now no ground truth implemented"
-    )
-
-    np.set_printoptions(precision=3, suppress=True)
-
-    def _get_list_of_g2o_files(dim: int) -> List[str]:
-        """Gets a list of all the g2o files in the sesync dataset.
-
-        Returns:
-            List[str]: List of paths to the g2o files.
-        """
-        assert dim in [2, 3], f"Dimension must be 2 or 3, not {dim}"
-
-        base_data_dir = Path(
-            expanduser(join("~", "data", "slam-data-sets", "g2o", "se_sync_gt"))
-        )
-        subdirs = [
-            base_data_dir.joinpath(x)
-            for x in listdir(base_data_dir)
-            if isdir(base_data_dir.joinpath(x))
-        ]
-        g2o_files = []
-        for subdir in subdirs:
-            g2o_files += [
-                str(subdir.joinpath(x))
-                for x in listdir(subdir)
-                if x.endswith(".g2o") and not x.startswith(".")
-            ]
-        return g2o_files
-
-    g2o_files = _get_list_of_g2o_files(dim=3)
-    if len(g2o_files) == 0:
-        raise FileNotFoundError("No g2o files found")
-
-    for file in g2o_files:
-
-        pickle_file = file.replace(".g2o", ".pickle")
-        if isfile(pickle_file):
-            use_choice = ""
-            while use_choice not in ["y", "n"]:
-                use_choice = input(f"Use existing pickle file? {pickle_file} [y/n]: ")
-            if use_choice == "y":
-                logger.info(f"Skipping {file}, pickle file already exists")
-                continue
-
-        try:
-            fg = parse_3d_g2o_file(file)
-            fg._save_to_pickle_format(pickle_file)
-            pass
-        except ValueError as e:
-            logger.error(f"Failed parsing file: {file} with error: {e}")
-            continue
-
-        # fg.plot_odom_precisions()
-        # fg = parse_pickle_file(pickle_file)
-        # fg.print_summary()
+    pass

@@ -1113,7 +1113,6 @@ class FactorGraphData:
         pickle_file = open(data_file, "wb")
         pickle.dump(self, pickle_file)
         pickle_file.close()
-        logger.info(f"Saved to {data_file}")
 
     def _save_to_plaza_format(self, data_folder: str) -> None:
         """

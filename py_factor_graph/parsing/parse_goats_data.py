@@ -120,10 +120,11 @@ class GoatsParser:
 
             # if this beacon has no ranges, then we don't add it to the factor
             # graph
-            num_nonnan = np.count_nonzero(~np.isnan(ranges))
-            if num_nonnan < self.dim:
+            num_non_nan = np.count_nonzero(~np.isnan(ranges))
+            if num_non_nan < self.dim:
                 logger.warning(
-                    f"Beacon {idx} has only {num_nonnan}, so it is not added"
+                    f"Beacon {idx} has only {num_non_nan} ranges, so its position "
+                    "is not uniquely defined and it is not added to the factor graph"
                 )
                 continue
 
@@ -162,7 +163,7 @@ class GoatsParser:
     def _row_has_range_measures(self, row: int) -> bool:
         beacon_ranges = (self._get_ranges(idx) for idx in range(self.num_beacons))
         range_data_at_row = np.array([x[row] for x in beacon_ranges])
-        return np.any(~np.isnan(range_data_at_row))
+        return np.any(~np.isnan(range_data_at_row)).astype(bool)
 
     def _add_odometry_measurements(self):
         start_pos = self.positions[0]
@@ -187,6 +188,8 @@ class GoatsParser:
             to_pose_name = f"A{idx}"
             x, y = relative_trans
             theta = get_theta_from_rotation_matrix(relative_rot)
+            # trans_cov = 0.02 ** 2
+            # rot_cov = 0.005 ** 2
             trans_cov = 0.02 ** 2
             rot_cov = 0.002 ** 2
             (
@@ -358,5 +361,3 @@ if __name__ == "__main__":
         # save the factor graph as a .pkl file
         pyfg_file_path = str(data_file).replace(".csv", ".pkl")
         pyfg._save_to_pickle_format(pyfg_file_path)
-        # if dir_num == 14:
-        #     pyfg.plot_ranges()
