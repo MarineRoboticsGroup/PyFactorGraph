@@ -13,4 +13,4 @@ repos:
     rev: v0.910
     hooks:
     -   id: mypy
-        additional_dependencies: [types-attrs==19.1.0]
+        additional_dependencies: [attrs==22.1.0]

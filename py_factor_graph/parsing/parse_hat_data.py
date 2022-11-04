@@ -2,12 +2,13 @@
 from typing import List, Dict, Tuple, Optional, Any
 from queue import Queue
 from os.path import isfile, join, isdir
-from os import listdir
+from os import listdir, remove
 from pathlib import Path
 import numpy as np
 from rosbags.rosbag1 import Reader, Writer
-from rosbags.serde import deserialize_cdr, ros1_to_cdr
+from rosbags.serde import deserialize_cdr, ros1_to_cdr, serialize_cdr, cdr_to_ros1
 from rosbags.typesys import get_types_from_msg, register_types
+from rosbags.typesys.types import std_msgs__msg__String as String
 import pymap3d as pm
 import attr
 
@@ -25,6 +26,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_measurement_precisions_from_covariances,
 )
 from py_factor_graph.parsing.bagmerge import merge_bags
+from py_factor_graph.modifiers import make_beacons_into_robot_trajectory
 
 
 #### Ugly steps to enable the use of custom messages for the rosbags package ####
@@ -138,6 +140,7 @@ class HATParser:
     def __init__(
         self,
         bag_path: str,
+        dimension: int = 2,
     ) -> None:
         """
         Initialize the HATParser.
@@ -147,7 +150,7 @@ class HATParser:
         """
         self._bag_path: str = bag_path
         self._base_lat_lon: Optional[LatLonAlt] = None
-        self._factor_graph = FactorGraphData()
+        self._factor_graph = FactorGraphData(dimension=dimension)
 
         self._beacon_data_msgs: List[BeaconData] = []
         self._diver_gps_msgs: List[DiverGPS] = []
@@ -213,21 +216,25 @@ class HATParser:
         # from this will be wrong because the movement due to the flow field is not
         # in the robot frame
 
-        diver_heading = msg.diver_heading
-
-        diver_course_over_ground = (
+        # convert all directions from geodesic to ENU
+        diver_heading_enu_radians = convert_global_degrees_to_enu_radians(
+            msg.diver_heading
+        )
+        diver_course_over_ground_enu_radians = convert_global_degrees_to_enu_radians(
             msg.diver_cog
-        )  # the direction of the velocity of the diver in the world frame
+        )
+        diver_velocity_direction_wrt_heading = (
+            diver_course_over_ground_enu_radians - diver_heading_enu_radians
+        )
         diver_speed_over_ground = msg.diver_sog  # the speed of the diver (scalar value)
 
-        diver_vel_in_world_frame = diver_speed_over_ground * np.array(
-            [np.cos(diver_course_over_ground), np.sin(diver_course_over_ground)]
+        diver_speed_over_ground = 0.25
+        diver_vel_in_diver_frame = diver_speed_over_ground * np.array(
+            [
+                np.cos(diver_velocity_direction_wrt_heading),
+                np.sin(diver_velocity_direction_wrt_heading),
+            ]
         )
-
-        # transform the velocity into the diver's frame instead of the world frame
-        rot_world_diver = get_rotation_matrix_from_theta(diver_heading)
-        rot_diver_world = rot_world_diver.T
-        diver_vel_in_diver_frame = rot_diver_world @ diver_vel_in_world_frame
         return diver_vel_in_diver_frame
 
     def _convert_latlon_to_enu(self, lat_lon: LatLonAlt) -> ENU:
@@ -320,7 +327,15 @@ class HATParser:
         gps_fix_idx = np.argmin(gps_fix_diff)
         return self._diver_gps_msgs[gps_fix_idx]
 
-    def _add_base_pose_for_vel_msg(self, msg):
+    def _add_base_pose_for_vel_msg(self, msg) -> str:
+        """Adds the base pose corresponding to this velocity message (because the velocity is being used to get odometry)
+
+        Args:
+            msg (DiverVelocity): the estimated velocity of the diver
+
+        Returns:
+            str: the name of the base pose
+        """
         # add the base pose for this velocity message
         base_pose_name = self._get_next_pose_variable_name()
         base_pose_gps_fix = self._get_nearest_gps_fix(msg.time_stamp)
@@ -353,6 +368,9 @@ class HATParser:
         return self._pose_names[nearest_pose_idx]
 
     def _compose_odometry_from_diver_velocity(self):
+        """Iterates over all of the diver velocity messages and adds the
+        corresponding odometry measurements and pose variables to the factor
+        graph"""
         for vel_msg_idx, msg in enumerate(self._diver_velocity_msgs[:-1]):
 
             if vel_msg_idx == 0:
@@ -367,15 +385,15 @@ class HATParser:
             next_msg_heading_enu_rad = convert_global_degrees_to_enu_radians(
                 next_msg.diver_heading
             )
-            delta_heading = cur_msg_heading_enu_rad - next_msg_heading_enu_rad
+            delta_heading = next_msg_heading_enu_rad - cur_msg_heading_enu_rad
 
             # get the change in position
-            delta_time = msg.time_stamp - next_msg.time_stamp
+            delta_time = next_msg.time_stamp - msg.time_stamp
             diver_vel_in_diver_frame = self._get_diver_velocity_in_diver_frame(msg)
             diver_delta_xy = diver_vel_in_diver_frame * delta_time
 
             # make the odometry message
-            translation_variance = 5.0  # this is a lot lower than what Jesse used
+            translation_variance = 10.0  # this is a lot lower than what Jesse used
             rotation_variance = 0.0436 * 2  # it seemed like this value worked for Jesse
             (
                 trans_precision,
@@ -391,11 +409,12 @@ class HATParser:
                 theta=delta_heading,
                 translation_precision=trans_precision,
                 rotation_precision=rot_precision,
-                timestamp=msg.time_stamp,
+                timestamp=float(msg.time_stamp),
             )
 
             # add the odometry measurement to the factor graph
-            self._factor_graph.add_odom_measurement(0, odometry)
+            robot_idx = 0
+            self._factor_graph.add_odom_measurement(robot_idx, odometry)
             base_pose_name = next_pose_name
 
     def _add_range_measurements_from_beacon_data(self):
@@ -491,25 +510,108 @@ class HATParser:
         self._fill_factor_graph_from_msg_lists()
         return self._factor_graph
 
+    def add_terminate_to_end_of_rosbag(self, output_bag_path: str) -> None:
+        """Adds a terminate signal to the end of the rosbag
 
-if __name__ == "__main__":
+        Args:
+            output_bag_path (str): The path to the output rosbag
+        """
 
-    data_dir = "/home/alan/data/hat_data/18AUG2022"
+        if isfile(output_bag_path):
+            print(f"Removing {output_bag_path}")
+            remove(output_bag_path)
 
-    # we want the files in data_dir that end with kayak.bag
+        terminate_topic = "/diver/HNT_trigger"
+        terminate_signal = "terminate"
+        terminate_msg_type = String.__msgtype__
+        with Reader(self._bag_path) as reader, Writer(output_bag_path) as writer:
+            conn_map = {}
+            print(f"Num reader connections: {len(reader.connections)}")
+            for conn in reader.connections:
+                if conn.topic not in conn_map:
+                    conn_map[conn.topic] = writer.add_connection(
+                        topic=conn.topic,
+                        msgtype=conn.msgtype,
+                        msgdef=conn.msgdef,
+                        md5sum=conn.md5sum,
+                    )
+
+            last_timestamp = None
+            for conn, timestamp, raw_data in reader.messages():
+                writer.write(conn_map[conn.topic], timestamp, raw_data)
+                last_timestamp = timestamp
+
+            assert isinstance(last_timestamp, int)
+            terminate_connection = writer.add_connection(
+                terminate_topic, terminate_msg_type
+            )
+
+            terminate_data = serialize_cdr(String(terminate_signal), terminate_msg_type)
+            writer.write(
+                terminate_connection,
+                timestamp=last_timestamp + 1,
+                data=terminate_data,
+            )
+        print(f"Added terminate signal to {output_bag_path}")
+
+    def remove_repeat_initial_packets(self, output_bag_path: str) -> None:
+        if isfile(output_bag_path):
+            print(f"Removing {output_bag_path}")
+            remove(output_bag_path)
+
+        with Reader(self._bag_path) as reader, Writer(output_bag_path) as writer:
+            conn_map = {}
+            print(f"Num reader connections: {len(reader.connections)}")
+            for conn in reader.connections:
+                if conn.topic not in conn_map:
+                    conn_map[conn.topic] = writer.add_connection(
+                        topic=conn.topic,
+                        msgtype=conn.msgtype,
+                        msgdef=conn.msgdef,
+                        md5sum=conn.md5sum,
+                    )
+
+            has_written_initial_packet = False
+            for conn, timestamp, raw_data in reader.messages():
+                if (
+                    conn.topic == "/diver/initial_packet"
+                    and not has_written_initial_packet
+                ):
+                    has_written_initial_packet = True
+                    writer.write(conn_map[conn.topic], timestamp, raw_data)
+                else:
+                    writer.write(conn_map[conn.topic], timestamp, raw_data)
+
+
+def _get_kayak_bag_files_in_dir(data_dir: str) -> List[str]:
+    """Returns a list of kayak bag files in the data directory
+
+    Args:
+        data_dir (str): the path to the data directory
+
+    Returns:
+        List[str]: the list of kayak bag files
+    """
+    assert isdir(data_dir), f"{data_dir} is not a directory"
     bag_files = [
         join(data_dir, f)
         for f in listdir(data_dir)
         if isfile(join(data_dir, f)) and f.endswith("kayak.bag")
     ]
-    experiment = bag_files[0]
+    assert len(bag_files) > 0, f"No kayak bag files found in {data_dir}"
+
+    return bag_files
+
+
+if __name__ == "__main__":
 
     # parse the experiment
+    experiment = "/home/alan/data/hat_data/16OCT2022/2022-10-16-12-14-46_terminate_added_cleaned.bag"
     hat_parser = HATParser(experiment)
-    pyfg = hat_parser.parse_data(experiment)
+    pyfg = hat_parser.parse_data()
 
     # pyfg.animate_groundtruth()
-    pyfg.animate_odometry(show_gt=True)
+    pyfg.animate_odometry(show_gt=True, num_range_measures_shown=3)
 
     # save the PyFG object
     save_filepath = experiment.replace(".bag", "_pyfg.pickle")

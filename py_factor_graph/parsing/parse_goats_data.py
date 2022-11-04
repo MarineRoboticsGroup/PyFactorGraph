@@ -336,17 +336,17 @@ class GoatsParser:
         ].to_numpy()
 
 
+def get_data_and_beacon_files(data_dir: Path):
+    files_in_dir = list(data_dir.glob("*.csv"))
+    assert len(files_in_dir) == 2, "There should be two .csv files in the directory"
+    beacon_loc_file = [x for x in files_in_dir if "beacon" in x.name.lower()][0]
+
+    # the other file is the data file
+    data_file = [x for x in files_in_dir if x != beacon_loc_file][0]
+    return data_file, beacon_loc_file
+
+
 if __name__ == "__main__":
-
-    def get_data_and_beacon_files(data_dir: Path):
-        files_in_dir = list(data_dir.glob("*.csv"))
-        assert len(files_in_dir) == 2, "There should be two .csv files in the directory"
-        beacon_loc_file = [x for x in files_in_dir if "beacon" in x.name.lower()][0]
-
-        # the other file is the data file
-        data_file = [x for x in files_in_dir if x != beacon_loc_file][0]
-        return data_file, beacon_loc_file
-
     goats_dirs = [14, 15, 16]
     for dir_num in goats_dirs:
         data_dir = Path(f"~/data/goats/goats_{dir_num}").expanduser()
@@ -357,7 +357,12 @@ if __name__ == "__main__":
         filter_outlier_ranges = True
         parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)  # type: ignore
         pyfg = parser.pyfg
+        pyfg.print_summary()
 
         # save the factor graph as a .pkl file
         pyfg_file_path = str(data_file).replace(".csv", ".pkl")
-        pyfg._save_to_pickle_format(pyfg_file_path)
+        # pyfg._save_to_pickle_format(pyfg_file_path)
+
+        # save the factor graph as a EFG file
+        efg_file_path = str(data_file).replace(".csv", ".fg")
+        pyfg.save_to_file(efg_file_path)
