@@ -352,7 +352,7 @@ class FactorGraphData:
         return pose_var_dict
 
     @property
-    def landmark_var_dict(self) -> Dict[str, LANDMARK_VARIABLE_TYPES]:
+    def landmark_variables_dict(self) -> Dict[str, LANDMARK_VARIABLE_TYPES]:
         """Returns the landmark variables as a dict.
 
         Returns:
@@ -360,6 +360,19 @@ class FactorGraphData:
         """
         landmark_var_dict = {x.name: x for x in self.landmark_variables}
         return landmark_var_dict
+
+    @property
+    def variable_true_positions_dict(self) -> Dict[str, Tuple]:
+        variable_positions_dict: Dict[str, Tuple] = {}
+        pose_variables_dict = self.pose_variables_dict
+        for pose_name, pose in pose_variables_dict.items():
+            variable_positions_dict[pose_name] = pose.true_position
+
+        landmark_variables_dict = self.landmark_variables_dict
+        for var_name, var in landmark_variables_dict.items():
+            variable_positions_dict[var_name] = var.true_position
+
+        return variable_positions_dict
 
     @property
     def all_variable_names(self) -> List[str]:
@@ -844,14 +857,14 @@ class FactorGraphData:
 
         # check is valid file type
         file_extension = pathlib.Path(filepath).suffix.strip(".")
-        format_options = ["fg", "pickle", "plaza"]
+        format_options = ["fg", "pickle", "plaza", "pkl"]
         assert (
             file_extension in format_options
         ), f"File extension: {file_extension} not available, must be one of {format_options}"
 
         if file_extension == "fg":
             self._save_to_efg_format(filepath)
-        elif file_extension == "pickle":
+        elif file_extension in ["pickle", "pkl"]:
             self._save_to_pickle_format(filepath)
         elif file_extension == "plaza":
             self._save_to_plaza_format(file_dir)
@@ -1377,7 +1390,12 @@ class FactorGraphData:
 
         plt.close()
 
-    def animate_odometry(self, show_gt: bool = False, pause: float = 0.01) -> None:
+    def animate_odometry(
+        self,
+        show_gt: bool = False,
+        pause: float = 0.01,
+        num_range_measures_shown: int = 10,
+    ) -> None:
         """Makes an animation of the odometric chain for every robot
 
         Args:
@@ -1387,7 +1405,7 @@ class FactorGraphData:
         assert self.dimension == 2, "Only 2D data can be animated"
 
         # set up plot
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots()
         assert (
             self.x_min is not None and self.x_max is not None
         ), "x_min and x_max must be set"
@@ -1401,6 +1419,9 @@ class FactorGraphData:
         y_max = self.y_max + 0.1 * abs(self.y_max)
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
+
+        # set axes to be equal
+        ax.set_aspect("equal")
 
         # go ahead and draw the landmarks
         for landmark in self.landmark_variables:
@@ -1427,7 +1448,8 @@ class FactorGraphData:
 
         # for drawing range measurements
         pose_to_range_measures_dict = self.pose_to_range_measures_dict
-        landmark_var_dict = self.landmark_var_dict
+        landmark_var_dict = self.landmark_variables_dict
+        pose_variable_dict = self.pose_variables_dict
         range_measure_objs: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
 
         # iterate over all the poses and visualize each pose chain at each
@@ -1458,7 +1480,7 @@ class FactorGraphData:
 
                     show_ranges = True
                     if show_ranges:
-                        if len(range_measure_objs) > 10:
+                        if len(range_measure_objs) > num_range_measures_shown:
                             line_to_remove, circle_to_remove = range_measure_objs.pop(0)
                             line_to_remove.remove()
                             circle_to_remove.remove()
@@ -1466,14 +1488,22 @@ class FactorGraphData:
                         if pose_name in pose_to_range_measures_dict:
                             range_measures = pose_to_range_measures_dict[pose_name]
                             for range_measure in range_measures:
-                                landmark_var = landmark_var_dict[
-                                    range_measure.landmark_key
+                                to_key = range_measure.landmark_key
+                                to_var: Union[
+                                    LANDMARK_VARIABLE_TYPES, POSE_VARIABLE_TYPES
                                 ]
-                                assert isinstance(landmark_var, LandmarkVariable2D)
-                                assert isinstance(gt_pose, PoseVariable2D)
+                                if to_key in landmark_var_dict:
+                                    to_var = landmark_var_dict[
+                                        range_measure.landmark_key
+                                    ]
+                                    assert isinstance(to_var, LandmarkVariable2D)
+                                else:
+                                    to_var = pose_variable_dict[to_key]
+                                    assert isinstance(to_var, PoseVariable2D)
+
                                 range_measure_objs.append(
                                     draw_range_measurement(
-                                        ax, range_measure, gt_pose, landmark_var
+                                        ax, range_measure, gt_pose, to_var
                                     )
                                 )
 

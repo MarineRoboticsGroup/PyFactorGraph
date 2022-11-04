@@ -198,3 +198,28 @@ def make_variable_name_validator(type: str) -> Callable:
             raise ValueError(f"{value} does not end with a number")
 
     return variable_name_validator
+
+
+def general_variable_name_validator(instance, attribute, value) -> None:
+    """
+    Return validator for variable names. Should be a string of form
+
+    "<Letter><Number>"
+    Poses should not start with 'L' : Poses = "A1", "B27", "C19"
+    Landmarks should start with 'L' : Landmarks = "L1", "L2", "L3"
+
+    Args:
+        value (str): value to validate
+
+    Returns:
+        Callable: validator
+    """
+    if not isinstance(value, str):
+        raise ValueError(f"{value} is not a string")
+
+    first_char = value[0]
+    if not first_char.isalpha() or first_char.islower():
+        raise ValueError(f"{value} does not start with a capital letter")
+
+    if not value[1:].isdigit():
+        raise ValueError(f"{value} does not end with a number")
