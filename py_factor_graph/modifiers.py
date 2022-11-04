@@ -592,6 +592,61 @@ def split_single_robot_into_multi_and_add_ranges(
     return new_fg
 
 
+def make_beacons_into_robot_trajectory(fg: FactorGraphData) -> FactorGraphData:
+    """This is useful for the HAT data, in which the beacons are the estimated
+    (via high accuracy GPS or INS) trajectory of a robot. The beacon locations
+    are converted into poses for a new robot and the beacon measurements are
+    converted into range measurements between the poses. We will just give
+    arbitrary orientation of 0 to the poses.
+
+    Args:
+        fg (FactorGraphData): the factor graph to modify
+
+    Returns:
+        FactorGraphData: a new factor graph with the modified trajectory
+    """
+    assert fg.dimension == 2, "Only 2D trajectories are supported."
+    new_fg = copy.deepcopy(fg)
+    new_robot_idx = new_fg.num_robots
+    new_robot_char = get_robot_char_from_number(new_robot_idx)
+
+    # add the new robot's poses - we set orientation to 0 to make everything easy
+    for beacon_idx, beacon in enumerate(new_fg.landmark_variables):
+        assert isinstance(beacon, LandmarkVariable2D)
+        new_pose_name = f"{new_robot_char}{beacon_idx}"
+        new_pose = PoseVariable2D(new_pose_name, beacon.true_position, 0.0)
+        new_fg.add_pose_variable(new_pose)
+
+    # add the new robot's odometry
+    new_pose_chain = new_fg.pose_variables[new_robot_idx]
+    num_new_poses = len(new_pose_chain)
+    for odom_idx in range(num_new_poses - 1):
+        base_pose = new_pose_chain[odom_idx]
+        to_pose = new_pose_chain[odom_idx + 1]
+        new_odom = PoseMeasurement2D(
+            base_pose.name,
+            to_pose.name,
+            x=to_pose.true_position[0] - base_pose.true_position[0],
+            y=to_pose.true_position[1] - base_pose.true_position[1],
+            theta=0.0,
+            translation_precision=100.0,
+            rotation_precision=1000.0,
+        )
+        new_fg.add_odom_measurement(new_robot_idx, new_odom)
+
+    # switch the range measurements to be between the new robot's poses
+    for range_meas in new_fg.range_measurements:
+        old_base_frame, old_to_frame = range_meas.association
+        new_base_frame = old_base_frame
+        new_to_frame = f"{new_robot_char}{int(old_to_frame[1:])}"
+        range_meas.association = (new_base_frame, new_to_frame)
+
+    # remove the beacons
+    new_fg.landmark_variables = []
+
+    return new_fg
+
+
 def set_all_precisions(
     fg: FactorGraphData,
     trans_precision: float,
