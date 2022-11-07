@@ -90,6 +90,23 @@ def positive_int_tuple_validator(instance, attribute, value) -> None:
         raise ValueError(f"At least one value in {value} is negative")
 
 
+def float_tuple_validator(instance, attribute, value) -> None:
+    """
+    Return validator for float tuple.
+
+    Args:
+        value (tuple): value to validate
+
+    Returns:
+        None
+    """
+    if not isinstance(value, tuple):
+        raise ValueError(f"{value} is not a tuple")
+
+    if not all(isinstance(x, float) for x in value):
+        raise ValueError(f"At least one value in {value} is not a float")
+
+
 def make_rot_matrix_validator(dimension: int) -> Callable:
     """
     Return validator for rotation matrix.
