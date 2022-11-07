@@ -36,6 +36,7 @@ from py_factor_graph.utils.attrib_utils import (
     positive_int_validator,
 )
 import random
+import matplotlib.pyplot as plt
 
 import logging, coloredlogs
 
@@ -66,44 +67,73 @@ class RangePairCalibration:
 
     var1: str = field(validator=make_variable_name_validator("pose"))
     var2: str = field(validator=general_variable_name_validator)
-    bias: float = field(validator=attrs.validators.instance_of((float, int)))
-    covariance: float = field(validator=positive_float_validator)
-    num_measurements: int = field(validator=positive_int_validator)
+    measured_dists: List[float] = field(default=[])
+    true_dists: List[float] = field(default=[])
+
+    def add_measurement(self, measured_dist: float, true_dist: float):
+        """Add a measurement to the calibration.
+
+        Args:
+            measured_dist (float): The measured distance.
+            true_dist (float): The true distance.
+        """
+        self.measured_dists.append(measured_dist)
+        self.true_dists.append(true_dist)
+
+    @property
+    def measurements_vector(self):
+        """Return the measurements as a vector."""
+        return np.array(self.measured_dists)
+
+    @property
+    def true_distances_vector(self):
+        """Return the true distances as a vector."""
+        return np.array(self.true_dists)
+
+    @property
+    def num_measurements(self):
+        """Return the number of measurements."""
+        return len(self.measured_dists)
+
+    @property
+    def bias(self) -> float:
+        """The bias of the range measurement."""
+        return np.mean(self.measured_dists) - np.mean(self.true_dists)
+
+    @property
+    def covariance(self):
+        """The covariance of the range measurement."""
+        measures_np = np.array(self.measured_dists)
+        true_dists_np = np.array(self.true_dists)
+        return np.var(measures_np - true_dists_np)
 
     @property
     def stddev(self):
         return np.sqrt(self.covariance)
 
+    def plot_error_vs_true_distance(self, ax=None, **kwargs):
+        """Plot the error vs true distance.
+
+        Args:
+            ax (matplotlib.axes.Axes, optional): The axes to plot on. Defaults to None.
+            **kwargs: Keyword arguments to pass to the plot
+        """
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        true_dists = self.true_distances_vector
+        measurements = self.measurements_vector
+        ax.scatter(true_dists, measurements - true_dists, **kwargs)
+        ax.set_xlabel("True distance")
+        ax.set_ylabel("Error")
+        ax.set_title(f"{self.var1} - {self.var2}")
+        plt.show(block=True)
+        return ax
+
     def __str__(self):
         """Return a string representation of the calibration."""
         return f"{self.var1} - {self.var2} ({self.num_measurements} measures): {self.bias} +- {self.stddev} stddev"
-
-
-def _get_range_pair_calibrations_from_bias_measurements(
-    bias_list: List[float],
-    var1: str,
-    var2: str,
-) -> RangePairCalibration:
-    """Get the calibration from a list of bias measurements
-
-    Args:
-        bias_list (List[float]): A list of bias measurements
-        var1 (str): The first variable name
-        var2 (str): The second variable name
-
-    Returns:
-        RangePairCalibration: The calibration
-    """
-    bias = np.mean(bias_list).astype(float)
-    covariance = np.var(bias_list).astype(float)
-    num_measurements = len(bias_list)
-    return RangePairCalibration(
-        var1=var1,
-        var2=var2,
-        bias=bias,
-        covariance=covariance,
-        num_measurements=num_measurements,
-    )
 
 
 def get_range_measure_calibrations(
@@ -157,8 +187,9 @@ def get_range_measure_calibrations(
         return true_dist
 
     # for each robot-robot or robot-beacon pair, record the biases measured
-    pair_to_all_biases_maps: Dict[Tuple[str, str], List[float]] = {
-        pair: [] for pair in _get_all_variable_pairs()
+    pair_to_calibration_map: Dict[Tuple[str, str], RangePairCalibration] = {
+        pair: RangePairCalibration(pair[0], pair[1])
+        for pair in _get_all_variable_pairs()
     }
 
     # record the biases measured for each pair
@@ -166,7 +197,6 @@ def get_range_measure_calibrations(
         var1, var2 = range_measure.association
         true_dist = _get_true_distance_between_variables(var1, var2)
         measured_dist = range_measure.dist
-        measured_bias = measured_dist - true_dist
 
         pair1_var = var1[0] + "0"
         if var2.startswith("L"):
@@ -175,15 +205,7 @@ def get_range_measure_calibrations(
             pair2_var = var2[0] + "0"
         var_pair = (pair1_var, pair2_var)
 
-        pair_to_all_biases_maps[var_pair].append(measured_bias)
-
-    # get the calibration for each pair
-    pair_to_calibration_map: Dict[Tuple[str, str], RangePairCalibration] = {
-        pair: _get_range_pair_calibrations_from_bias_measurements(
-            bias_list, pair[0], pair[1]
-        )
-        for pair, bias_list in pair_to_all_biases_maps.items()
-    }
+        pair_to_calibration_map[var_pair].add_measurement(measured_dist, true_dist)
 
     return pair_to_calibration_map
 
@@ -193,17 +215,28 @@ if __name__ == "__main__":
         GoatsParser,
         get_data_and_beacon_files,
     )
+    from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
     from pathlib import Path
+    from py_factor_graph.modifiers import make_beacons_into_robot_trajectory
 
-    dir_num = 16
-    data_dir = Path(f"~/data/goats/goats_{dir_num}").expanduser()
-    data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
+    # dir_num = 16
+    # data_dir = Path(f"~/data/goats/goats_{dir_num}").expanduser()
+    # data_file, beacon_loc_file = get_data_and_beacon_files(data_dir)
+    # dimension = 2
+    # filter_outlier_ranges = True
+    # parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)  # type: ignore
+    # pyfg = parser.pyfg
 
-    dimension = 2
-    filter_outlier_ranges = True
-    parser = GoatsParser(data_file, beacon_loc_file, dimension, filter_outlier_ranges)  # type: ignore
-    pyfg = parser.pyfg
+    hat_experiment = "/home/alan/data/hat_data/16OCT2022/2022-10-16-12-14-46_terminate_added_cleaned_pyfg.pickle"
+    pyfg = parse_pickle_file(hat_experiment)
+    pyfg = make_beacons_into_robot_trajectory(pyfg)
 
     calibrations = get_range_measure_calibrations(pyfg)
-    for cal in calibrations.values():
-        print(cal)
+
+    # get the only robot-robot calibration
+    pair0 = ("A0", "B0")
+    cal = calibrations[pair0]
+    print(cal)
+
+    # plot the error vs true distance
+    cal.plot_error_vs_true_distance()
