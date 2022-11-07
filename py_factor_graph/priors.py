@@ -1,9 +1,14 @@
 import attr
 from typing import List, Tuple, Dict, Optional
 import numpy as np
+from attrs import define, field
+from py_factor_graph.utils.attrib_utils import (
+    make_variable_name_validator,
+    float_tuple_validator,
+)
 
 
-@attr.s(frozen=True)
+@define(frozen=True)
 class PosePrior:
     """A prior on the robot pose
 
@@ -30,7 +35,7 @@ class PosePrior:
         return self.position[1]
 
 
-@attr.s(frozen=True)
+@define(frozen=True)
 class LandmarkPrior:
     """A prior on the landmark
 
@@ -40,6 +45,6 @@ class LandmarkPrior:
         covariance (np.ndarray): the covariance of the prior
     """
 
-    _name: str = attr.ib()
-    _position: Tuple[float, float] = attr.ib()
-    _covariance: np.ndarray = attr.ib()
+    name: str = field(validator=make_variable_name_validator("landmark"))
+    position: Tuple[float, float] = field(validator=float_tuple_validator)
+    covariance: np.ndarray = field(validator=attr.validators.instance_of(np.ndarray))
