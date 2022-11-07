@@ -1,7 +1,7 @@
 # type: ignore
 from typing import List, Dict, Tuple, Optional, Any
 from queue import Queue
-from os.path import isfile, join, isdir
+from os.path import isfile, join, isdir, dirname
 from os import listdir, remove
 from pathlib import Path
 import numpy as np
@@ -17,7 +17,7 @@ from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
 )
-from py_factor_graph.priors import PosePrior, LandmarkPrior
+from py_factor_graph.priors import LandmarkPrior
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
@@ -449,7 +449,7 @@ class HATParser:
             range_measure = FGRangeMeasurement(
                 association=data_association,
                 dist=dist_measured,
-                stddev=1.0,  #! this is a hardcoded value
+                stddev=1.5,  #! this is a hardcoded value
                 timestamp=msg.time_of_fix,
             )
             self._factor_graph.add_range_measurement(range_measure)
@@ -611,8 +611,9 @@ if __name__ == "__main__":
     pyfg = hat_parser.parse_data()
 
     # pyfg.animate_groundtruth()
-    pyfg.animate_odometry(show_gt=True, num_range_measures_shown=3)
+    # pyfg.animate_odometry(show_gt=True, num_range_measures_shown=3)
 
-    # save the PyFG object
-    save_filepath = experiment.replace(".bag", "_pyfg.pickle")
-    # pyfg.save_to_file(save_filepath)
+    file_dir = dirname(experiment)
+    save_filepath = join(file_dir, "factor_graph.pickle")
+
+    pyfg.save_to_file(save_filepath)
