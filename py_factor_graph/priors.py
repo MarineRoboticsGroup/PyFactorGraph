@@ -5,7 +5,9 @@ from attrs import define, field
 from py_factor_graph.utils.attrib_utils import (
     make_variable_name_validator,
     float_tuple_validator,
+    positive_float_validator,
 )
+from py_factor_graph.utils.matrix_utils import get_rotation_matrix_from_theta
 
 
 @define(frozen=True)
@@ -23,7 +25,8 @@ class PosePrior:
     name: str = attr.ib()
     position: Tuple[float, float] = attr.ib()
     theta: float = attr.ib()
-    covariance: np.ndarray = attr.ib()
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    rotation_precision: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(default=None)
 
     @property
@@ -33,6 +36,24 @@ class PosePrior:
     @property
     def y(self):
         return self.position[1]
+
+    @property
+    def translation_vector(self):
+        return np.array([self.x, self.y])
+
+    @property
+    def rotation_matrix(self):
+        return get_rotation_matrix_from_theta(self.theta)
+
+    @property
+    def covariance(self):
+        return np.diag(
+            [
+                1 / self.translation_precision,
+                1 / self.translation_precision,
+                1 / self.rotation_precision,
+            ]
+        )
 
 
 @define(frozen=True)
@@ -47,4 +68,12 @@ class LandmarkPrior:
 
     name: str = field(validator=make_variable_name_validator("landmark"))
     position: Tuple[float, float] = field(validator=float_tuple_validator)
-    covariance: np.ndarray = field(validator=attr.validators.instance_of(np.ndarray))
+    translation_precision: float = field(validator=positive_float_validator)
+
+    @property
+    def translation_vector(self):
+        return np.array(self.position)
+
+    @property
+    def covariance(self):
+        return np.diag([1 / self.translation_precision] * 2)

@@ -98,7 +98,7 @@ class RangePairCalibration:
     @property
     def bias(self) -> float:
         """The bias of the range measurement."""
-        return np.mean(self.measured_dists) - np.mean(self.true_dists)
+        return float(np.mean(self.measured_dists) - np.mean(self.true_dists))
 
     @property
     def covariance(self):

@@ -393,7 +393,7 @@ class HATParser:
             diver_delta_xy = diver_vel_in_diver_frame * delta_time
 
             # make the odometry message
-            translation_variance = 10.0  # this is a lot lower than what Jesse used
+            translation_variance = 5.0  # this is a lot lower than what Jesse used
             rotation_variance = 0.0436 * 2  # it seemed like this value worked for Jesse
             (
                 trans_precision,
@@ -437,9 +437,8 @@ class HATParser:
             self._factor_graph.add_landmark_variable(beacon_var)
 
             # apply a prior on the beacon position
-            beacon_prior = LandmarkPrior(
-                beacon_name, beacon_position, np.eye(2) * msg.beacon_loc_uncertainty
-            )
+            prior_precision = 1.0 / msg.beacon_loc_uncertainty
+            beacon_prior = LandmarkPrior(beacon_name, beacon_position, prior_precision)
             self._factor_graph.add_landmark_prior(beacon_prior)
 
             # add the range measurement
@@ -611,6 +610,8 @@ if __name__ == "__main__":
     pyfg = hat_parser.parse_data()
 
     # pyfg.animate_groundtruth()
+    # from py_factor_graph.modifiers import make_beacons_into_robot_trajectory
+    # pyfg = make_beacons_into_robot_trajectory(pyfg)
     # pyfg.animate_odometry(show_gt=True, num_range_measures_shown=3)
 
     file_dir = dirname(experiment)

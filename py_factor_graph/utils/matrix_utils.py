@@ -8,6 +8,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def get_matrix_determinant(mat: np.ndarray) -> float:
+    """returns the determinant of the matrix
+
+    Args:
+        mat (np.ndarray): [description]
+
+    Returns:
+        float: [description]
+    """
+    _check_square(mat)
+    return float(np.linalg.det(mat))
+
+
 def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
     """
     Rounds a matrix to special orthogonal form.
@@ -261,21 +274,28 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
     return rot_mat
 
 
-def get_quat_from_rotation_matrix(rot: np.ndarray) -> np.ndarray:
+def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
     """Returns the quaternion from a rotation matrix
 
     Args:
-        rot (np.ndarray): the rotation matrix
+        mat (np.ndarray): the rotation matrix
 
     Returns:
         np.ndarray: the quaternion
     """
-    _check_rotation_matrix(rot, assert_test=True)
-    rot = scipy.spatial.transform.Rotation.from_matrix(rot)
+    _check_rotation_matrix(mat)
+    mat_dim = mat.shape[0]
+
+    if mat_dim == 2:
+        rot_matrix = np.eye(3)
+        rot_matrix[:2, :2] = mat
+    else:
+        rot_matrix = mat
+
+    rot = scipy.spatial.transform.Rotation.from_matrix(rot_matrix)
     assert isinstance(rot, scipy.spatial.transform.Rotation)
     quat = rot.as_quat()
     assert isinstance(quat, np.ndarray)
-    assert quat.shape == (4,)
     return quat
 
 
@@ -491,7 +511,9 @@ def _check_is_laplacian(L: np.ndarray):
     assert np.allclose(L @ ones, zeros), f"L @ ones != zeros: {L @ ones}"
 
 
-def _check_transformation_matrix(T: np.ndarray, assert_test: bool = True):
+def _check_transformation_matrix(
+    T: np.ndarray, assert_test: bool = True, dim: Optional[int] = None
+):
     """Checks that the matrix passed in is a homogeneous transformation matrix.
     If assert_test is True, then this is in the form of assertions, otherwise we
     just print out error messages but continue
@@ -502,18 +524,27 @@ def _check_transformation_matrix(T: np.ndarray, assert_test: bool = True):
         asserted or just a 'soft' test and only prints message if test fails. Defaults to True.
     """
     _check_square(T)
-    assert (
-        T.shape[0] == 3
-    ), f"only considering 2d world right now so matrix must be 3x3, received {T.shape}"
+    matrix_dim = T.shape[0]
+    if dim is not None:
+        assert (
+            matrix_dim == dim + 1
+        ), f"matrix dimension {matrix_dim} != dim + 1 {dim + 1}"
+
+    assert matrix_dim in [
+        3,
+        4,
+    ], f"Was {T.shape} but must be 3x3 or 4x4 for a transformation matrix"
 
     # check that is rotation matrix in upper left block
-    R = T[0:2, 0:2]
+    R = T[:-1, :-1]
     _check_rotation_matrix(R, assert_test=assert_test)
 
     # check that the bottom row is [0, 0, 1]
-    bottom = T[2, :]
-    bottom_expected: np.ndarray = np.ndarray([0, 0, 1])
-    assert np.allclose(bottom.flatten(), bottom_expected)
+    bottom = T[-1, :]
+    bottom_expected = np.array([0] * (matrix_dim - 1) + [1])
+    assert np.allclose(
+        bottom.flatten(), bottom_expected
+    ), f"Transformation matrix bottom row is {bottom} but should be {bottom_expected}"
 
 
 def is_diagonal(mat: np.ndarray) -> bool:
@@ -630,3 +661,38 @@ def _matprint_block(mat, fmt="g"):
 
     print(row_spacer)
     print("\n\n\n")
+
+
+def apply_transformation_matrix_perturbation(
+    transformation_matrix,
+    perturb_magnitude: Optional[float],
+    perturb_rotation: Optional[float],
+) -> np.ndarray:
+    """Applies a random SE(2) perturbation to a transformation matrix
+
+    Args:
+        transformation_matrix ([type]): [description]
+        perturb_magnitude (Optional[float]): [description]
+        perturb_rotation (Optional[float]): [description]
+
+    Returns:
+        np.ndarray: [description]
+    """
+    _check_transformation_matrix(transformation_matrix)
+
+    # get the x/y perturbation
+    perturb_direction = np.random.uniform(0, 2 * np.pi)
+    perturb_x = np.cos(perturb_direction) * perturb_magnitude
+    perturb_y = np.sin(perturb_direction) * perturb_magnitude
+
+    # get the rotation perturbation
+    perturb_theta = np.random.choice([-1, 1]) * perturb_rotation
+
+    # compose the perturbation into a transformation matrix
+    rand_trans = np.eye(3)
+    rand_trans[:2, :2] = get_rotation_matrix_from_theta(perturb_theta)
+    rand_trans[:2, 2] = perturb_x, perturb_y
+    _check_transformation_matrix(rand_trans)
+
+    # perturb curr pose
+    return transformation_matrix @ rand_trans
