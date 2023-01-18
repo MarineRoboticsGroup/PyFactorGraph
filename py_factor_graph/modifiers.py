@@ -482,6 +482,71 @@ def add_inter_robot_range_measurements(
     return new_fg
 
 
+def take_first_n_poses(fg: FactorGraphData, n: int) -> FactorGraphData:
+    """Returns a factor graph with only the first n poses. Effectively tries to
+    cut off at a certain timestep without strictly requiring the timesteps be
+    filled.
+
+    If 'n' is greater than the number of poses then the data of the original
+    factor graph is returned (but not the exact same object)
+
+    Args:
+        fg (FactorGraphData): the factor graph to trim
+        n (int): the number of poses to keep
+
+    Returns:
+        FactorGraphData: the trimmed FG
+    """
+    assert isinstance(n, int) and n > 0, "n must be a positive integer"
+    assert isinstance(fg, FactorGraphData), "fg must be a FactorGraphData object"
+
+    new_fg = FactorGraphData(dimension=fg.dimension)
+
+    # add the poses and odometry measurements
+    for robot_idx in range(fg.num_robots):
+        for pose_var in fg.pose_variables[robot_idx][:n]:
+            new_pose_var = copy.deepcopy(pose_var)
+            new_fg.add_pose_variable(new_pose_var)
+
+        # for n poses there are (n-1) odometry measurements
+        for odom_meas in fg.odom_measurements[robot_idx][: n - 1]:
+            new_odom_meas = copy.deepcopy(odom_meas)
+            new_fg.add_odom_measurement(robot_idx, new_odom_meas)
+
+    # add the loop closures
+    new_poses = new_fg.pose_variables_dict
+    for loop_closure in fg.loop_closure_measurements:
+        pose1_name, pose2_name = loop_closure.base_pose, loop_closure.to_pose
+        if pose1_name in new_poses and pose2_name in new_poses:
+            new_loop_closure = copy.deepcopy(loop_closure)
+            new_fg.add_loop_closure(new_loop_closure)
+
+    # add the range measurements and landmarks
+    old_landmarks = fg.landmark_variables_dict
+    for range_meas in fg.range_measurements:
+        pose1_name, var2_name = range_meas.association
+
+        # need to be a little careful here to not add any range measurements to
+        # unwanted poses but to add new beacon variables if necessary.
+        if not new_fg.pose_exists(pose1_name):
+            continue
+
+        # if this is a measurement between two of the new poses then we can
+        # just add it
+        new_range_meas = copy.deepcopy(range_meas)
+        if var2_name in new_poses:
+            new_fg.add_range_measurement(new_range_meas)
+
+        # if this is a measurement between a new pose and an old landmark then
+        # we need to add the landmark to the new factor graph
+        elif var2_name in old_landmarks:
+            new_landmark_var = copy.deepcopy(old_landmarks[var2_name])
+            new_fg.add_landmark_variable(new_landmark_var)
+            new_fg.add_range_measurement(new_range_meas)
+
+    return new_fg
+
+
 def make_single_robot_into_multi_via_transform(
     fg: FactorGraphData, num_robots: int
 ) -> FactorGraphData:
@@ -643,6 +708,7 @@ def make_beacons_into_robot_trajectory(fg: FactorGraphData) -> FactorGraphData:
 
     # remove the beacons
     new_fg.landmark_variables = []
+    new_fg.landmark_priors = []
 
     return new_fg
 

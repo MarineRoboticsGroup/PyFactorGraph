@@ -29,5 +29,5 @@ def parse_pickle_file(filepath: str) -> FactorGraphData:
 
     with open(filepath, "rb") as f:
         data = pickle.load(f)
-        logger.info(f"Loaded factor graph data from {filepath}")
+        logger.debug(f"Loaded factor graph data from {filepath}")
         return data

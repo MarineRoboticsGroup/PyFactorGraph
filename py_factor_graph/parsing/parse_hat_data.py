@@ -2,7 +2,7 @@
 from typing import List, Dict, Tuple, Optional, Any
 from queue import Queue
 from os.path import isfile, join, isdir, dirname
-from os import listdir, remove
+from os import listdir, remove, makedirs
 from pathlib import Path
 import numpy as np
 from rosbags.rosbag1 import Reader, Writer
@@ -448,7 +448,7 @@ class HATParser:
             range_measure = FGRangeMeasurement(
                 association=data_association,
                 dist=dist_measured,
-                stddev=1.5,  #! this is a hardcoded value
+                stddev=2.00,  #! this is a hardcoded value
                 timestamp=msg.time_of_fix,
             )
             self._factor_graph.add_range_measurement(range_measure)
@@ -502,6 +502,8 @@ class HATParser:
                 connections=connections
             ):
                 topic = connection.topic
+                if topic not in expected_topics:
+                    continue
                 msgtype = connection.msgtype
                 msg = deserialize_cdr(ros1_to_cdr(raw_data, msgtype), msgtype)
                 self._update_msg_lists(topic, msg, timestamp)
@@ -582,39 +584,25 @@ class HATParser:
                     writer.write(conn_map[conn.topic], timestamp, raw_data)
 
 
-def _get_kayak_bag_files_in_dir(data_dir: str) -> List[str]:
-    """Returns a list of kayak bag files in the data directory
-
-    Args:
-        data_dir (str): the path to the data directory
-
-    Returns:
-        List[str]: the list of kayak bag files
-    """
-    assert isdir(data_dir), f"{data_dir} is not a directory"
-    bag_files = [
-        join(data_dir, f)
-        for f in listdir(data_dir)
-        if isfile(join(data_dir, f)) and f.endswith("kayak.bag")
+def _get_aug_18_experiments() -> List[str]:
+    data_dir = "/home/alan/data/hat_data/18AUG2022"
+    files = [
+        "2022-08-18-09-43-18_run1_kayak.bag",
+        "2022-08-18-10-26-34_run2_kayak.bag",
+        "2022-08-18-11-09-26_run3_kayak.bag",
+        "2022-08-18-12-09-32_run4_kayak.bag",
+        "2022-08-18-13-08-35_run5_kayak.bag",
     ]
-    assert len(bag_files) > 0, f"No kayak bag files found in {data_dir}"
-
-    return bag_files
+    return [join(data_dir, f) for f in files]
 
 
 if __name__ == "__main__":
 
     # parse the experiment
     experiment = "/home/alan/data/hat_data/16OCT2022/2022-10-16-12-14-46_terminate_added_cleaned.bag"
-    hat_parser = HATParser(experiment)
-    pyfg = hat_parser.parse_data()
 
-    # pyfg.animate_groundtruth()
-    # from py_factor_graph.modifiers import make_beacons_into_robot_trajectory
-    # pyfg = make_beacons_into_robot_trajectory(pyfg)
-    # pyfg.animate_odometry(show_gt=True, num_range_measures_shown=3)
-
-    file_dir = dirname(experiment)
-    save_filepath = join(file_dir, "factor_graph.pickle")
-
-    pyfg.save_to_file(save_filepath)
+    for experiment in _get_aug_18_experiments():
+        hat_parser = HATParser(experiment)
+        pyfg = hat_parser.parse_data()
+        save_filepath = experiment.replace(".bag", "_pyfg.pickle")
+        pyfg.save_to_file(save_filepath)

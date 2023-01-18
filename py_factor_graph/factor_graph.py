@@ -203,7 +203,7 @@ class FactorGraphData:
 
         return len(self.pose_variables[robot_idx])
 
-    def print_summary(self) -> None:
+    def print_summary(self) -> str:
         """Prints a summary of the factor graph data."""
         num_robots = self.num_robots
         num_poses = self.num_poses
@@ -219,7 +219,8 @@ class FactorGraphData:
             f"interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
-        logger.info(msg)
+        print(msg)
+        return msg
 
     @property
     def num_robots(self) -> int:
@@ -871,7 +872,7 @@ class FactorGraphData:
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
-        logger.info(f"Saved data to {filepath}")
+        logger.debug(f"Saved data to {filepath}")
 
     def _save_to_efg_format(
         self,
@@ -1231,7 +1232,7 @@ class FactorGraphData:
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
 
-        logger.info(f"Writing ground truth to TUM format in {data_dir}")
+        logger.debug(f"Writing ground truth to TUM format in {data_dir}")
         for i, pose_chain in enumerate(self.pose_variables):
             filename = "gt_traj_" + chr(ord("A") + i) + ".tum"
             filepath = os.path.join(data_dir, filename)
@@ -1247,7 +1248,7 @@ class FactorGraphData:
                 )
 
             fw.close()
-            logger.info(f"Saved to {filepath}")
+            logger.debug(f"Saved to {filepath}")
 
     #### plotting functions ####
 

@@ -63,6 +63,7 @@ class SolverResults:
     total_time: float = attr.ib()
     solved: bool = attr.ib()
     pose_chain_names: Optional[list] = attr.ib(default=None)  # Default [[str]]
+    solver_cost: Optional[float] = attr.ib(default=None)
 
     @property
     def poses(self):
@@ -99,9 +100,10 @@ def save_results_to_file(
     Saves the results to a file
 
     Args:
-        result (Drake Results): the result of the solution
-        solved_results (Dict[str, Dict[str, np.ndarray]]): the solved values of the variables
-        filepath (str): the path to save the results to
+        solved_results: The results of the solver
+        solved_cost: The cost of the solved results
+        solve_success: Whether the solver was successful
+        filepath: The path to save the results to
     """
     data_dir = dirname(filepath)
     if not isdir(data_dir):
@@ -161,7 +163,7 @@ def save_results_to_file(
             f"The file extension {filepath.split('.')[-1]} is not supported. "
         )
 
-    logger.info(f"Results saved to: {filepath}\n")
+    logger.debug(f"Results saved to: {filepath}\n")
 
 
 def save_to_tum(
