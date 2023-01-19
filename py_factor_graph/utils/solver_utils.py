@@ -29,32 +29,35 @@ class VariableValues:
     distances: Optional[Dict[Tuple[str, str], np.ndarray]] = attr.ib(default=None)
 
     @property
-    def rotations_theta(self):
+    def rotations_theta(self) -> Dict[str, float]:
         return {
             key: get_theta_from_transformation_matrix(value)
             for key, value in self.poses.items()
         }
 
     @property
-    def rotations_matrix(self):
+    def rotations_matrix(self) -> Dict[str, np.ndarray]:
         return {
             key: get_rotation_matrix_from_transformation_matrix(value)
             for key, value in self.poses.items()
         }
 
     @property
-    def rotations_quat(self):
+    def rotations_quat(self) -> Dict[str, np.ndarray]:
         return {
             key: get_quat_from_rotation_matrix(value)
             for key, value in self.rotations_matrix.items()
         }
 
     @property
-    def translations(self):
-        return {
+    def translations(self) -> Dict[str, np.ndarray]:
+        trans_vals = {
             key: get_translation_from_transformation_matrix(value)
             for key, value in self.poses.items()
         }
+        landmark_trans_vals = {key: value for key, value in self.landmarks.items()}
+        trans_vals.update(landmark_trans_vals)
+        return trans_vals
 
 
 @attr.s(frozen=True)
