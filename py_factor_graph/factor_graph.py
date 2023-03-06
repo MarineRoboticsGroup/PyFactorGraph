@@ -26,7 +26,12 @@ from py_factor_graph.measurements import (
     AmbiguousFGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
 )
-from py_factor_graph.priors import PosePrior, LandmarkPrior
+from py_factor_graph.priors import (
+    PosePrior2D,
+    LandmarkPrior2D,
+    LandmarkPrior3D,
+    PosePrior3D,
+)
 from py_factor_graph.utils.name_utils import (
     get_robot_char_from_number,
     get_robot_idx_from_frame_name,
@@ -80,8 +85,8 @@ class FactorGraphData:
         range_measurements (List[FGRangeMeasurement]): the range measurements
         ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
         of ambiguous range measurements.
-        pose_priors (List[PosePrior]): the pose priors
-        landmark_priors (List[LandmarkPrior]): the landmark priors
+        pose_priors (List[PosePrior2D]): the pose priors
+        landmark_priors (List[LandmarkPrior2D]): the landmark priors
         dimension (int): the dimension of the factor graph (e.g. 3 for 3D)
 
     Raises:
@@ -111,8 +116,10 @@ class FactorGraphData:
     )
 
     # priors
-    pose_priors: List[PosePrior] = attr.ib(factory=list)
-    landmark_priors: List[LandmarkPrior] = attr.ib(factory=list)
+    pose_priors: List[Union[PosePrior2D, PosePrior3D]] = attr.ib(factory=list)
+    landmark_priors: List[Union[LandmarkPrior2D, LandmarkPrior3D]] = attr.ib(
+        factory=list
+    )
 
     # useful helper values
     x_min: Optional[float] = attr.ib(default=None)
@@ -340,6 +347,24 @@ class FactorGraphData:
         return len(self.range_measurements)
 
     @property
+    def num_landmark_priors(self) -> int:
+        """Returns the number of landmark priors.
+
+        Returns:
+            int: the number of landmark priors
+        """
+        return len(self.landmark_priors)
+
+    @property
+    def num_pose_priors(self) -> int:
+        """Returns the number of pose priors.
+
+        Returns:
+            int: the number of pose priors
+        """
+        return len(self.pose_priors)
+
+    @property
     def pose_variables_dict(self) -> Dict[str, POSE_VARIABLE_TYPES]:
         """Returns the pose variables as a dict.
 
@@ -478,7 +503,7 @@ class FactorGraphData:
             List[List[np.ndarray]]: the trajectories for each robot obtained from the odometry measurements
         """
         start_poses = [np.eye(self.dimension + 1) for _ in range(self.num_robots)]
-        odom_traj = [start_poses]
+        odom_traj = [[pose] for pose in start_poses]
         for robot_idx, odom_chain in enumerate(self.odom_measurements):
             for odom in odom_chain:
                 curr_pose = odom_traj[robot_idx][-1]
@@ -537,6 +562,19 @@ class FactorGraphData:
                 measures_dict[associated_pose] = []
             measures_dict[associated_pose].append(measure)
         return measures_dict
+
+    @property
+    def has_priors(self) -> bool:
+        """Returns True if the factor graph has priors, and False otherwise.
+
+        Args:
+            fg (FactorGraphData): the factor graph data describing the problem
+
+        Returns:
+            bool: True if the factor graph has priors, and False otherwise
+        """
+        has_priors = len(self.pose_priors) > 0 or len(self.landmark_priors) > 0
+        return has_priors
 
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
@@ -814,25 +852,33 @@ class FactorGraphData:
         """
         self.ambiguous_range_measurements.append(measure)
 
-    def add_pose_prior(self, pose_prior: PosePrior):
+    def add_pose_prior(self, pose_prior: PosePrior2D):
         """Adds a pose prior to the list of pose priors.
 
         Args:
-            pose_prior (PosePrior): the pose prior to add
+            pose_prior (PosePrior2D): the pose prior to add
         """
         self.pose_priors.append(pose_prior)
 
-    def add_landmark_prior(self, landmark_prior: LandmarkPrior):
+    def add_landmark_prior(
+        self, landmark_prior: Union[LandmarkPrior2D, LandmarkPrior3D]
+    ):
         """Adds a landmark prior to the list of landmark priors.
 
         Args:
-            landmark_prior (LandmarkPrior): the landmark prior to add
+            landmark_prior (LandmarkPrior2D): the landmark prior to add
         """
+        if self.dimension == 2:
+            assert isinstance(landmark_prior, LandmarkPrior2D)
+        elif self.dimension == 3:
+            assert isinstance(landmark_prior, LandmarkPrior3D)
+        else:
+            raise ValueError("Invalid dimension: {}".format(self.dimension))
         self.landmark_priors.append(landmark_prior)
 
     #### Get pose chain variable names
 
-    def get_pose_chain_names(self):
+    def get_pose_chain_names(self) -> List[List[str]]:
         """Returns the pose chain variable names.
 
         Returns:
@@ -872,7 +918,7 @@ class FactorGraphData:
         else:
             raise ValueError(f"Unknown format: {file_extension}")
 
-        logger.debug(f"Saved data to {filepath}")
+        logger.info(f"Saved data to {filepath}")
 
     def _save_to_efg_format(
         self,
@@ -988,7 +1034,7 @@ class FactorGraphData:
             line += f"{frame} {beacon.true_x:.15f} {beacon.true_y:.15f}\n"
             return line
 
-        def get_prior_to_pin_string(prior: PosePrior) -> str:
+        def get_prior_to_pin_string(prior: PosePrior2D) -> str:
             """this is the prior on the first pose to 'pin' the factor graph.
 
             Returns:
@@ -1084,6 +1130,9 @@ class FactorGraphData:
             file_writer.write(line)
 
         for prior in self.pose_priors:
+            assert isinstance(
+                prior, PosePrior2D
+            ), "3D priors not supported yet for efg format"
             line = get_prior_to_pin_string(prior)
             file_writer.write(line)
 
@@ -1222,7 +1271,7 @@ class FactorGraphData:
         save_TD_plaza()
         return
 
-    def write_pose_gt_to_tum(self, data_dir: str) -> None:
+    def write_pose_gt_to_tum(self, data_dir: str) -> List[str]:
         """
         Write ground truth to TUM format.
 
@@ -1233,6 +1282,7 @@ class FactorGraphData:
             os.makedirs(data_dir)
 
         logger.debug(f"Writing ground truth to TUM format in {data_dir}")
+        gt_files = []
         for i, pose_chain in enumerate(self.pose_variables):
             filename = "gt_traj_" + chr(ord("A") + i) + ".tum"
             filepath = os.path.join(data_dir, filename)
@@ -1248,7 +1298,10 @@ class FactorGraphData:
                 )
 
             fw.close()
-            logger.debug(f"Saved to {filepath}")
+            logger.info(f"Saved to {filepath}")
+            gt_files.append(filepath)
+
+        return gt_files
 
     #### plotting functions ####
 

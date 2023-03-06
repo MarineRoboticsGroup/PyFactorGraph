@@ -8,7 +8,12 @@ from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
 )
-from py_factor_graph.priors import PosePrior, LandmarkPrior
+from py_factor_graph.priors import (
+    PosePrior2D,
+    PosePrior3D,
+    LandmarkPrior2D,
+    LandmarkPrior3D,
+)
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
@@ -32,9 +37,15 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
 
     Returns:
         FactorGraphData: The factor graph data.
+
+    Raises:
+        ValueError: If the file does not end with .fg.
+        ValueError: If the file does not exist.
     """
-    assert isfile(filepath), f"{filepath} is not a file"
-    assert filepath.endswith(".fg"), f"{filepath} is not an efg file"
+    if not isfile(filepath):
+        raise ValueError(f"File {filepath} does not exist.")
+    if not filepath.endswith(".fg"):
+        raise ValueError(f"File {filepath} does not end with .fg.")
 
     pose_var_header = "Variable Pose SE2"
     landmark_var_header = "Variable Landmark R2"
@@ -122,7 +133,15 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 theta = float(line_items[5])
                 covar_list = [float(x) for x in line_items[7:]]
                 covar = get_covariance_matrix_from_list(covar_list)
-                pose_prior = PosePrior(pose_name, (x, y), theta, covar)
+                (
+                    translation_precision,
+                    rotation_precision,
+                ) = get_measurement_precisions_from_covariance_matrix(
+                    covar, matrix_dim=3
+                )
+                pose_prior = PosePrior2D(
+                    pose_name, (x, y), theta, translation_precision, rotation_precision
+                )
                 new_fg_data.add_pose_prior(pose_prior)
 
             elif line.startswith(landmark_prior_header):

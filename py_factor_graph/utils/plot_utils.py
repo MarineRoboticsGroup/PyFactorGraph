@@ -1,9 +1,16 @@
 import numpy as np
 import math
+import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional, List
+from evo.tools import file_interface, plot as evoplot
+from py_factor_graph.utils.solver_utils import (
+    SolverResults,
+    VariableValues,
+    save_to_tum,
+)
 from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.utils.matrix_utils import get_theta_from_rotation_matrix
@@ -141,3 +148,52 @@ def draw_range_measurement(
     # arrow = draw_landmark_variable(ax, to_landmark)
 
     return line, circle
+
+
+def visualize_solution(
+    solution: SolverResults,
+    gt_files: Optional[List[str]] = None,
+    name: str = "estimate",
+) -> None:
+    """Visualizes the solution.
+
+    Args:
+        solution (SolverResults): the solution.
+        gt_traj (str): the path to the groundtruth trajectory.
+    """
+    # save the solution to a temporary .tum file
+    temp_file = f"/tmp/{name}.tum"
+    soln_tum_files = save_to_tum(solution, temp_file)
+    assert gt_files is None or len(gt_files) == len(
+        soln_tum_files
+    ), f"gt_files: {gt_files}, soln_tum_files: {soln_tum_files}"
+
+    def _get_filename_without_extension(filepath: str) -> str:
+        return os.path.splitext(os.path.basename(filepath))[0]
+
+    traj_by_label = {}
+    for file_idx in range(len(soln_tum_files)):
+        file = soln_tum_files[file_idx]
+        traj_est = file_interface.read_tum_trajectory_file(file)
+
+        from os.path import join
+
+        if gt_files is not None:
+            gt_traj_path = gt_files[file_idx]
+            gt_traj = file_interface.read_tum_trajectory_file(gt_traj_path)
+
+            # get the traj label from the filename without extension
+            traj_label = _get_filename_without_extension(gt_traj_path)
+            traj_by_label[traj_label] = gt_traj
+
+            # align the estimated trajectory to the groundtruth
+            traj_est.align(gt_traj)
+
+        label_letter = _get_filename_without_extension(file)[-1]
+        label = f"{name}_{label_letter}"
+        traj_by_label[label] = traj_est
+
+    fig = plt.figure()
+    plot_mode = evoplot.PlotMode.xy
+    evoplot.trajectories(fig, traj_by_label, plot_mode=plot_mode)
+    plt.show()

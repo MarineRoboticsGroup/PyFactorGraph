@@ -35,6 +35,9 @@ def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
     _check_rotation_matrix(mat, assert_test=False)
     S, D, Vh = la.svd(mat)
     R_so = S @ Vh
+    if np.linalg.det(R_so) < 0:
+        Vh[-1, :] *= -1
+        R_so = S @ Vh
     _check_rotation_matrix(R_so, assert_test=True)
     return R_so
 

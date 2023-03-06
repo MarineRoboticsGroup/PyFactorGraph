@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 import pickle
 from os.path import isfile, dirname, isdir
 from os import makedirs
@@ -17,16 +17,37 @@ from py_factor_graph.utils.matrix_utils import (
 )
 
 
-def _check_poses(self, attribute, value: Dict[str, np.ndarray]):
-    for pose in value.values():
-        _check_transformation_matrix(pose)
-
-
 @attr.s(frozen=True)
 class VariableValues:
-    poses: Dict[str, np.ndarray] = attr.ib(validator=_check_poses)
+    dim: int = attr.ib(validator=attr.validators.instance_of(int))
+    poses: Dict[str, np.ndarray] = attr.ib()
     landmarks: Dict[str, np.ndarray] = attr.ib()
     distances: Optional[Dict[Tuple[str, str], np.ndarray]] = attr.ib(default=None)
+
+    @dim.validator
+    def _check_dim(self, attribute, value: int):
+        assert value in (2, 3)
+
+    @poses.validator
+    def _check_poses(self, attribute, value: Dict[str, np.ndarray]):
+        for pose in value.values():
+            _check_transformation_matrix(pose, dim=self.dim)
+
+    @landmarks.validator
+    def _check_landmarks(self, attribute, value: Dict[str, np.ndarray]):
+        for landmark in value.values():
+            assert landmark.shape == (self.dim,)
+
+    @distances.validator
+    def _check_distances(
+        self, attribute, value: Optional[Dict[Tuple[str, str], np.ndarray]]
+    ):
+        if value is not None:
+            for distance in value.values():
+                assert distance.shape in [
+                    (1,),
+                    (self.dim,),
+                ], f"Expected shape ({self.dim},) or (1,) but got {distance.shape} for distance"
 
     @property
     def rotations_theta(self) -> Dict[str, float]:
@@ -67,6 +88,10 @@ class SolverResults:
     solved: bool = attr.ib()
     pose_chain_names: Optional[list] = attr.ib(default=None)  # Default [[str]]
     solver_cost: Optional[float] = attr.ib(default=None)
+
+    @property
+    def dim(self) -> int:
+        return self.variables.dim
 
     @property
     def poses(self):
@@ -171,7 +196,7 @@ def save_results_to_file(
 
 def save_to_tum(
     solved_results: SolverResults, filepath: str, strip_extension: bool = False
-):
+) -> List[str]:
     """Saves a given set of solver results to a number of TUM files, with one
     for each pose chain in the results.
 
@@ -182,18 +207,24 @@ def save_to_tum(
         strip_extension (bool, optional): Whether to strip the file extension
         and replace with ".tum". This should be set to true if the file
         extension is not already ".tum". Defaults to False.
+
+    Returns:
+        List[str]: The list of filepaths that the results were saved to.
     """
     assert (
         solved_results.pose_chain_names is not None
     ), "Pose_chain_names must be provided for multi robot trajectories"
+    acceptable_pose_chain_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".replace("L", "")
     # TODO: Add support for exporting without pose_chain_names
+
+    save_files = []
     for pose_chain in solved_results.pose_chain_names:
         if len(pose_chain) == 0:
             continue
         pose_chain_letter = pose_chain[0][0]  # Get first letter of first pose in chain
         assert (
-            pose_chain_letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        ), "Pose chain letter must be uppercase letter"
+            pose_chain_letter in acceptable_pose_chain_letters
+        ), "Pose chain letter must be uppercase letter and not L"
 
         # Removes extension from filepath to add tum extension
         if strip_extension:
@@ -225,6 +256,11 @@ def save_to_tum(
                 qx, qy, qz, qw = quat_solve
                 # TODO: Add actual timestamps
                 f.write(f"{i} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
+
+        logger.info(f"Wrote: {modified_path}")
+        save_files.append(modified_path)
+
+    return save_files
 
 
 def load_custom_init_file(file_path: str) -> VariableValues:

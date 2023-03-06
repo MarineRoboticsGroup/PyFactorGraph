@@ -200,7 +200,12 @@ def make_variable_name_validator(type: str) -> Callable:
         if not isinstance(value, str):
             raise ValueError(f"{value} is not a string")
 
+        # allow exception for declaring an "origin" pose
+        if type == "pose" and value == "origin":
+            return
+
         first_char = value[0]
+
         if type == "pose" and first_char == "L":
             raise ValueError(f"{value} starts with L - reserved for landmarks")
         elif type == "landmark" and first_char != "L":

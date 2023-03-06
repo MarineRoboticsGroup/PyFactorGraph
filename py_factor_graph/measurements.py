@@ -83,6 +83,59 @@ class PoseMeasurement2D:
 
 
 @attr.s(frozen=False)
+class PoseToLandmarkMeasurement2D:
+    pose_name: str = attr.ib(validator=make_variable_name_validator("pose"))
+    landmark_name: str = attr.ib(validator=make_variable_name_validator("landmark"))
+    x: float = attr.ib(validator=attr.validators.instance_of(float))
+    y: float = attr.ib(validator=attr.validators.instance_of(float))
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    timestamp: Optional[float] = attr.ib(
+        default=None, validator=optional_float_validator
+    )
+
+    @property
+    def translation_vector(self) -> np.ndarray:
+        """
+        Get the translation vector for the measurement
+        """
+        return np.array([self.x, self.y])
+
+    @property
+    def covariance(self) -> np.ndarray:
+        """
+        Get the covariance matrix
+        """
+        return np.diag([1 / self.translation_precision] * 2)
+
+
+@attr.s(frozen=False)
+class PoseToLandmarkMeasurement3D:
+    pose_name: str = attr.ib(validator=make_variable_name_validator("pose"))
+    landmark_name: str = attr.ib(validator=make_variable_name_validator("landmark"))
+    x: float = attr.ib(validator=attr.validators.instance_of(float))
+    y: float = attr.ib(validator=attr.validators.instance_of(float))
+    z: float = attr.ib(validator=attr.validators.instance_of(float))
+    translation_precision: float = attr.ib(validator=positive_float_validator)
+    timestamp: Optional[float] = attr.ib(
+        default=None, validator=optional_float_validator
+    )
+
+    @property
+    def translation_vector(self) -> np.ndarray:
+        """
+        Get the translation vector for the measurement
+        """
+        return np.array([self.x, self.y, self.z])
+
+    @property
+    def covariance(self) -> np.ndarray:
+        """
+        Get the covariance matrix
+        """
+        return np.diag([1 / self.translation_precision] * 3)
+
+
+@attr.s(frozen=False)
 class PoseMeasurement3D:
     """
     An pose measurement
@@ -388,3 +441,6 @@ class AmbiguousFGRangeMeasurement:
 
 
 POSE_MEASUREMENT_TYPES = Union[PoseMeasurement2D, PoseMeasurement3D]
+POSE_TO_LANDMARK_MEASUREMENT_TYPES = Union[
+    PoseToLandmarkMeasurement2D, PoseToLandmarkMeasurement2D
+]
