@@ -131,6 +131,10 @@ class LandmarkPrior2D:
     def covariance_matrix(self):
         return np.diag([1 / self.translation_precision] * 2)
 
+    @property
+    def covariance(self):
+        return self.covariance_matrix
+
 
 @define(frozen=True)
 class LandmarkPrior3D:

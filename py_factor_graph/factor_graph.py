@@ -9,6 +9,11 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 
 from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
+from py_factor_graph.utils.matrix_utils import (
+    get_translation_from_transformation_matrix,
+    get_rotation_matrix_from_transformation_matrix,
+    get_quat_from_rotation_matrix,
+)
 
 from py_factor_graph.variables import (
     PoseVariable2D,
@@ -1277,6 +1282,9 @@ class FactorGraphData:
 
         Args:
             data_dir (str): the base folder to write the files to
+
+        Returns:
+            List[str]: the list of file paths written
         """
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
@@ -1302,6 +1310,59 @@ class FactorGraphData:
             gt_files.append(filepath)
 
         return gt_files
+
+    def write_pose_odom_to_tum(self, data_dir: str) -> List[str]:
+        """Write odometry to TUM format.
+
+        Args:
+            data_dir (str): the base folder to write the files to
+
+        Returns:
+            List[str]: the list of file paths written
+        """
+        logger.debug(f"Writing odometry to TUM format in {data_dir}")
+        odom_files = []
+        for i, odom_chain in enumerate(self.odom_measurements):
+            filename = "odom_traj_" + chr(ord("A") + i) + ".tum"
+            filepath = os.path.join(data_dir, filename)
+            fw = open(filepath, "w")
+
+            start_pose = self.pose_variables[i][0].transformation_matrix
+            start_timestamp = (
+                self.pose_variables[i][0].timestamp
+                if self.pose_variables[i][0].timestamp is not None
+                else 0
+            )
+            x, y, z = get_translation_from_transformation_matrix(start_pose)
+            rot = get_rotation_matrix_from_transformation_matrix(start_pose)
+            qx, qy, qz, qw = get_quat_from_rotation_matrix(rot)
+            fw.write(f"{start_timestamp} " f"{x} {y} {z} " f"{qx} {qy} {qz} {qw}\n")
+
+            cur_pose = start_pose
+            for odom_idx, odom in enumerate(odom_chain):
+                odom_mat = odom.transformation_matrix
+                cur_pose = cur_pose @ odom_mat
+
+                cur_x, cur_y, cur_z = get_translation_from_transformation_matrix(
+                    cur_pose
+                )
+                cur_rot = get_rotation_matrix_from_transformation_matrix(cur_pose)
+                cur_qx, cur_qy, cur_qz, cur_qw = get_quat_from_rotation_matrix(cur_rot)
+
+                timestamp = (
+                    odom.timestamp if odom.timestamp is not None else (odom_idx + 1)
+                )
+                fw.write(
+                    f"{timestamp} "
+                    f"{cur_x} {cur_y} {cur_z} "
+                    f"{cur_qx} {cur_qy} {cur_qz} {cur_qw}\n"
+                )
+
+            fw.close()
+            logger.info(f"Saved to {filepath}")
+            odom_files.append(filepath)
+
+        return odom_files
 
     #### plotting functions ####
 
