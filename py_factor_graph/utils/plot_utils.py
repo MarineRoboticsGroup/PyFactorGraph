@@ -149,11 +149,14 @@ def draw_range_measurement(
 
     return line, circle
 
-
 def visualize_solution(
     solution: SolverResults,
     gt_files: Optional[List[str]] = None,
     name: str = "estimate",
+    xlim: Optional[Tuple[float, float]] = None,
+    ylim: Optional[Tuple[float, float]] = None,
+    save_path: Optional[str] = None,
+    show: bool = True,
 ) -> None:
     """Visualizes the solution.
 
@@ -195,5 +198,34 @@ def visualize_solution(
 
     fig = plt.figure()
     plot_mode = evoplot.PlotMode.xy
+    # turn off the background grid and legend
     evoplot.trajectories(fig, traj_by_label, plot_mode=plot_mode)
-    plt.show()
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    # hide the legend
+    plt.gca().get_legend().remove()
+
+    # hide the grid
+    plt.grid(False)
+
+    # set the background to white
+    plt.gca().set_facecolor("white")
+
+    # set the background to transparent
+    background_transparent = True
+
+    if save_path is not None:
+        if not os.path.isdir(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+
+        # save at a higher resolution
+        plt.savefig(save_path, transparent=background_transparent, bbox_inches="tight", dpi=300)
+        print(f"Saved plot to {save_path}")
+    
+    if show:
+        plt.show()
+
+    plt.close(fig)
