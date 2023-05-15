@@ -157,8 +157,23 @@ def _add_odometry_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
         fg.add_odom_measurement(robot_idx=0, odom_meas=odom_measure)
 
 
-def _find_nearest_time_index(df: pd.DataFrame, time: float) -> int:
-    return np.argmin(np.abs(df["time"] - time))
+def _find_nearest_time_index(
+    time_series: pd.Series, target_time: float, start_idx: int
+) -> int:
+    """
+    We know that time is sorted and that we will be iterating through the
+    time_series in order. As a result, we can start our search from the
+    previous index we found.
+    """
+    for idx in range(start_idx, len(time_series)):
+        if time_series[idx] >= target_time:
+            prev_time = time_series[idx - 1]
+            next_time = time_series[idx]
+            prev_diff = abs(prev_time - target_time)
+            next_diff = abs(next_time - target_time)
+            return idx - 1 if prev_diff < next_diff else idx
+
+    return len(time_series) - 1
 
 
 def _get_list_of_range_measures(
@@ -170,11 +185,13 @@ def _get_list_of_range_measures(
     range_df["beacon_id"] = range_df["beacon_id"].apply(lambda x: beacon_id_to_idx[x])
 
     range_measure_list: List[Tuple[str, str, float]] = []
+    most_recent_pose_idx = 0
     for _, row in range_df.iterrows():
         range_measure_time = row["time"]
         nearest_robot_pose_idx = _find_nearest_time_index(
-            gt_pose_df, range_measure_time
+            gt_pose_df["time"], range_measure_time, most_recent_pose_idx
         )
+        most_recent_pose_idx = nearest_robot_pose_idx
         robot_pose_name = f"A{nearest_robot_pose_idx}"
         beacon_pose_name = f"L{int(row['beacon_id'])}"
         measured_distance = row["distance"]
@@ -185,10 +202,12 @@ def _get_list_of_range_measures(
     return range_measure_list
 
 
-def _obtain_calibrations_for_radios(data_files: PlazaDataFiles) -> Dict[int, Callable]:
-    range_measures = _get_list_of_range_measures(data_files)
+def _obtain_calibrations_for_radios(
+    data_files: PlazaDataFiles, range_measures: List[Tuple[float, str, str, float]]
+) -> Dict[int, Callable]:
     gt_pose_df = data_files.robot_gt_df()
     beacon_idxs = data_files.get_beacon_id_to_idx_mapping().values()
+    beacon_gt_df = data_files.landmark_gt_df()
 
     # group the range measures by beacon and pair them with the true range
     calibration_pairs = {x: [] for x in beacon_idxs}
@@ -198,12 +217,10 @@ def _obtain_calibrations_for_radios(data_files: PlazaDataFiles) -> Dict[int, Cal
         beacon_idx = int(beacon_name[1:])
 
         true_robot_location = gt_pose_df.iloc[robot_idx][["x", "y"]].values
-        true_beacon_location = data_files.landmark_gt_df().iloc[beacon_idx][
-            ["x", "y"]
-        ].values
+        true_beacon_location = beacon_gt_df.iloc[beacon_idx][["x", "y"]].values
 
         true_range = np.linalg.norm(true_robot_location - true_beacon_location)
-        
+
         calibration_pairs[beacon_idx].append((true_range, measured_distance))
 
     # for each beacon we now have a list of true range, measured range pairs
@@ -225,8 +242,8 @@ def _add_range_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
     range_df = data_files.dist_measure_df()
     gt_pose_df = data_files.robot_gt_df()
 
-    calibrations = _obtain_calibrations_for_radios(data_files)
     range_measures = _get_list_of_range_measures(data_files)
+    calibrations = _obtain_calibrations_for_radios(data_files, range_measures)
 
     range_stddev = 3.0
     for measure in range_measures:
@@ -240,7 +257,6 @@ def _add_range_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
             timestamp=meas_time,
         )
         fg.add_range_measurement(range_measure)
-
 
 
 def parse_plaza_files(dirpath: str) -> FactorGraphData:
@@ -264,6 +280,23 @@ def parse_plaza_files(dirpath: str) -> FactorGraphData:
 
 
 if __name__ == "__main__":
-    data_dir = "/home/alan/experimental_data/plaza/Plaza1"
+    import os
+    data_dir = os.path.expanduser("~/experimental_data/plaza/Plaza1")
+
+    # parse and print summary
     fg = parse_plaza_files(data_dir)
     fg.print_summary()
+
+    # animate if desired
+    visualize = False
+    if visualize:
+        fg.animate_odometry(
+            show_gt=True,
+            pause=0.0001,
+            num_range_measures_shown=4,
+            clear_ranges_every_frame=True,
+        )
+
+    # save the factor graph to file
+    save_path = os.path.expanduser("~/experimental_data/plaza/Plaza1/factor_graph.pickle")
+    fg.save_to_file(save_path)
