@@ -1510,6 +1510,7 @@ class FactorGraphData:
         show_gt: bool = False,
         pause: float = 0.01,
         num_range_measures_shown: int = 10,
+        clear_ranges_every_frame: bool = True,
     ) -> None:
         """Makes an animation of the odometric chain for every robot
 
@@ -1595,6 +1596,15 @@ class FactorGraphData:
 
                     show_ranges = True
                     if show_ranges:
+
+                        if clear_ranges_every_frame:
+                            while len(range_measure_objs) > 0:
+                                line_to_remove, circle_to_remove = range_measure_objs.pop(
+                                    0
+                                )
+                                line_to_remove.remove()
+                                circle_to_remove.remove()
+
                         if len(range_measure_objs) > num_range_measures_shown:
                             line_to_remove, circle_to_remove = range_measure_objs.pop(0)
                             line_to_remove.remove()
@@ -1634,7 +1644,7 @@ class FactorGraphData:
                 # draw groundtruth solution
                 cur_poses[robot_idx] = np.dot(cur_poses[robot_idx], odom_measure)
 
-            plt.pause(0.001)  # type: ignore
+            plt.pause(pause)  # type: ignore
 
             if pose_idx > num_poses_show and False:
                 for _ in range(num_full_odom_chains):
