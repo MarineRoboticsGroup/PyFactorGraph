@@ -54,6 +54,8 @@ def positive_float_validator(instance, attribute, value):
         raise ValueError(f"{value} is not a float (ints are also accepted)")
     if value < 0:
         raise ValueError(f"Value {value} is not positive")
+    if np.isnan(value):
+        raise ValueError(f"Value {value} is nan")
 
 
 def positive_int_validator(instance, attribute, value) -> None:
