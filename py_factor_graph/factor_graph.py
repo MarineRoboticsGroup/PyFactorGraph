@@ -231,7 +231,7 @@ class FactorGraphData:
             f"interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
-        print(msg)
+        logger.info(msg)
         return msg
 
     @property
@@ -726,7 +726,7 @@ class FactorGraphData:
                 logger.info(self.landmark_variables)
                 logger.info(landmark_var)
                 raise ValueError(
-                    "Landmark variables must be added in order of increasing robot_idx"
+                    "Landmark variables must be added in order of increasing index"
                 )
 
         self.landmark_variables.append(landmark_var)
@@ -762,9 +762,9 @@ class FactorGraphData:
 
         # check that we are not adding a measurement between variables that exist
         base_pose = odom_meas.base_pose
-        assert self.pose_exists(base_pose)
+        assert self.pose_exists(base_pose), f"{base_pose} does not exist"
         to_pose = odom_meas.to_pose
-        assert self.pose_exists(to_pose)
+        assert self.pose_exists(to_pose), f"{to_pose} does not exist"
 
         # update max and min measurement weights
         max_odom_weight = max(
@@ -1462,7 +1462,6 @@ class FactorGraphData:
                 continue
 
             for pose_chain in self.pose_variables:
-
                 if len(pose_chain) == 0:
                     continue
 
@@ -1577,7 +1576,6 @@ class FactorGraphData:
             for robot_idx, odom_and_pose_chain in enumerate(
                 zip(self.odom_measurements, self.pose_variables)
             ):
-
                 odom_chain, pose_chain = odom_and_pose_chain
 
                 if len(odom_chain) == 0:
@@ -1596,12 +1594,12 @@ class FactorGraphData:
 
                     show_ranges = True
                     if show_ranges:
-
                         if clear_ranges_every_frame:
                             while len(range_measure_objs) > 0:
-                                line_to_remove, circle_to_remove = range_measure_objs.pop(
-                                    0
-                                )
+                                (
+                                    line_to_remove,
+                                    circle_to_remove,
+                                ) = range_measure_objs.pop(0)
                                 line_to_remove.remove()
                                 circle_to_remove.remove()
 
