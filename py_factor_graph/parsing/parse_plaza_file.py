@@ -38,6 +38,20 @@ GT_ROBOT_EXTENSION = "_GT.csv"
 DIST_MEASURE_EXTENSION = "_TD.csv"
 GT_LANDMARK_EXTENSION = "_TL.csv"
 
+import logging, coloredlogs
+
+logger = logging.getLogger(__name__)
+field_styles = {
+    "filename": {"color": "green"},
+    "levelname": {"bold": True, "color": "black"},
+    "name": {"color": "blue"},
+}
+coloredlogs.install(
+    level="INFO",
+    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
+    field_styles=field_styles,
+)
+
 
 def _get_file_with_extension(files: List[str], extension: str) -> str:
     candidate_files = [f for f in files if f.endswith(extension)]
@@ -273,12 +287,14 @@ def _apply_calibration_model(
     calibration_model: LinearCalibrationModel,
     stddev: Optional[float] = None,
 ) -> List[FGRangeMeasurement]:
-
     # if we don't have a stddev, we will compute it from the residuals
+    residuals = _get_residuals(measurements, calibration_model)
+    calibrated_stddev = np.std(residuals)
+    logger.debug(f"Calibrated stddev is {calibrated_stddev}")
     if stddev is None:
-        residuals = _get_residuals(measurements, calibration_model)
-        stddev = np.std(residuals)
+        stddev = calibrated_stddev
 
+    logger.debug(f"Using stddev of {stddev} for range measurements.")
     calibrated_measurements: List[FGRangeMeasurement] = []
     for uncalibrated_measure in measurements:
         measured_dist = uncalibrated_measure.dist
@@ -388,23 +404,30 @@ def _obtain_calibrated_measurements(
     all_calibrated_measurements: List[FGRangeMeasurement] = []
     for beacon_idx, measures in inlier_measurements.items():
         linear_calibration = _fit_linear_calibration_model(measures)
-        calibrated_measurements = _apply_calibration_model(measures, linear_calibration)
+        calibrated_measurements = _apply_calibration_model(
+            measures, linear_calibration, stddev=stddev
+        )
         all_calibrated_measurements.extend(calibrated_measurements)
 
     return all_calibrated_measurements
 
 
-def _add_range_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
-    range_stddev = 3.0
+def _add_range_measurements(
+    fg: FactorGraphData,
+    data_files: PlazaDataFiles,
+    range_stddev: Optional[float] = None,
+):
     uncalibrated_range_measures = _parse_uncalibrated_range_measures(data_files)
     calibrated_ranges = _obtain_calibrated_measurements(
-        data_files, uncalibrated_range_measures
+        data_files, uncalibrated_range_measures, stddev=range_stddev
     )
     for range_measure in calibrated_ranges:
         fg.add_range_measurement(range_measure)
 
 
-def parse_plaza_files(dirpath: str) -> FactorGraphData:
+def parse_plaza_files(
+    dirpath: str, range_stddev: Optional[float] = None
+) -> FactorGraphData:
     data_files = PlazaDataFiles(dirpath)
     if "gesling" in dirpath.lower():
         raise NotImplementedError(
@@ -419,7 +442,7 @@ def parse_plaza_files(dirpath: str) -> FactorGraphData:
     _set_pose_variables(fg, data_files)
     _add_odometry_measurements(fg, data_files)
     _set_beacon_variables(fg, data_files)
-    _add_range_measurements(fg, data_files)
+    _add_range_measurements(fg, data_files, range_stddev=range_stddev)
 
     return fg
 
