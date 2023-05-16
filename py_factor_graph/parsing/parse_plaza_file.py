@@ -4,7 +4,8 @@ For parsing the Plaza dataset
 paper: https://onlinelibrary.wiley.com/doi/pdf/10.1002/rob.20311
 dataset: https://infoscience.epfl.ch/record/283435
 """
-from typing import List, Dict, Tuple, Callable
+from typing import List, Dict, Tuple, Callable, Optional, Union
+import copy
 import os
 import numpy as np
 import pandas as pd
@@ -28,6 +29,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_measurement_precisions_from_covariances,
 )
 from py_factor_graph.utils.name_utils import get_time_idx_from_frame_name
+import matplotlib.pyplot as plt
 from attrs import define, field
 
 ODOM_EXTENSION = "_DR.csv"
@@ -97,16 +99,27 @@ class PlazaDataFiles:
         return range_df
 
     def landmark_gt_df(self) -> pd.DataFrame:
-        headers = ["time", "beacon_id", "x", "y"]
+        headers = ["beacon_id", "x", "y"]
         return pd.read_csv(self.gt_landmark_file, names=headers)
 
     def get_beacon_id_to_idx_mapping(self) -> Dict[int, int]:
-        beacon_id_to_idx = {}
+        beacon_id_to_idx: Dict[int, int] = {}
         with open(self.gt_landmark_file, "r") as f:
             for line in f.readlines():
                 beacon_id, x, y = line.split(",")
                 beacon_id_to_idx[int(beacon_id)] = len(beacon_id_to_idx)
         return beacon_id_to_idx
+
+
+@define
+class UncalibratedRangeMeasurement:
+    association: Tuple[str, str] = field()
+    dist: float = field()
+    timestamp: float = field()
+    true_dist: Optional[float] = field(default=None)
+
+    def set_true_dist(self, true_dist: float):
+        self.true_dist = true_dist
 
 
 def _set_beacon_variables(fg: FactorGraphData, data_files: PlazaDataFiles):
@@ -176,15 +189,18 @@ def _find_nearest_time_index(
     return len(time_series) - 1
 
 
-def _get_list_of_range_measures(
+def _parse_uncalibrated_range_measures(
     data_files: PlazaDataFiles,
-) -> List[Tuple[float, str, str, float]]:
+) -> List[UncalibratedRangeMeasurement]:
     beacon_id_to_idx = data_files.get_beacon_id_to_idx_mapping()
     gt_pose_df = data_files.robot_gt_df()
     range_df = data_files.dist_measure_df()
     range_df["beacon_id"] = range_df["beacon_id"].apply(lambda x: beacon_id_to_idx[x])
 
-    range_measure_list: List[Tuple[str, str, float]] = []
+    # collect a list of range measures for each robot-beacon pair - we will
+    # average the measured distance and timestamps over these to get a single
+    # range measurement for each robot-beacon pair
+    range_measures: Dict[Tuple[str, str], List[Tuple[float, float]]] = {}
     most_recent_pose_idx = 0
     for _, row in range_df.iterrows():
         range_measure_time = row["time"]
@@ -195,67 +211,196 @@ def _get_list_of_range_measures(
         robot_pose_name = f"A{nearest_robot_pose_idx}"
         beacon_pose_name = f"L{int(row['beacon_id'])}"
         measured_distance = row["distance"]
+
+        association = (robot_pose_name, beacon_pose_name)
+        if association not in range_measures:
+            range_measures[association] = []
+        range_measures[association].append((range_measure_time, measured_distance))
+
+    range_measure_list: List[UncalibratedRangeMeasurement] = []
+    for association, measures in range_measures.items():
+        robot_pose_name, beacon_pose_name = association
+        avg_measured_distance = float(np.mean([x[1] for x in measures]))
+        measured_timestamp = float(np.mean([x[0] for x in measures]))
         range_measure_list.append(
-            (range_measure_time, robot_pose_name, beacon_pose_name, measured_distance)
+            UncalibratedRangeMeasurement(
+                association=association,
+                dist=avg_measured_distance,
+                timestamp=measured_timestamp,
+            )
         )
 
     return range_measure_list
 
 
-def _obtain_calibrations_for_radios(
-    data_files: PlazaDataFiles, range_measures: List[Tuple[float, str, str, float]]
-) -> Dict[int, Callable]:
+@define
+class LinearCalibrationModel:
+    slope: float = field()
+    intercept: float = field()
+
+    def __call__(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+        return self.slope * x + self.intercept
+
+
+def _get_residuals(
+    uncalibrated_measurements: List[UncalibratedRangeMeasurement],
+    linear_calibration: LinearCalibrationModel,
+) -> np.ndarray:
+    """
+    We will fit a linear model to the range measurements and remove outliers.
+    """
+    measured_distances = np.array([x.dist for x in uncalibrated_measurements])
+    true_distances = np.array([x.true_dist for x in uncalibrated_measurements])
+    predicted_true_distances = linear_calibration(measured_distances)
+    residuals = true_distances - predicted_true_distances
+    return residuals
+
+
+def _fit_linear_calibration_model(
+    uncalibrated_measurements: List[UncalibratedRangeMeasurement],
+) -> LinearCalibrationModel:
+    """
+    We will fit a linear model to the range measurements and remove outliers.
+    """
+    measured_dists = np.array([x.dist for x in uncalibrated_measurements])
+    true_dists = np.array([x.true_dist for x in uncalibrated_measurements])
+    slope, intercept, r_value, p_value, std_err = linregress(measured_dists, true_dists)
+    return LinearCalibrationModel(slope=slope, intercept=intercept)
+
+
+def _apply_calibration_model(
+    measurements: List[UncalibratedRangeMeasurement],
+    calibration_model: LinearCalibrationModel,
+    stddev: Optional[float] = None,
+) -> List[FGRangeMeasurement]:
+
+    # if we don't have a stddev, we will compute it from the residuals
+    if stddev is None:
+        residuals = _get_residuals(measurements, calibration_model)
+        stddev = np.std(residuals)
+
+    calibrated_measurements: List[FGRangeMeasurement] = []
+    for uncalibrated_measure in measurements:
+        measured_dist = uncalibrated_measure.dist
+        calibrated_dist = calibration_model(measured_dist)
+        assert isinstance(calibrated_dist, float)
+        calibrated_measure = FGRangeMeasurement(
+            uncalibrated_measure.association,
+            dist=calibrated_dist,
+            stddev=stddev,
+            timestamp=uncalibrated_measure.timestamp,
+        )
+        calibrated_measurements.append(calibrated_measure)
+
+    return calibrated_measurements
+
+
+def _get_inlier_set_of_range_measurements(
+    uncalibrated_measurements: List[UncalibratedRangeMeasurement],
+    inlier_stddev_threshold: float = 3.0,
+    show_outlier_rejection: bool = False,
+) -> List[UncalibratedRangeMeasurement]:
+    """
+    We will fit a linear model to the range measurements and remove outliers. W
+    """
+
+    def _plot_inliers_and_outliers(
+        measurements: List[UncalibratedRangeMeasurement],
+        outlier_mask: np.ndarray,
+    ):
+        inliers = [x for idx, x in enumerate(measurements) if idx not in outlier_mask]
+        outliers = [x for idx, x in enumerate(measurements) if idx in outlier_mask]
+        inlier_measured_dists = np.array([x.dist for x in inliers])
+        inlier_true_dists = np.array([x.true_dist for x in inliers])
+        outlier_measured_dists = np.array([x.dist for x in outliers])
+        outlier_true_dists = np.array([x.true_dist for x in outliers])
+
+        plt.scatter(
+            inlier_measured_dists, inlier_true_dists, color="blue", label="inliers"
+        )
+        plt.scatter(
+            outlier_measured_dists, outlier_true_dists, color="red", label="outliers"
+        )
+        plt.legend()
+        plt.show(block=True)
+
+    inliers_have_converged = False
+    inlier_measurements = copy.deepcopy(uncalibrated_measurements)
+    while not inliers_have_converged:
+        # fit a linear model to the range measurements
+        linear_calibration = _fit_linear_calibration_model(inlier_measurements)
+
+        # compute the residuals and use them to find outliers
+        residuals = _get_residuals(inlier_measurements, linear_calibration)
+        res_stddev = np.std(residuals)
+        outlier_mask = np.where(
+            np.abs(residuals) > inlier_stddev_threshold * res_stddev
+        )[0]
+
+        # visualize the inliers and outliers
+        if show_outlier_rejection:
+            _plot_inliers_and_outliers(inlier_measurements, outlier_mask)
+
+        # check if we have converged
+        inliers_have_converged = len(outlier_mask) == 0
+        if inliers_have_converged:
+            break
+
+        # remove any measurements that are outliers
+        inlier_measurements = [
+            x for idx, x in enumerate(inlier_measurements) if idx not in outlier_mask
+        ]
+
+    return inlier_measurements
+
+
+def _obtain_calibrated_measurements(
+    data_files: PlazaDataFiles,
+    range_measures: List[UncalibratedRangeMeasurement],
+    stddev: Optional[float] = None,
+) -> List[FGRangeMeasurement]:
     gt_pose_df = data_files.robot_gt_df()
     beacon_idxs = data_files.get_beacon_id_to_idx_mapping().values()
     beacon_gt_df = data_files.landmark_gt_df()
 
-    # group the range measures by beacon and pair them with the true range
-    calibration_pairs = {x: [] for x in beacon_idxs}
+    # group the range measures by beacon and add the true range (from GPS) to each
+    calibration_pairs: Dict[int, List[UncalibratedRangeMeasurement]] = {
+        x: [] for x in beacon_idxs
+    }
     for measure in range_measures:
-        meas_time, robot_name, beacon_name, measured_distance = measure
-        robot_idx = int(robot_name[1:])
+        pose_name, beacon_name = measure.association
+        robot_idx = int(pose_name[1:])
         beacon_idx = int(beacon_name[1:])
 
         true_robot_location = gt_pose_df.iloc[robot_idx][["x", "y"]].values
         true_beacon_location = beacon_gt_df.iloc[beacon_idx][["x", "y"]].values
+        true_range = float(np.linalg.norm(true_robot_location - true_beacon_location))
 
-        true_range = np.linalg.norm(true_robot_location - true_beacon_location)
+        measure.set_true_dist(true_range)
+        calibration_pairs[beacon_idx].append(measure)
 
-        calibration_pairs[beacon_idx].append((true_range, measured_distance))
+    inlier_measurements: Dict[int, List[UncalibratedRangeMeasurement]] = {}
+    for beacon_idx, measures in calibration_pairs.items():
+        inlier_measurements[beacon_idx] = _get_inlier_set_of_range_measurements(
+            measures
+        )
 
-    # for each beacon we now have a list of true range, measured range pairs
-    # we will fit a linear model to these pairs and use that as the calibration
-    calibrations = {}
-    for beacon_idx, pairs in calibration_pairs.items():
-        true_ranges = np.array([x[0] for x in pairs])
-        measured_ranges = np.array([x[1] for x in pairs])
+    all_calibrated_measurements: List[FGRangeMeasurement] = []
+    for beacon_idx, measures in inlier_measurements.items():
+        linear_calibration = _fit_linear_calibration_model(measures)
+        calibrated_measurements = _apply_calibration_model(measures, linear_calibration)
+        all_calibrated_measurements.extend(calibrated_measurements)
 
-        # we want a mapping from measured range to true range
-        slope, intercept, _, _, _ = linregress(measured_ranges, true_ranges)
-        calibrations[beacon_idx] = lambda x: slope * x + intercept
-
-    return calibrations
+    return all_calibrated_measurements
 
 
 def _add_range_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
-    beacon_id_to_idx = data_files.get_beacon_id_to_idx_mapping()
-    range_df = data_files.dist_measure_df()
-    gt_pose_df = data_files.robot_gt_df()
-
-    range_measures = _get_list_of_range_measures(data_files)
-    calibrations = _obtain_calibrations_for_radios(data_files, range_measures)
-
     range_stddev = 3.0
-    for measure in range_measures:
-        meas_time, pose_name, beacon_name, measured_distance = measure
-        beacon_idx = int(beacon_name[1:])
-        calibrated_distance = calibrations[beacon_idx](measured_distance)
-        range_measure = FGRangeMeasurement(
-            association=(pose_name, beacon_name),
-            dist=calibrated_distance,
-            stddev=range_stddev,
-            timestamp=meas_time,
-        )
+    uncalibrated_range_measures = _parse_uncalibrated_range_measures(data_files)
+    calibrated_ranges = _obtain_calibrated_measurements(
+        data_files, uncalibrated_range_measures
+    )
+    for range_measure in calibrated_ranges:
         fg.add_range_measurement(range_measure)
 
 
@@ -263,9 +408,9 @@ def parse_plaza_files(dirpath: str) -> FactorGraphData:
     data_files = PlazaDataFiles(dirpath)
     if "gesling" in dirpath.lower():
         raise NotImplementedError(
-            """ 
-            Gesling data not yet supported. This data requires some 
-            additional calibration, as there are multiple radios attached to the robot 
+            """
+            Gesling data not yet supported. This data requires some
+            additional calibration, as there are multiple radios attached to the robot
             (https://onlinelibrary.wiley.com/doi/pdf/10.1002/rob.20311)
             """
         )
@@ -281,6 +426,7 @@ def parse_plaza_files(dirpath: str) -> FactorGraphData:
 
 if __name__ == "__main__":
     import os
+
     data_dir = os.path.expanduser("~/experimental_data/plaza/Plaza1")
 
     # parse and print summary
@@ -298,5 +444,7 @@ if __name__ == "__main__":
         )
 
     # save the factor graph to file
-    save_path = os.path.expanduser("~/experimental_data/plaza/Plaza1/factor_graph.pickle")
+    save_path = os.path.expanduser(
+        "~/experimental_data/plaza/Plaza1/factor_graph.pickle"
+    )
     fg.save_to_file(save_path)
