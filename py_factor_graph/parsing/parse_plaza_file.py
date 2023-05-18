@@ -151,11 +151,16 @@ def _set_beacon_variables(fg: FactorGraphData, data_files: PlazaDataFiles):
 
 def _set_pose_variables(fg: FactorGraphData, data_files: PlazaDataFiles):
     gt_pose_df = data_files.robot_gt_df()
+    if "plaza2" in data_files.dirpath.lower():
+        logger.warning("Plaza2 data detected. Adding pi offset to theta.")
+        theta_offset = np.pi
+    else:
+        theta_offset = 0.0
     for idx, row in gt_pose_df.iterrows():
         pose_var = PoseVariable2D(
             name=f"A{idx}",
             true_position=(row["x"], row["y"]),
-            true_theta=row["theta"],
+            true_theta=row["theta"] + theta_offset,
             timestamp=row["time"],
         )
         fg.add_pose_variable(pose_var)
@@ -461,9 +466,9 @@ if __name__ == "__main__":
     if visualize:
         fg.animate_odometry(
             show_gt=True,
-            pause=0.0001,
-            num_range_measures_shown=4,
-            clear_ranges_every_frame=True,
+            pause_interval=0.01,
+            show_ranges=True,
+            num_timesteps_keep_ranges=1,
         )
 
     # save the factor graph to file
