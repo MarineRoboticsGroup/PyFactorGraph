@@ -191,7 +191,7 @@ def get_theta_from_rotation_matrix(mat: np.ndarray) -> float:
     return float(np.arctan2(mat[1, 0], mat[0, 0]))
 
 
-def get_random_vector(dim: int) -> np.ndarray:
+def get_random_vector(dim: int, bounds: List[float]) -> np.ndarray:
     """Returns a random vector of size dim
 
     Args:
@@ -200,7 +200,22 @@ def get_random_vector(dim: int) -> np.ndarray:
     Returns:
         np.ndarray: the random vector
     """
-    return np.random.rand(dim)
+    assert dim in [2, 3]
+    assert len(bounds) == dim * 2
+    assert all([bounds[i] < bounds[i + 1] for i in range(0, len(bounds), 2)])
+    if dim == 2:
+        xmin, xmax, ymin, ymax = bounds
+        x = np.random.uniform(xmin, xmax)
+        y = np.random.uniform(ymin, ymax)
+        return np.array([x, y])
+    elif dim == 3:
+        xmin, xmax, ymin, ymax, zmin, zmax = bounds
+        x = np.random.uniform(xmin, xmax)
+        y = np.random.uniform(ymin, ymax)
+        z = np.random.uniform(zmin, zmax)
+        return np.array([x, y, z])
+    else:
+        raise ValueError(f"Invalid dimension: {dim}")
 
 
 def get_rotation_matrix_from_theta(theta: float) -> np.ndarray:
@@ -343,7 +358,7 @@ def get_random_rotation_matrix(dim: int = 2) -> np.ndarray:
 def get_random_transformation_matrix(dim: int = 2) -> np.ndarray:
     if dim == 2:
         R = get_random_rotation_matrix(dim)
-        t = get_random_vector(dim)
+        t = get_random_vector(dim, [-10, 10, -10, 10])
         return make_transformation_matrix(R, t)
     else:
         raise NotImplementedError("Only implemented for dim = 2")

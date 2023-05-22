@@ -5,6 +5,7 @@ import pathlib
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 
@@ -43,11 +44,10 @@ from py_factor_graph.utils.name_utils import (
     get_time_idx_from_frame_name,
 )
 from py_factor_graph.utils.plot_utils import (
-    draw_pose_variable,
-    draw_pose_matrix,
+    draw_pose,
+    update_pose_arrow,
+    draw_traj,
     draw_landmark_variable,
-    draw_loop_closure_measurement,
-    draw_line,
     draw_range_measurement,
 )
 from py_factor_graph.utils.attrib_utils import is_dimension
@@ -231,7 +231,7 @@ class FactorGraphData:
             f"interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
-        print(msg)
+        logger.info(msg)
         return msg
 
     @property
@@ -507,7 +507,9 @@ class FactorGraphData:
         Returns:
             List[List[np.ndarray]]: the trajectories for each robot obtained from the odometry measurements
         """
-        start_poses = [np.eye(self.dimension + 1) for _ in range(self.num_robots)]
+        start_poses = [
+            pose_chain[0].transformation_matrix for pose_chain in self.pose_variables
+        ]
         odom_traj = [[pose] for pose in start_poses]
         for robot_idx, odom_chain in enumerate(self.odom_measurements):
             for odom in odom_chain:
@@ -726,7 +728,7 @@ class FactorGraphData:
                 logger.info(self.landmark_variables)
                 logger.info(landmark_var)
                 raise ValueError(
-                    "Landmark variables must be added in order of increasing robot_idx"
+                    "Landmark variables must be added in order of increasing index"
                 )
 
         self.landmark_variables.append(landmark_var)
@@ -762,9 +764,9 @@ class FactorGraphData:
 
         # check that we are not adding a measurement between variables that exist
         base_pose = odom_meas.base_pose
-        assert self.pose_exists(base_pose)
+        assert self.pose_exists(base_pose), f"{base_pose} does not exist"
         to_pose = odom_meas.to_pose
-        assert self.pose_exists(to_pose)
+        assert self.pose_exists(to_pose), f"{to_pose} does not exist"
 
         # update max and min measurement weights
         max_odom_weight = max(
@@ -1404,112 +1406,12 @@ class FactorGraphData:
 
         plt.show(block=True)
 
-    def animate_groundtruth(self, pause: float = 0.01) -> None:
-        """
-        Animate the data.
-
-        Args:
-            pause (float): the pause time between frames
-        """
-
-        assert self.dimension == 2, "Only 2D data can be animated"
-
-        # set up plot
-        fig, ax = plt.subplots(figsize=(10, 10))
-        assert (
-            self.x_min is not None and self.x_max is not None
-        ), "x_min and x_max must be set"
-        assert (
-            self.y_min is not None and self.y_max is not None
-        ), "y_min and y_max must be set"
-
-        ax.set_xlim(self.x_min - 1, self.x_max + 1)
-        ax.set_ylim(self.y_min - 1, self.y_max + 1)
-
-        # these are for help visualizing the loop closures
-        true_poses_dict = self.pose_variables_dict
-        loop_closures = self.loop_closure_measurements
-        loop_closure_dict = {
-            x.base_pose: true_poses_dict[x.to_pose] for x in loop_closures
-        }
-
-        # go ahead and draw the landmarks
-        for landmark in self.landmark_variables:
-            assert isinstance(landmark, LandmarkVariable2D)
-            draw_landmark_variable(ax, landmark)
-
-        pose_var_plot_obj: List[mpatches.FancyArrow] = []
-
-        cnt = 0
-        num_frames_skip = 2
-        max_pose_chain_length = max(
-            [len(pose_chain) for pose_chain in self.pose_variables]
-        )
-        num_poses_show = 5
-
-        num_full_pose_chains = 0
-        for pose_chain in self.pose_variables:
-            if len(pose_chain) > 0:
-                num_full_pose_chains += 1
-
-        # iterate over all the poses and visualize each pose chain at each
-        # timestep
-        for pose_idx in range(max_pose_chain_length):
-            if cnt % num_frames_skip == 0:
-                cnt = 0
-            else:
-                cnt += 1
-                continue
-
-            for pose_chain in self.pose_variables:
-
-                if len(pose_chain) == 0:
-                    continue
-
-                # if past end of pose chain just grab last pose, otherwise use
-                # next in chain
-                if len(pose_chain) <= pose_idx:
-                    pose = pose_chain[-1]
-                else:
-                    pose = pose_chain[pose_idx]
-
-                # draw groundtruth solution
-                assert isinstance(pose, PoseVariable2D)
-                var_arrow = draw_pose_variable(ax, pose)
-                pose_var_plot_obj.append(var_arrow)
-
-                # if loop closure draw it
-                if pose.name in loop_closure_dict:
-                    true_to_pose = loop_closure_dict[pose.name]
-                    assert isinstance(true_to_pose, PoseVariable2D)
-                    loop_line, loop_pose = draw_loop_closure_measurement(
-                        ax, pose.position_vector, true_to_pose
-                    )
-                else:
-                    loop_line = None
-                    loop_pose = None
-
-            plt.pause(0.001)  # type: ignore
-
-            # if showing loop closures let's not have them hang around forever
-            if loop_line and loop_pose:
-                loop_line.remove()
-                loop_pose.remove()
-
-            # we are keeping a sliding window of poses to show, this starts to
-            # remove the oldest poses after a certain number of frames
-            if pose_idx > num_poses_show:
-                for _ in range(num_full_pose_chains):
-                    pose_var_plot_obj[0].remove()
-                    pose_var_plot_obj.pop(0)
-
-        plt.close()
-
     def animate_odometry(
         self,
         show_gt: bool = False,
-        pause: float = 0.01,
-        num_range_measures_shown: int = 10,
+        pause_interval: float = 0.01,
+        show_ranges: bool = False,
+        num_timesteps_keep_ranges: int = 1,
     ) -> None:
         """Makes an animation of the odometric chain for every robot
 
@@ -1518,9 +1420,6 @@ class FactorGraphData:
             pause (float, optional): How long to pause between frames. Defaults to 0.01.
         """
         assert self.dimension == 2, "Only 2D data can be animated"
-
-        # set up plot
-        fig, ax = plt.subplots()
         assert (
             self.x_min is not None and self.x_max is not None
         ), "x_min and x_max must be set"
@@ -1528,125 +1427,168 @@ class FactorGraphData:
             self.y_min is not None and self.y_max is not None
         ), "y_min and y_max must be set"
 
-        x_min = self.x_min - 0.1 * abs(self.x_min)
-        x_max = self.x_max + 0.1 * abs(self.x_max)
-        y_min = self.y_min - 0.1 * abs(self.y_min)
-        y_max = self.y_max + 0.1 * abs(self.y_max)
-        ax.set_xlim(x_min, x_max)
-        ax.set_ylim(y_min, y_max)
+        # set up plot
+        fig, ax = plt.subplots()
 
-        # set axes to be equal
-        ax.set_aspect("equal")
+        # scale is the order of magnitude of the largest range
+        x_range = self.x_max - self.x_min
+        y_range = self.y_max - self.y_min
+        scale = max(x_range, y_range) / 100.0
+
+        def _format_viewport():
+            x_min = self.x_min - 0.1 * abs(self.x_min)
+            x_max = self.x_max + 0.1 * abs(self.x_max)
+            y_min = self.y_min - 0.1 * abs(self.y_min)
+            y_max = self.y_max + 0.1 * abs(self.y_max)
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
+
+            # set axes to be equal
+            ax.set_aspect("equal")
+
+        _format_viewport()
 
         # go ahead and draw the landmarks
         for landmark in self.landmark_variables:
             assert isinstance(landmark, LandmarkVariable2D)
             draw_landmark_variable(ax, landmark)
 
-        pose_var_plot_obj: List[mpatches.FancyArrow] = []
-
-        odom_chain_lens = [len(x) for x in self.odom_measurements]
-        pose_chain_lens = [len(x) for x in self.pose_variables]
-        assert len(odom_chain_lens) == len(
-            pose_chain_lens
-        ), "must be same number of odometry and pose chains"
-        assert all(
-            x[0] + 1 == x[1] for x in zip(odom_chain_lens, pose_chain_lens)
-        ), "the length of the odom chains must match with the length of the pose chains"
-
-        num_poses_show = 5
-
-        num_full_odom_chains = 0
-        for odom_chain in self.odom_measurements:
-            if len(odom_chain) > 0:
-                num_full_odom_chains += 1
-
-        # for drawing range measurements
-        pose_to_range_measures_dict = self.pose_to_range_measures_dict
-        landmark_var_dict = self.landmark_variables_dict
-        pose_variable_dict = self.pose_variables_dict
-        range_measure_objs: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
-
-        # iterate over all the poses and visualize each pose chain at each
-        # timestep
-        cur_poses = [
-            pose_chain[0].transformation_matrix for pose_chain in self.pose_variables
+        # all of the objects to track for plotting the poses as arrows
+        odom_color = "blue"
+        gt_color = "red"
+        odom_pose_var_arrows: List[mpatches.FancyArrow] = [
+            draw_pose(ax, pose_chain[0], odom_color, scale=scale) for pose_chain in self.pose_variables  # type: ignore
         ]
-        for pose_idx in range(max(pose_chain_lens)):
-            for robot_idx, odom_and_pose_chain in enumerate(
-                zip(self.odom_measurements, self.pose_variables)
-            ):
+        gt_pose_var_arrows: List[mpatches.FancyArrow] = [
+            draw_pose(ax, pose_chain[0], gt_color, scale=scale) for pose_chain in self.pose_variables  # type: ignore
+        ]
 
-                odom_chain, pose_chain = odom_and_pose_chain
+        # all of the objects to track for plotting the trajectories as lines
+        odom_pose_traj_lines: List[mlines.Line2D] = [
+            draw_traj(
+                ax,
+                [],
+                [],
+                odom_color,
+            )
+            for robot_idx in range(self.num_robots)
+        ]
+        gt_pose_traj_lines: List[mlines.Line2D] = [
+            draw_traj(
+                ax,
+                [],
+                [],
+                gt_color,
+            )
+            for _ in range(self.num_robots)
+        ]
 
-                if len(odom_chain) == 0:
+        # get the trajectories as poses
+        odom_pose_trajs = self.odometry_trajectories
+        gt_pose_trajs = self.true_trajectories
+        assert len(odom_pose_trajs) == len(
+            gt_pose_trajs
+        ), "must be same number of odometry and ground truth pose chains"
+
+        def _get_xy_traj_from_pose_traj(
+            pose_traj: List[np.ndarray],
+        ) -> Tuple[List[float], List[float]]:
+            x_traj = [pose[0, 2] for pose in pose_traj]
+            y_traj = [pose[1, 2] for pose in pose_traj]
+            return x_traj, y_traj
+
+        odom_xy_history = [
+            _get_xy_traj_from_pose_traj(pose_traj) for pose_traj in odom_pose_trajs
+        ]
+        gt_pose_xy_history = [
+            _get_xy_traj_from_pose_traj(pose_traj) for pose_traj in gt_pose_trajs
+        ]
+
+        num_timesteps = len(odom_pose_trajs[0])
+
+        def _update_traj_lines(timestep: int) -> None:
+            idx = min(timestep + 1, num_timesteps)
+            for robot_idx in range(self.num_robots):
+                odom_pose_traj_lines[robot_idx].set_data(
+                    odom_xy_history[robot_idx][0][:idx],
+                    odom_xy_history[robot_idx][1][:idx],
+                )
+                if show_gt:
+                    gt_pose_traj_lines[robot_idx].set_data(
+                        gt_pose_xy_history[robot_idx][0][:idx],
+                        gt_pose_xy_history[robot_idx][1][:idx],
+                    )
+
+        def _update_pose_arrows(timestep: int) -> None:
+            for robot_idx in range(self.num_robots):
+                update_pose_arrow(
+                    odom_pose_var_arrows[robot_idx],
+                    odom_pose_trajs[robot_idx][timestep],
+                    scale=scale,
+                )
+                if show_gt:
+                    update_pose_arrow(
+                        gt_pose_var_arrows[robot_idx],
+                        gt_pose_trajs[robot_idx][timestep],
+                        scale=scale,
+                    )
+
+        pose_range_measures = self.pose_to_range_measures_dict
+        pose_dict = self.pose_variables_dict
+        landmark_dict = self.landmark_variables_dict
+        range_drawings: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
+        range_timesteps_added: List[int] = []  # keep track of when we added the range
+
+        def _update_range_lines(timestep: int) -> None:
+            def _has_range_measures_to_remove():
+                return (
+                    len(range_timesteps_added) > 0
+                    and timestep - range_timesteps_added[0] > num_timesteps_keep_ranges
+                )
+
+            while _has_range_measures_to_remove():
+                range_objs = range_drawings.pop(0)
+                assert len(range_objs) == 2
+                range_objs[0].remove()
+                range_objs[1].remove()
+                range_timesteps_added.pop(0)
+
+            for robot_idx in range(self.num_robots):
+                pose = self.pose_variables[robot_idx][timestep]
+                assert isinstance(pose, PoseVariable2D)
+                if pose.name not in pose_range_measures:
                     continue
 
-                var_arrow = draw_pose_matrix(ax, cur_poses[robot_idx])
-                pose_var_plot_obj.append(var_arrow)
+                associated_range_measures = pose_range_measures[pose.name]
+                for range_measure in associated_range_measures:
+                    other_var_name = range_measure.association[1]
+                    if other_var_name in landmark_dict:
+                        other_var = landmark_dict[other_var_name]  # type: ignore
+                    elif other_var_name in pose_dict:
+                        other_var = pose_dict[other_var_name]  # type: ignore
 
-                if show_gt:
-                    pose_chain_idx = min(len(pose_chain) - 1, pose_idx)
-                    gt_pose = pose_chain[pose_chain_idx]
-                    pose_name = gt_pose.name
-                    assert isinstance(gt_pose, PoseVariable2D)
-                    var_arrow = draw_pose_variable(ax, gt_pose, color="red")
-                    pose_var_plot_obj.append(var_arrow)
+                    range_drawings.append(
+                        draw_range_measurement(
+                            ax, range_measure, pose, other_var  # type: ignore
+                        )
+                    )
+                    range_timesteps_added.append(timestep)
 
-                    show_ranges = True
-                    if show_ranges:
-                        if len(range_measure_objs) > num_range_measures_shown:
-                            line_to_remove, circle_to_remove = range_measure_objs.pop(0)
-                            line_to_remove.remove()
-                            circle_to_remove.remove()
+        def _update_animation(timestep: int) -> None:
+            _update_traj_lines(timestep)
+            _update_pose_arrows(timestep)
+            if show_ranges:
+                _update_range_lines(timestep)
 
-                        if pose_name in pose_to_range_measures_dict:
-                            range_measures = pose_to_range_measures_dict[pose_name]
-                            for range_measure in range_measures:
-                                to_key = range_measure.landmark_key
-                                to_var: Union[
-                                    LANDMARK_VARIABLE_TYPES, POSE_VARIABLE_TYPES
-                                ]
-                                if to_key in landmark_var_dict:
-                                    to_var = landmark_var_dict[
-                                        range_measure.landmark_key
-                                    ]
-                                    assert isinstance(to_var, LandmarkVariable2D)
-                                else:
-                                    to_var = pose_variable_dict[to_key]
-                                    assert isinstance(to_var, PoseVariable2D)
+        ani = animation.FuncAnimation(
+            fig,
+            _update_animation,
+            frames=num_timesteps,
+            interval=pause_interval,
+            repeat=False,
+        )
 
-                                range_measure_objs.append(
-                                    draw_range_measurement(
-                                        ax, range_measure, gt_pose, to_var
-                                    )
-                                )
-
-                ## update the odometry pose ##
-
-                # if past end of pose chain just grab last pose, otherwise use
-                # next in chain
-                if len(odom_chain) <= pose_idx:
-                    odom_measure = np.eye(3)
-                else:
-                    odom_measure = odom_chain[pose_idx].transformation_matrix
-
-                # draw groundtruth solution
-                cur_poses[robot_idx] = np.dot(cur_poses[robot_idx], odom_measure)
-
-            plt.pause(0.001)  # type: ignore
-
-            if pose_idx > num_poses_show and False:
-                for _ in range(num_full_odom_chains):
-                    pose_var_plot_obj[0].remove()
-                    pose_var_plot_obj.pop(0)
-
-                    # if showing groundtruth need to remove that pose as well
-                    if show_gt:
-                        pose_var_plot_obj[0].remove()
-                        pose_var_plot_obj.pop(0)
-
-        plt.close()
+        plt.show(block=True)
 
     #### checks on inputs ####
 

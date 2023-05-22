@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
-from typing import Tuple, Union, Optional, List
+from typing import Tuple, Union, Optional, List, Sequence
 from evo.tools import file_interface, plot as evoplot
 from py_factor_graph.utils.solver_utils import (
     SolverResults,
@@ -27,8 +27,8 @@ def draw_arrow(
     x: float,
     y: float,
     theta: float,
-    quiver_length: float = 0.1,
-    quiver_width: float = 0.01,
+    quiver_length: float = 1,
+    quiver_width: float = 0.1,
     color: str = "black",
 ) -> mpatches.FancyArrow:
     """Draws an arrow on the given axes
@@ -92,18 +92,71 @@ def draw_circle(ax: plt.Axes, circle: np.ndarray, color="red") -> mpatches.Circl
     )
 
 
-def draw_pose_variable(ax: plt.Axes, pose: PoseVariable2D, color="blue"):
-    true_x = pose.true_x
-    true_y = pose.true_y
-    true_theta = pose.true_theta
-    return draw_arrow(ax, true_x, true_y, true_theta, color=color)
+def _get_pose_xytheta(
+    pose: Union[np.ndarray, PoseVariable2D],
+) -> Tuple[float, float, float]:
+    assert isinstance(pose, np.ndarray) or isinstance(pose, PoseVariable2D)
+    if isinstance(pose, PoseVariable2D):
+        x = pose.true_x
+        y = pose.true_y
+        theta = pose.true_theta
+    else:
+        x = pose[0, 2]
+        y = pose[1, 2]
+        theta = get_theta_from_rotation_matrix(pose[0:2, 0:2])
+    return x, y, theta
 
 
-def draw_pose_matrix(ax: plt.Axes, pose_matrix: np.ndarray, color="blue"):
-    true_x = pose_matrix[0, 2]
-    true_y = pose_matrix[1, 2]
-    true_theta = get_theta_from_rotation_matrix(pose_matrix[0:2, 0:2])
-    return draw_arrow(ax, true_x, true_y, true_theta, color=color)
+def draw_pose(
+    ax: plt.Axes,
+    pose: Union[np.ndarray, PoseVariable2D],
+    color="blue",
+    scale: float = 1,
+) -> mpatches.FancyArrow:
+    true_x, true_y, true_theta = _get_pose_xytheta(pose)
+    return draw_arrow(
+        ax,
+        true_x,
+        true_y,
+        true_theta,
+        color=color,
+        quiver_length=scale,
+        quiver_width=scale / 10,
+    )
+
+
+def update_pose_arrow(
+    arrow: mpatches.FancyArrow,
+    pose: Union[np.ndarray, PoseVariable2D],
+    scale: float = 1,
+):
+    x, y, theta = _get_pose_xytheta(pose)
+    quiver_length = scale
+    dx = quiver_length * math.cos(theta)
+    dy = quiver_length * math.sin(theta)
+    arrow.set_data(x=x, y=y, dx=dx, dy=dy)
+
+
+def draw_traj(
+    ax: plt.Axes,
+    x_traj: Sequence[float],
+    y_traj: Sequence[float],
+    color: str = "black",
+) -> mlines.Line2D:
+    assert len(x_traj) == len(y_traj)
+    line = mlines.Line2D(x_traj, y_traj, color=color)
+    ax.add_line(line)
+    return line
+
+
+def update_traj(
+    line: mlines.Line2D,
+    x_traj: Sequence[float],
+    y_traj: Sequence[float],
+):
+    assert len(x_traj) == len(y_traj)
+    line.set_xdata(x_traj)
+    line.set_ydata(y_traj)
 
 
 def draw_landmark_variable(ax: plt.Axes, landmark: LandmarkVariable2D):
@@ -123,7 +176,7 @@ def draw_loop_closure_measurement(
     y_end = to_pose.true_y
 
     line = draw_line(ax, x_start, y_start, x_end, y_end, color="green")
-    arrow = draw_pose_variable(ax, to_pose)
+    arrow = draw_pose(ax, to_pose)
 
     return line, arrow
 
@@ -154,6 +207,10 @@ def visualize_solution(
     solution: SolverResults,
     gt_files: Optional[List[str]] = None,
     name: str = "estimate",
+    xlim: Optional[Tuple[float, float]] = None,
+    ylim: Optional[Tuple[float, float]] = None,
+    save_path: Optional[str] = None,
+    show: bool = True,
 ) -> None:
     """Visualizes the solution.
 
@@ -195,5 +252,36 @@ def visualize_solution(
 
     fig = plt.figure()
     plot_mode = evoplot.PlotMode.xy
+    # turn off the background grid and legend
     evoplot.trajectories(fig, traj_by_label, plot_mode=plot_mode)
-    plt.show()
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    # hide the legend
+    plt.gca().get_legend().remove()
+
+    # hide the grid
+    plt.grid(False)
+
+    # set the background to white
+    plt.gca().set_facecolor("white")
+
+    # set the background to transparent
+    background_transparent = True
+
+    if save_path is not None:
+        if not os.path.isdir(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+
+        # save at a higher resolution
+        plt.savefig(
+            save_path, transparent=background_transparent, bbox_inches="tight", dpi=300
+        )
+        print(f"Saved plot to {save_path}")
+
+    if show:
+        plt.show()
+
+    plt.close(fig)

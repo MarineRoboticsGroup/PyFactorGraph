@@ -80,6 +80,24 @@ class VariableValues:
         trans_vals.update(landmark_trans_vals)
         return trans_vals
 
+    @property
+    def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        """
+        Returns the x/y limits of the poses and landmarks
+
+        Returns:
+            (xmin, xmax), (ymin, ymax)
+        """
+        translations = self.translations.values()
+        trans_as_array = np.array(list(translations))
+        nrows, ncols = trans_as_array.shape
+        assert ncols == self.dim
+        max_vals = np.max(trans_as_array, axis=0)
+        min_vals = np.min(trans_as_array, axis=0)
+        return (min_vals[0], max_vals[0]), (min_vals[1], max_vals[1])
+
+
+
 
 @attr.s(frozen=True)
 class SolverResults:
@@ -116,6 +134,17 @@ class SolverResults:
     @property
     def distances(self):
         return self.variables.distances
+
+    @property
+    def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        """
+        Returns the x/y limits of the poses and landmarks
+
+        Returns:
+            (xmin, xmax), (ymin, ymax)
+        """
+        return self.variables.limits
+
 
 
 def save_results_to_file(
@@ -195,7 +224,7 @@ def save_results_to_file(
 
 
 def save_to_tum(
-    solved_results: SolverResults, filepath: str, strip_extension: bool = False
+    solved_results: SolverResults, filepath: str, strip_extension: bool = False, verbose: bool = False
 ) -> List[str]:
     """Saves a given set of solver results to a number of TUM files, with one
     for each pose chain in the results.
@@ -234,8 +263,11 @@ def save_to_tum(
         modified_path = filepath.replace(".tum", f"_{pose_chain_letter}.tum")
 
         # if file already exists we won't write over it
-        if isfile(modified_path):
+        if verbose and isfile(modified_path) and "/tmp/" not in modified_path:
             logger.warning(f"{modified_path} already exists, overwriting")
+
+        if not isdir(dirname(modified_path)):
+            makedirs(dirname(modified_path))
 
         with open(modified_path, "w") as f:
             translations = solved_results.translations
@@ -257,17 +289,19 @@ def save_to_tum(
                 # TODO: Add actual timestamps
                 f.write(f"{i} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
 
-        logger.info(f"Wrote: {modified_path}")
+        if verbose and "/tmp/" not in modified_path:
+            logger.info(f"Wrote: {modified_path}")
         save_files.append(modified_path)
 
     return save_files
 
 
 def load_custom_init_file(file_path: str) -> VariableValues:
-    """Loads the custom init file
+    """Loads the custom init file. Is either a pickled VariableValues object
+    or a pickled SolverResults object.
 
     Args:
-        file_path (str): [description]
+        file_path (str): path to the custom init file
     """
 
     assert isfile(file_path), f"File {file_path} does not exist"
