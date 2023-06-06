@@ -80,7 +80,18 @@ def draw_line(
     Returns:
         mpatches.FancyArrow: the arrow
     """
-    line = mlines.Line2D([x_start, x_end], [y_start, y_end], color=color)
+    # if color is grey lets make the line dashed and reduce the line width
+    if color == "grey":
+        line = mlines.Line2D(
+            [x_start, x_end],
+            [y_start, y_end],
+            color=color,
+            linestyle="dashed",
+            linewidth=0.5,
+        )
+    else:
+        line = mlines.Line2D([x_start, x_end], [y_start, y_end], color=color)
+
     ax.add_line(line)
     return line
 
@@ -186,19 +197,27 @@ def draw_range_measurement(
     range_measure: FGRangeMeasurement,
     from_pose: PoseVariable2D,
     to_landmark: Union[LandmarkVariable2D, PoseVariable2D],
-) -> Tuple[mlines.Line2D, mpatches.Circle]:
+    add_line: bool = True,
+    add_circle: bool = True,
+) -> Tuple[Optional[mlines.Line2D], Optional[mpatches.Circle]]:
     base_loc = from_pose.true_x, from_pose.true_y
     to_loc = to_landmark.true_x, to_landmark.true_y
-    dist = range_measure.dist
 
     x_start, y_start = base_loc
-    x_end, y_end = to_loc
-
     landmark_idx = int(to_landmark.name[1:])
     c = get_color(landmark_idx)
-    line = draw_line(ax, x_start, y_start, x_end, y_end, color=c)
-    circle = draw_circle(ax, np.array([x_start, y_start, dist]), color=c)
-    # arrow = draw_landmark_variable(ax, to_landmark)
+    c = "grey"
+
+    if add_line:
+        x_end, y_end = to_loc
+        line = draw_line(ax, x_start, y_start, x_end, y_end, color=c)
+    else:
+        line = None
+    if add_circle:
+        dist = range_measure.dist
+        circle = draw_circle(ax, np.array([x_start, y_start, dist]), color=c)
+    else:
+        circle = None
 
     return line, circle
 

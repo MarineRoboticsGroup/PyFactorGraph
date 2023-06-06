@@ -1410,7 +1410,8 @@ class FactorGraphData:
         self,
         show_gt: bool = False,
         pause_interval: float = 0.01,
-        show_ranges: bool = False,
+        draw_range_lines: bool = False,
+        draw_range_circles: bool = False,
         num_timesteps_keep_ranges: int = 1,
     ) -> None:
         """Makes an animation of the odometric chain for every robot
@@ -1536,7 +1537,8 @@ class FactorGraphData:
         pose_range_measures = self.pose_to_range_measures_dict
         pose_dict = self.pose_variables_dict
         landmark_dict = self.landmark_variables_dict
-        range_drawings: List[Tuple[mlines.Line2D, mpatches.Circle]] = []
+        range_line_drawings: List[mlines.Line2D] = []
+        range_circle_drawings: List[mpatches.Circle] = []
         range_timesteps_added: List[int] = []  # keep track of when we added the range
 
         def _update_range_lines(timestep: int) -> None:
@@ -1547,11 +1549,14 @@ class FactorGraphData:
                 )
 
             while _has_range_measures_to_remove():
-                range_objs = range_drawings.pop(0)
-                assert len(range_objs) == 2
-                range_objs[0].remove()
-                range_objs[1].remove()
+                drawn_line = range_line_drawings.pop(0)
+                drawn_circle = range_circle_drawings.pop(0)
                 range_timesteps_added.pop(0)
+
+                if drawn_line is not None:
+                    drawn_line.remove()
+                if drawn_circle is not None:
+                    drawn_circle.remove()
 
             for robot_idx in range(self.num_robots):
                 pose = self.pose_variables[robot_idx][timestep]
@@ -1567,18 +1572,31 @@ class FactorGraphData:
                     elif other_var_name in pose_dict:
                         other_var = pose_dict[other_var_name]  # type: ignore
 
-                    range_drawings.append(
-                        draw_range_measurement(
-                            ax, range_measure, pose, other_var  # type: ignore
-                        )
+                    assert isinstance(other_var, (PoseVariable2D, LandmarkVariable2D))
+                    drawn_line, drawn_circle = draw_range_measurement(
+                        ax,
+                        range_measure,
+                        pose,
+                        other_var,
+                        add_line=draw_range_lines,
+                        add_circle=draw_range_circles,
                     )
+                    range_line_drawings.append(drawn_line)
+                    range_circle_drawings.append(drawn_circle)
                     range_timesteps_added.append(timestep)
 
         def _update_animation(timestep: int) -> None:
             _update_traj_lines(timestep)
             _update_pose_arrows(timestep)
-            if show_ranges:
+            if draw_range_circles or draw_range_lines:
                 _update_range_lines(timestep)
+
+        # add a legend for blue = odometry, red = ground truth
+        legend_elements = [
+            mlines.Line2D([0], [0], color=odom_color, label="odometry"),
+            mlines.Line2D([0], [0], color=gt_color, label="ground truth"),
+        ]
+        ax.legend(handles=legend_elements)
 
         ani = animation.FuncAnimation(
             fig,
