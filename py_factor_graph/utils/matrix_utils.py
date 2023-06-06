@@ -271,7 +271,8 @@ def get_rotation_matrix_from_transformation_matrix(T: np.ndarray) -> np.ndarray:
 
 
 def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
-    """Returns the rotation matrix from a quaternion
+    """Returns the rotation matrix from a quaternion in scalar-last (x, y, z, w)
+    format.
 
     Args:
         quat (np.ndarray): the quaternion
