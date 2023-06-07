@@ -12,11 +12,8 @@ from py_factor_graph.factor_graph import (
 from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_quat,
     get_measurement_precisions_from_info_matrix,
-)
-from py_factor_graph.utils.data_utils import (
     load_symmetric_matrix_column_major,
 )
-
 
 import logging, coloredlogs
 

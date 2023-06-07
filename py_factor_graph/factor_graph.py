@@ -9,10 +9,10 @@ import matplotlib.animation as animation
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 
-from py_factor_graph.utils.data_utils import get_theta_from_transformation_matrix
 from py_factor_graph.utils.matrix_utils import (
     get_translation_from_transformation_matrix,
     get_rotation_matrix_from_transformation_matrix,
+    get_theta_from_transformation_matrix,
     get_quat_from_rotation_matrix,
 )
 

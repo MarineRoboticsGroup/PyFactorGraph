@@ -294,7 +294,7 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
 
 
 def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
-    """Returns the quaternion from a rotation matrix
+    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w)
 
     Args:
         mat (np.ndarray): the rotation matrix
@@ -630,58 +630,6 @@ def is_approx_isotropic(mat: np.ndarray, eps: float = 15e-1) -> bool:
 #### print functions ####
 
 
-def _print_eigvals(
-    M: np.ndarray, name: str = None, print_eigvec: bool = False, symmetric: bool = True
-):
-    """print the eigenvalues of a matrix"""
-
-    if name is not None:
-        print(name)
-
-    if print_eigvec:
-        # get the eigenvalues of the matrix
-        if symmetric:
-            eigvals, eigvecs = la.eigh(M)
-        else:
-            eigvals, eigvecs = la.eig(M)
-
-        # sort the eigenvalues and eigenvectors
-        idx = eigvals.argsort()[::1]
-        eigvals = eigvals[idx]
-        eigvecs = eigvecs[:, idx]
-
-        print(f"eigenvectors: {eigvecs}")
-    else:
-        if symmetric:
-            eigvals = la.eigvalsh(M)
-        else:
-            eigvals = la.eigvals(M)
-        print(f"eigenvalues\n{eigvals}")
-
-    print("\n\n\n")
-
-
-def _matprint_block(mat, fmt="g"):
-    col_maxes = [max([len(("{:" + fmt + "}").format(x)) for x in col]) for col in mat.T]
-    num_col = mat.shape[1]
-    row_spacer = ""
-    for _ in range(num_col):
-        row_spacer += "__ __ __ "
-    for j, x in enumerate(mat):
-        if j % 2 == 0:
-            print(row_spacer)
-            print("")
-        for i, y in enumerate(x):
-            if i % 2 == 1:
-                print(("{:" + str(col_maxes[i]) + fmt + "}").format(y), end=" | ")
-            else:
-                print(("{:" + str(col_maxes[i]) + fmt + "}").format(y), end="  ")
-        print("")
-
-    print(row_spacer)
-    print("\n\n\n")
-
-
 def apply_transformation_matrix_perturbation(
     transformation_matrix,
     perturb_magnitude: Optional[float],
@@ -715,3 +663,58 @@ def apply_transformation_matrix_perturbation(
 
     # perturb curr pose
     return transformation_matrix @ rand_trans
+
+
+#### I/O functions ####
+
+
+def get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
+    """
+    Converts a list of floats to a covariance matrix.
+
+    Args:
+        covar_list (List): a list of floats representing the covariance matrix
+
+    Returns:
+        np.ndarray: the covariance matrix
+    """
+    assert len(covar_list) == 3 * 3, f"{len(covar_list)} != 3x3"
+    assert all(isinstance(val, float) for val in covar_list)
+    covar_matrix = np.array(
+        [
+            [covar_list[0], covar_list[1], covar_list[2]],
+            [covar_list[3], covar_list[4], covar_list[5]],
+            [covar_list[6], covar_list[7], covar_list[8]],
+        ]
+    )
+
+    assert np.allclose(
+        covar_matrix, covar_matrix.T
+    ), "Covariance matrix must be symmetric"
+    assert covar_matrix.shape == (3, 3), "Covariance matrix must be 3x3"
+
+    return covar_matrix
+
+
+def load_symmetric_matrix_column_major(vals: List[float], size: int) -> np.ndarray:
+    assert len(vals) == size * (size + 1) / 2
+    assert all(isinstance(val, float) for val in vals)
+    mat = np.zeros((size, size))
+    idx = 0
+    for i in range(size):
+        for j in range(i, size):
+            mat[i, j] = vals[idx]
+            mat[j, i] = vals[idx]
+            idx += 1
+    return mat
+
+
+def convert_symmetric_matrix_to_list_column_major(mat: np.ndarray) -> List[float]:
+    _check_symmetric(mat)
+    size = mat.shape[0]
+    vals = []
+    for i in range(size):
+        for j in range(i, size):
+            vals.append(mat[i, j])
+    assert len(vals) == size * (size + 1) / 2
+    return vals
