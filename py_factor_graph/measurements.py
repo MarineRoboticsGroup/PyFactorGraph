@@ -10,6 +10,7 @@ from py_factor_graph.utils.attrib_utils import (
 )
 from py_factor_graph.utils.matrix_utils import (
     get_covariance_matrix_from_measurement_precisions,
+    get_quat_from_rotation_matrix,
     get_info_matrix_from_measurement_precisions,
 )
 
@@ -224,6 +225,16 @@ class PoseMeasurement3D:
         return self.translation[2]
 
     @property
+    def quat(self) -> np.ndarray:
+        """
+        Get the quaternion in the form [x, y, z, w]
+
+        Returns:
+            np.ndarray: the 4x1 quaternion
+        """
+        return get_quat_from_rotation_matrix(self.rotation)
+
+    @property
     def covariance(self):
         """
         Get the 6x6 covariance matrix. Right now uses isotropic covariance
@@ -355,7 +366,7 @@ class FGRangeMeasurement:
         """
         Get the weight of the measurement
         """
-        return 1 / (self.stddev ** 2)
+        return 1 / (self.stddev**2)
 
     @property
     def pose_key(self) -> str:
@@ -376,7 +387,7 @@ class FGRangeMeasurement:
         """
         Get the variance of the measurement
         """
-        return self.stddev ** 2
+        return self.stddev**2
 
     @property
     def precision(self) -> float:
@@ -437,10 +448,10 @@ class AmbiguousFGRangeMeasurement:
         """
         Get the weight of the measurement
         """
-        return 1 / (self.stddev ** 2)
+        return 1 / (self.stddev**2)
 
 
 POSE_MEASUREMENT_TYPES = Union[PoseMeasurement2D, PoseMeasurement3D]
 POSE_TO_LANDMARK_MEASUREMENT_TYPES = Union[
-    PoseToLandmarkMeasurement2D, PoseToLandmarkMeasurement2D
+    PoseToLandmarkMeasurement2D, PoseToLandmarkMeasurement3D
 ]
