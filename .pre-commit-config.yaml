@@ -14,3 +14,8 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [attrs==22.1.0]
+-   repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.4 # Possible releases: https://github.com/hadialqattan/pycln/releases
+    hooks:
+      - id: pycln
+        args: [--config=pyproject.toml]
