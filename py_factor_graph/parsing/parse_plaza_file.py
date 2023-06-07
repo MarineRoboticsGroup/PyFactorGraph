@@ -4,12 +4,10 @@ For parsing the Plaza dataset
 paper: https://onlinelibrary.wiley.com/doi/pdf/10.1002/rob.20311
 dataset: https://infoscience.epfl.ch/record/283435
 """
-from typing import List, Dict, Tuple, Callable, Optional, Union, SupportsIndex
-import copy
+from typing import List, Dict, Tuple, Optional
 import os
 import numpy as np
 import pandas as pd
-from scipy.stats import linregress
 
 from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
@@ -19,14 +17,7 @@ from py_factor_graph.measurements import (
 from py_factor_graph.calibrations.range_measurement_calibration import (
     UncalibratedRangeMeasurement,
     get_inlier_set_of_range_measurements,
-    fit_linear_calibration_model,
     get_linearly_calibrated_measurements,
-)
-from py_factor_graph.priors import (
-    PosePrior2D,
-    PosePrior3D,
-    LandmarkPrior2D,
-    LandmarkPrior3D,
 )
 from py_factor_graph.factor_graph import (
     FactorGraphData,
@@ -34,8 +25,6 @@ from py_factor_graph.factor_graph import (
 from py_factor_graph.utils.matrix_utils import (
     get_measurement_precisions_from_covariances,
 )
-from py_factor_graph.utils.name_utils import get_time_idx_from_frame_name
-import matplotlib.pyplot as plt
 from attrs import define, field
 
 ODOM_EXTENSION = "_DR.csv"

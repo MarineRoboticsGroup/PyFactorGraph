@@ -39,7 +39,6 @@ from py_factor_graph.priors import (
     PosePrior3D,
 )
 from py_factor_graph.utils.name_utils import (
-    get_robot_char_from_number,
     get_robot_idx_from_frame_name,
     get_time_idx_from_frame_name,
 )

@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Tuple, Callable, Optional, Union, overload
+from typing import List, Tuple, Optional, Union, overload
 from attrs import define, field
 import numpy as np
 from scipy.stats import linregress

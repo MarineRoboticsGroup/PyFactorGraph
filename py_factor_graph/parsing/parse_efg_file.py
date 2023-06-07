@@ -1,7 +1,4 @@
-from typing import List
 from os.path import isfile
-import numpy as np
-import pickle
 
 from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
@@ -10,9 +7,6 @@ from py_factor_graph.measurements import (
 )
 from py_factor_graph.priors import (
     PosePrior2D,
-    PosePrior3D,
-    LandmarkPrior2D,
-    LandmarkPrior3D,
 )
 from py_factor_graph.factor_graph import (
     FactorGraphData,

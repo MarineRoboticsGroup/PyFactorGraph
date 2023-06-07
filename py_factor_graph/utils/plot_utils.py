@@ -8,7 +8,6 @@ from typing import Tuple, Union, Optional, List, Sequence
 from evo.tools import file_interface, plot as evoplot
 from py_factor_graph.utils.solver_utils import (
     SolverResults,
-    VariableValues,
     save_to_tum,
 )
 from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
@@ -251,8 +250,6 @@ def visualize_solution(
     for file_idx in range(len(soln_tum_files)):
         file = soln_tum_files[file_idx]
         traj_est = file_interface.read_tum_trajectory_file(file)
-
-        from os.path import join
 
         if gt_files is not None:
             gt_traj_path = gt_files[file_idx]

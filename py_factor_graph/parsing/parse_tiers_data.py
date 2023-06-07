@@ -8,7 +8,7 @@ import numpy as np
 from typing import Union, Tuple, Dict, List
 
 from rosbags.rosbag2 import Reader
-from rosbags.serde import deserialize_cdr, serialize_cdr
+from rosbags.serde import deserialize_cdr
 from rosbags.typesys.types import (
     sensor_msgs__msg__Range as Range,
     nav_msgs__msg__Odometry as Odometry,

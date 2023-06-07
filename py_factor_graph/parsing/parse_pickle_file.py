@@ -1,6 +1,4 @@
-from typing import List
 from os.path import isfile
-import numpy as np
 import pickle
 import logging
 

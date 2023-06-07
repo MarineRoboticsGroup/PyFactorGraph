@@ -1,5 +1,4 @@
-from typing import List, Optional, Callable
-import attr
+from typing import Callable
 import numpy as np
 
 

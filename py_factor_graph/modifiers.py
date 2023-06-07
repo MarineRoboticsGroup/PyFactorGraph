@@ -6,12 +6,11 @@ Examples:
     2) a modifier that splits a single-robot factor graph into a multi-robot one
 """
 
-from typing import Dict, List, Optional, Tuple, Union, Iterable
+from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import copy
 import itertools
 from attrs import define, field
-from os.path import expanduser, join
 
 from py_factor_graph.variables import (
     PoseVariable2D,
@@ -24,8 +23,6 @@ from py_factor_graph.variables import (
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
-    PoseToLandmarkMeasurement2D,
-    PoseToLandmarkMeasurement3D,
     POSE_MEASUREMENT_TYPES,
     FGRangeMeasurement,
 )
@@ -35,7 +32,6 @@ from py_factor_graph.utils.name_utils import (
     get_time_idx_from_frame_name,
 )
 from py_factor_graph.utils.matrix_utils import (
-    _check_transformation_matrix,
     get_random_transformation_matrix,
     get_theta_from_transformation_matrix,
     get_rotation_matrix_from_transformation_matrix,

@@ -1,9 +1,8 @@
 import attr
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, Union
 import numpy as np
 from py_factor_graph.utils.attrib_utils import (
     positive_float_validator,
-    is_dimension,
     make_variable_name_validator,
     make_rot_matrix_validator,
     optional_float_validator,
@@ -11,7 +10,6 @@ from py_factor_graph.utils.attrib_utils import (
 from py_factor_graph.utils.matrix_utils import (
     get_covariance_matrix_from_measurement_precisions,
     get_quat_from_rotation_matrix,
-    get_info_matrix_from_measurement_precisions,
 )
 
 
