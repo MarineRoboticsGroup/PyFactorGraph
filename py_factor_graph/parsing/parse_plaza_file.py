@@ -16,7 +16,7 @@ from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
 )
-from py_factor_graph.parsing.range_measurement_calibration import (
+from py_factor_graph.calibrations.range_measurement_calibration import (
     UncalibratedRangeMeasurement,
     get_inlier_set_of_range_measurements,
     fit_linear_calibration_model,
