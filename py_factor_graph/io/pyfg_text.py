@@ -29,6 +29,21 @@ from py_factor_graph.measurements import (
     FGRangeMeasurement,
 )
 
+import logging, coloredlogs
+
+logger = logging.getLogger(__name__)
+field_styles = {
+    "filename": {"color": "green"},
+    "levelname": {"bold": True, "color": "black"},
+    "name": {"color": "blue"},
+}
+coloredlogs.install(
+    level="INFO",
+    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
+    field_styles=field_styles,
+)
+
+
 POSE_TYPE_2D = "VERTEX_SE2"
 POSE_TYPE_3D = "VERTEX_SE3:QUAT"
 LANDMARK_TYPE_2D = "VERTEX_XY"
@@ -166,6 +181,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
             f.write(
                 f"{range_measure_type} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist} {range_measure.variance}\n"
             )
+
+    logger.info(f"Saved factor graph in PyFG text format to {fpath}")
 
 
 def read_from_pyfg_text(fpath: str) -> FactorGraphData:
@@ -430,6 +447,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
     f.close()
 
     assert isinstance(pyfg, FactorGraphData)
+    logger.info(f"Loaded factor graph in PyFG text format from {fpath}")
     return pyfg
 
 
