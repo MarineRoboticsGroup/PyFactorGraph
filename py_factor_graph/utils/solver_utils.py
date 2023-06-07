@@ -97,8 +97,6 @@ class VariableValues:
         return (min_vals[0], max_vals[0]), (min_vals[1], max_vals[1])
 
 
-
-
 @attr.s(frozen=True)
 class SolverResults:
     variables: VariableValues = attr.ib()
@@ -144,7 +142,6 @@ class SolverResults:
             (xmin, xmax), (ymin, ymax)
         """
         return self.variables.limits
-
 
 
 def save_results_to_file(
@@ -224,7 +221,10 @@ def save_results_to_file(
 
 
 def save_to_tum(
-    solved_results: SolverResults, filepath: str, strip_extension: bool = False, verbose: bool = False
+    solved_results: SolverResults,
+    filepath: str,
+    strip_extension: bool = False,
+    verbose: bool = False,
 ) -> List[str]:
     """Saves a given set of solver results to a number of TUM files, with one
     for each pose chain in the results.
