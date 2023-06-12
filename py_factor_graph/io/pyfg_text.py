@@ -46,6 +46,8 @@ coloredlogs.install(
 
 POSE_TYPE_2D = "VERTEX_SE2"
 POSE_TYPE_3D = "VERTEX_SE3:QUAT"
+POSE_PRIOR_3D = "VERTEX"
+POSE_PRIOR_3D = "VERTEX"
 LANDMARK_TYPE_2D = "VERTEX_XY"
 LANDMARK_TYPE_3D = "VERTEX_XYZ"
 REL_POSE_POSE_TYPE_2D = "EDGE_SE2"
@@ -91,11 +93,11 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
         if isinstance(pose_var, PoseVariable2D):
             x, y = pose_var.true_position
             theta = pose_var.true_theta
-            return f"{pose_type} {pose_var.name} {x} {y} {theta}"
+            return f"{pose_type} {pose_var.timestamp} {pose_var.name} {x} {y} {theta}"
         elif isinstance(pose_var, PoseVariable3D):
             x, y, z = pose_var.true_position
             qx, qy, qz, qw = pose_var.true_quat
-            return f"{pose_type} {pose_var.name} {x} {y} {z} {qx} {qy} {qz} {qw}"
+            return f"{pose_type} {pose_var.timestamp} {pose_var.name} {x} {y} {z} {qx} {qy} {qz} {qw}"
         else:
             raise ValueError(f"Unknown pose type {type(pose_var)}")
 
@@ -120,7 +122,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
         if isinstance(measure, PoseMeasurement2D):
             measurement_values = f"{measure.x} {measure.y} {measure.theta}"
             measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            return f"{rel_pose_pose_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
+            return f"{rel_pose_pose_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
         elif isinstance(measure, PoseMeasurement3D):
             quat = measure.quat
             qx, qy, qz, qw = quat
@@ -128,7 +130,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
                 f"{measure.x} {measure.y} {measure.z} {qx} {qy} {qz} {qw}"
             )
             measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            return f"{rel_pose_pose_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
+            return f"{rel_pose_pose_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
 
@@ -145,12 +147,12 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
         if isinstance(measure, PoseToLandmarkMeasurement2D):
             measurement_values = f"{measure.x} {measure.y}"
             measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
+            full_string = f"{rel_pose_landmark_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
             return full_string
         elif isinstance(measure, PoseToLandmarkMeasurement3D):
             measurement_values = f"{measure.x} {measure.y} {measure.z}"
             measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
+            full_string = f"{rel_pose_landmark_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
             return full_string
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
@@ -179,7 +181,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
 
         for range_measure in fg.range_measurements:
             f.write(
-                f"{range_measure_type} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist} {range_measure.variance}\n"
+                f"{range_measure_type} {range_measure.timestamp} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist} {range_measure.variance}\n"
             )
 
     logger.info(f"Saved factor graph in PyFG text format to {fpath}")
@@ -215,30 +217,36 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         RANGE_MEASURE_TYPE: "RANGE_MEASURE",
     }
 
+    pose_state_dim = (
+        3 if dim == 2 else 7
+    )  # 3 for 2D, 7 for 3D (quaternion representation)
+
     def _get_pose_var_from_line(line: str) -> POSE_VARIABLE_TYPES:
         line_parts = line.split(" ")
-        pose_var_name = line_parts[1]
+        pose_var_timestamp = float(line_parts[1])
+        pose_var_name = line_parts[2]
         if dim == 2:
-            # f"{pose_type} {pose_var.name} {x} {y} {theta}"
             assert line_parts[0] == POSE_TYPE_2D
-            assert len(line_parts) == 5
-            x, y, theta = [float(x) for x in line_parts[2:]]
+            assert len(line_parts) == 6
+            x, y, theta = [float(x) for x in line_parts[-pose_state_dim:]]
             return PoseVariable2D(
-                name=pose_var_name, true_position=(x, y), true_theta=theta
+                name=pose_var_name,
+                true_position=(x, y),
+                true_theta=theta,
+                timestamp=pose_var_timestamp,
             )
 
         elif dim == 3:
-            # f"{pose_type} {pose_var.name} {x} {y} {z} {qx} {qy} {qz} {qw}"
             assert line_parts[0] == POSE_TYPE_3D
-            assert len(line_parts) == 9
-            x, y, z, qx, qy, qz, qw = [float(x) for x in line_parts[2:]]
+            assert len(line_parts) == 10
+            x, y, z, qx, qy, qz, qw = [float(x) for x in line_parts[-pose_state_dim:]]
             quat = np.array([qx, qy, qz, qw])
             rot_mat = get_rotation_matrix_from_quat(quat)
             return PoseVariable3D(
                 name=pose_var_name,
                 true_position=(x, y, z),
                 true_rotation=rot_mat,
-                timestamp=None,
+                timestamp=pose_var_timestamp,
             )
         else:
             raise ValueError(f"Unknown dimension {dim}")
@@ -247,13 +255,11 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         line_parts = line.split(" ")
         landmark_var_name = line_parts[1]
         if dim == 2:
-            # f"{landmark_type} {landmark_var.name} {x} {y}"
             assert line_parts[0] == LANDMARK_TYPE_2D
             assert len(line_parts) == 4
             x, y = [float(x) for x in line_parts[2:]]
             return LandmarkVariable2D(name=landmark_var_name, true_position=(x, y))
         elif dim == 3:
-            # f"{landmark_type} {landmark_var.name} {x} {y} {z}"
             assert line_parts[0] == LANDMARK_TYPE_3D
             assert len(line_parts) == 5
             x, y, z = [float(x) for x in line_parts[2:]]
@@ -261,6 +267,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         else:
             raise ValueError(f"Unknown dimension {dim}")
 
+    measurement_metadata_dim = 4
     pose_pose_measure_dim = 3 if dim == 2 else 6
     num_trans_and_rot_entries = (
         3 if dim == 2 else 7
@@ -269,10 +276,21 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
 
     def _get_pose_pose_measure_from_line(line: str) -> POSE_MEASUREMENT_TYPES:
         line_parts = line.split(" ")
-        base_pose_name = line_parts[1]
-        to_pose_name = line_parts[2]
-        measurement = [float(x) for x in line_parts[3 : 3 + num_trans_and_rot_entries]]
-        covar_elements = [float(x) for x in line_parts[3 + num_trans_and_rot_entries :]]
+        measure_timestamp = float(line_parts[1])
+        base_pose_name = line_parts[2]
+        to_pose_name = line_parts[3]
+        measurement = [
+            float(x)
+            for x in line_parts[
+                measurement_metadata_dim : measurement_metadata_dim
+                + num_trans_and_rot_entries
+            ]
+        ]
+        covar_elements = [
+            float(x)
+            for x in line_parts[measurement_metadata_dim + num_trans_and_rot_entries :]
+        ]
+        assert len(covar_elements) == pose_pose_measure_noise_dim
         covar_mat = load_symmetric_matrix_column_major(
             covar_elements, pose_pose_measure_dim
         )
@@ -283,11 +301,13 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             covar_mat, matrix_dim=pose_pose_measure_dim
         )
         assert (
-            len(line_parts) == 3 + pose_pose_measure_dim + pose_pose_measure_noise_dim
+            len(line_parts)
+            == measurement_metadata_dim
+            + pose_pose_measure_dim
+            + pose_pose_measure_noise_dim
         )
         if dim == 2:
             assert line_parts[0] == REL_POSE_POSE_TYPE_2D
-            # full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
             x, y, theta = measurement
             return PoseMeasurement2D(
                 base_pose=base_pose_name,
@@ -297,22 +317,14 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
                 theta=theta,
                 translation_precision=trans_precision,
                 rotation_precision=rot_precision,
+                timestamp=measure_timestamp,
             )
         elif dim == 3:
-            # full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
             assert line_parts[0] == REL_POSE_POSE_TYPE_3D
-            x, y, z, qx, qy, qz, qw = [float(x) for x in line_parts[3:3]]
+            x, y, z, qx, qy, qz, qw = measurement
             translation = np.array([x, y, z])
             quat = np.array([qx, qy, qz, qw])
             rot_mat = get_rotation_matrix_from_quat(quat)
-            covar_elements = [float(x) for x in line_parts[10:]]
-            covar_mat = load_symmetric_matrix_column_major(covar_elements, 6)
-            (
-                trans_precision,
-                rot_precision,
-            ) = get_measurement_precisions_from_covariance_matrix(
-                covar_mat, matrix_dim=6
-            )
             return PoseMeasurement3D(
                 base_pose=base_pose_name,
                 to_pose=to_pose_name,
@@ -320,6 +332,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
                 rotation=rot_mat,
                 translation_precision=trans_precision,
                 rotation_precision=rot_precision,
+                timestamp=measure_timestamp,
             )
         else:
             raise ValueError(f"Unknown dimension {dim}")
@@ -337,10 +350,20 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             len(line_parts)
             == 3 + pose_landmark_measure_dim + pose_landmark_measure_noise_dim
         )
-        pose_name = line_parts[1]
-        landmark_name = line_parts[2]
-        measurement = [float(x) for x in line_parts[3 : 3 + pose_landmark_measure_dim]]
-        covar_elements = [float(x) for x in line_parts[3 + pose_landmark_measure_dim :]]
+        measure_timestamp = float(line_parts[1])
+        pose_name = line_parts[2]
+        landmark_name = line_parts[3]
+        measurement = [
+            float(x)
+            for x in line_parts[
+                measurement_metadata_dim : measurement_metadata_dim
+                + pose_landmark_measure_dim
+            ]
+        ]
+        covar_elements = [
+            float(x)
+            for x in line_parts[measurement_metadata_dim + pose_landmark_measure_dim :]
+        ]
         assert len(covar_elements) == pose_landmark_measure_noise_dim
         covar_mat = load_symmetric_matrix_column_major(
             covar_elements, pose_landmark_measure_dim
@@ -359,7 +382,6 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         )
         if dim == 2:
             assert line_parts[0] == REL_POSE_LANDMARK_TYPE_2D
-            # full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
             x, y = measurement
             return PoseToLandmarkMeasurement2D(
                 pose_name=pose_name,
@@ -367,10 +389,10 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
                 x=x,
                 y=y,
                 translation_precision=trans_precision,
+                timestamp=measure_timestamp,
             )
         elif dim == 3:
             assert line_parts[0] == REL_POSE_LANDMARK_TYPE_3D
-            # full_string = f"{rel_pose_landmark_type} {measurement_connectivity} {measurement_values} {measurement_noise}"
             x, y, z = measurement
             return PoseToLandmarkMeasurement3D(
                 pose_name=pose_name,
@@ -379,20 +401,24 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
                 y=y,
                 z=z,
                 translation_precision=trans_precision,
+                timestamp=measure_timestamp,
             )
         else:
             raise ValueError(f"Unknown dimension {dim}")
 
     def _get_range_measure_from_line(line: str) -> FGRangeMeasurement:
-        # f"{range_measure_type} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist} {range_measure.variance}\n"
         line_parts = line.split(" ")
-        assert len(line_parts) == 5
+        assert len(line_parts) == 6
         assert line_parts[0] == RANGE_MEASURE_TYPE
-        association = (line_parts[1], line_parts[2])
-        dist = float(line_parts[3])
-        variance = float(line_parts[4])
+        measure_timestamp = float(line_parts[1])
+        association = (line_parts[2], line_parts[3])
+        dist = float(line_parts[4])
+        variance = float(line_parts[5])
         return FGRangeMeasurement(
-            association=association, dist=dist, stddev=math.sqrt(variance)
+            association=association,
+            dist=dist,
+            stddev=math.sqrt(variance),
+            timestamp=measure_timestamp,
         )
 
     def _rel_pose_pose_is_odom(measure: POSE_MEASUREMENT_TYPES) -> bool:
@@ -451,8 +477,10 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
     return pyfg
 
 
+raise NotImplementedError("Need to implement pose/landmark priors")
+
 if __name__ == "__main__":
-    from py_factor_graph.parsing.parse_pickle_file import parse_pickle_file
+    from py_factor_graph.io.pickle_file import parse_pickle_file
     from os.path import expanduser
 
     sample_file = expanduser("~/experimental_data/plaza/Plaza1/factor_graph.pickle")
