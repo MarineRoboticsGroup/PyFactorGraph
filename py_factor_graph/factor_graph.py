@@ -858,7 +858,7 @@ class FactorGraphData:
         """
         self.ambiguous_range_measurements.append(measure)
 
-    def add_pose_prior(self, pose_prior: PosePrior2D):
+    def add_pose_prior(self, pose_prior: Union[PosePrior2D, PosePrior3D]):
         """Adds a pose prior to the list of pose priors.
 
         Args:

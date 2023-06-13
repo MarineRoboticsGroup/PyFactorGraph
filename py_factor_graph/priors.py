@@ -8,7 +8,10 @@ from py_factor_graph.utils.attrib_utils import (
     make_rot_matrix_validator,
     positive_float_validator,
 )
-from py_factor_graph.utils.matrix_utils import get_rotation_matrix_from_theta
+from py_factor_graph.utils.matrix_utils import (
+    get_rotation_matrix_from_theta,
+    get_quat_from_rotation_matrix,
+)
 
 
 @define(frozen=True)
@@ -87,7 +90,7 @@ class PosePrior3D:
         return self.rotation
 
     @property
-    def covariance_matrix(self) -> np.ndarray:
+    def covariance(self) -> np.ndarray:
         return np.diag(
             [
                 1 / self.translation_precision,
@@ -98,6 +101,10 @@ class PosePrior3D:
                 1 / self.rotation_precision,
             ]
         )
+
+    @property
+    def quat(self) -> np.ndarray:
+        return get_quat_from_rotation_matrix(self.rotation)
 
 
 @define(frozen=True)
@@ -162,3 +169,7 @@ class LandmarkPrior3D:
     @property
     def covariance_matrix(self):
         return np.diag([1 / self.translation_precision] * 3)
+
+    @property
+    def covariance(self):
+        return self.covariance_matrix
