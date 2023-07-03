@@ -294,7 +294,7 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
 
 
 def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
-    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w)
+    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w) and ensures w is positive by convention
 
     Args:
         mat (np.ndarray): the rotation matrix
@@ -315,6 +315,10 @@ def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
     assert isinstance(rot, scipy.spatial.transform.Rotation)
     quat = rot.as_quat()
     assert isinstance(quat, np.ndarray)
+
+    if quat[-1] < 0:
+        quat = np.negative(quat)
+
     return quat
 
 

@@ -14,9 +14,9 @@ from py_factor_graph.utils.matrix_utils import (
 from py_factor_graph.variables import (
     PoseVariable2D,
     PoseVariable3D,
-    POSE_VARIABLE_TYPES,
     LandmarkVariable2D,
     LandmarkVariable3D,
+    POSE_VARIABLE_TYPES,
     LANDMARK_VARIABLE_TYPES,
 )
 from typing import Union
@@ -25,6 +25,8 @@ from py_factor_graph.priors import (
     PosePrior3D,
     LandmarkPrior2D,
     LandmarkPrior3D,
+    POSE_PRIOR_TYPES,
+    LANDMARK_PRIOR_TYPES,
 )
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
@@ -78,12 +80,32 @@ def _num_elems_symmetric_matrix(dim: int) -> int:
     return int(dim * (dim + 1) / 2)
 
 
-def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
-    """Save factor graph to g2o file format.
+def _get_measurement_noise_str_from_covariance_matrix(
+    covar: np.ndarray, req_covar_dim: int, fprec: int
+) -> str:
+    """Get the measurement noise string from a covariance matrix
+
+    Args:
+        covar (np.ndarray): covariance matrix.
+        req_covar_dim (int): required dimension of the covariance matrix.
+        fprec (int): format precision.
+
+    Returns:
+        str: string containing measurement noise formatted for pyfg
+    """
+    covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar)
+    assert len(covar_mat_elems) == _num_elems_symmetric_matrix(req_covar_dim)
+    measurement_noise = " ".join([f"{x:.{fprec}f}" for x in covar_mat_elems])
+    return measurement_noise
+
+
+def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
+    """Save factor graph to pyfg file format.
 
     Args:
         fg (FactorGraphData): factor graph data.
         fpath (str): file path.
+        fprec (int): format precision.
     """
     if fg.dimension == 2:
         pose_type = POSE_TYPE_2D
@@ -104,104 +126,82 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
 
     def _get_pose_var_string(pose_var: POSE_VARIABLE_TYPES):
         if isinstance(pose_var, PoseVariable2D):
-            x, y = pose_var.true_position
-            theta = pose_var.true_theta
-            return f"{pose_type} {pose_var.timestamp} {pose_var.name} {x} {y} {theta}"
+            return f"{pose_type} {pose_var.timestamp:.9f} {pose_var.name} {pose_var.true_x:.{fprec}f} {pose_var.true_y:.{fprec}f} {pose_var.true_theta:.{fprec}f}"
         elif isinstance(pose_var, PoseVariable3D):
-            x, y, z = pose_var.true_position
             qx, qy, qz, qw = pose_var.true_quat
-            return f"{pose_type} {pose_var.timestamp} {pose_var.name} {x} {y} {z} {qx} {qy} {qz} {qw}"
+            return f"{pose_type} {pose_var.timestamp:.9f} {pose_var.name} {pose_var.true_x:.{fprec}f} {pose_var.true_y:.{fprec}f} {pose_var.true_z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown pose type {type(pose_var)}")
 
     def _get_landmark_var_string(landmark_var: LANDMARK_VARIABLE_TYPES):
         if isinstance(landmark_var, LandmarkVariable2D):
-            x, y = landmark_var.true_position
-            return f"{landmark_type} {landmark_var.name} {x} {y}"
+            return f"{landmark_type} {landmark_var.name} {landmark_var.true_x:.{fprec}f} {landmark_var.true_y:.{fprec}f}"
         elif isinstance(landmark_var, LandmarkVariable3D):
-            x, y, z = landmark_var.true_position
-            return f"{landmark_type} {landmark_var.name} {x} {y} {z}"
+            return f"{landmark_type} {landmark_var.name} {landmark_var.true_x:.{fprec}f} {landmark_var.true_y:.{fprec}f} {landmark_var.true_z:.{fprec}f}"
         else:
             raise ValueError(f"Unknown landmark type {type(landmark_var)}")
 
-    def _get_pose_prior_string(pose_prior: Union[PosePrior2D, PosePrior3D]):
-        covar_mat = pose_prior.covariance
-        covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar_mat)
+    def _get_pose_prior_string(pose_prior: POSE_PRIOR_TYPES):
         if isinstance(pose_prior, PosePrior2D):
-            x, y = pose_prior.position
-            theta = pose_prior.theta
-            prior_covar = " ".join([str(x) for x in covar_mat_elems])
-            return f"{pose_prior_type} {pose_prior.timestamp} {pose_prior.name} {x} {y} {theta} {prior_covar}"
+            measurement_values = f"{pose_prior.x:.{fprec}f} {pose_prior.y:.{fprec}f} {pose_prior.theta:.{fprec}f}"
         elif isinstance(pose_prior, PosePrior3D):
-            x, y, z = pose_prior.position
             qx, qy, qz, qw = pose_prior.quat
-            prior_covar = " ".join([str(x) for x in covar_mat_elems])
-            return f"{pose_prior_type} {pose_prior.timestamp} {pose_prior.name} {x} {y} {z} {qx} {qy} {qz} {qw} {prior_covar}"
+            measurement_values = f"{pose_prior.x:.{fprec}f} {pose_prior.y:.{fprec}f} {pose_prior.z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown pose prior type {type(pose_prior)}")
+        req_covar_dim = 3 if isinstance(pose_prior, PoseMeasurement2D) else 6
+        measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
+            pose_prior.covariance, req_covar_dim, fprec
+        )
+        return f"{pose_prior_type} {pose_prior.timestamp:.9f} {pose_prior.name} {measurement_values} {measurement_noise}"
 
-    def _get_landmark_prior_string(
-        landmark_prior: Union[LandmarkPrior2D, LandmarkPrior3D]
-    ):
-        covar_mat = landmark_prior.covariance
-        covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar_mat)
-        timestamp = landmark_prior.timestamp
+    def _get_landmark_prior_string(landmark_prior: LANDMARK_PRIOR_TYPES):
         if isinstance(landmark_prior, LandmarkPrior2D):
-            x, y = landmark_prior.position
-            prior_covar = " ".join([str(x) for x in covar_mat_elems])
-            return f"{landmark_prior_type} {timestamp} {landmark_prior.name} {x} {y} {prior_covar}"
+            measurement_values = (
+                f"{landmark_prior.x:.{fprec}f} {landmark_prior.y:.{fprec}f}"
+            )
         elif isinstance(landmark_prior, LandmarkPrior3D):
-            x, y, z = landmark_prior.position
-            prior_covar = " ".join([str(x) for x in covar_mat_elems])
-            return f"{landmark_prior_type} {timestamp} {landmark_prior.name} {x} {y} {z} {prior_covar}"
+            measurement_values = f"{landmark_prior.x:.{fprec}f} {landmark_prior.y:.{fprec}f} {landmark_prior.z:.{fprec}f}"
         else:
             raise ValueError(f"Unknown landmark prior type {type(landmark_prior)}")
+        req_covar_dim = 2 if isinstance(pose_prior, LandmarkPrior2D) else 3
+        measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
+            landmark_prior.covariance, req_covar_dim, fprec
+        )
+        return f"{landmark_prior_type} {landmark_prior.timestamp:.9f} {landmark_prior.name} {measurement_values} {measurement_noise}"
 
     def _get_pose_pose_measure_string(measure: POSE_MEASUREMENT_TYPES):
         measurement_connectivity = f"{measure.base_pose} {measure.to_pose}"
-        covar_mat = measure.covariance
-        covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar_mat)
-        pose_pose_measure_dim = 3 if isinstance(measure, PoseMeasurement2D) else 6
-        assert len(covar_mat_elems) == _num_elems_symmetric_matrix(
-            pose_pose_measure_dim
-        )
         if isinstance(measure, PoseMeasurement2D):
-            measurement_values = f"{measure.x} {measure.y} {measure.theta}"
-            measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            return f"{rel_pose_pose_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
-        elif isinstance(measure, PoseMeasurement3D):
-            quat = measure.quat
-            qx, qy, qz, qw = quat
             measurement_values = (
-                f"{measure.x} {measure.y} {measure.z} {qx} {qy} {qz} {qw}"
+                f"{measure.x:.{fprec}f} {measure.y:.{fprec}f} {measure.theta:.{fprec}f}"
             )
-            measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            return f"{rel_pose_pose_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
+        elif isinstance(measure, PoseMeasurement3D):
+            qx, qy, qz, qw = measure.quat
+            measurement_values = f"{measure.x:.{fprec}f} {measure.y:.{fprec}f} {measure.z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
+        req_covar_dim = 3 if isinstance(measure, PoseMeasurement2D) else 6
+        measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
+            measure.covariance, req_covar_dim, fprec
+        )
+        return f"{rel_pose_pose_type} {measure.timestamp:.9f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     def _get_pose_landmark_measure_string(measure: POSE_TO_LANDMARK_MEASUREMENT_TYPES):
         measurement_connectivity = f"{measure.pose_name} {measure.landmark_name}"
-        cover_mat = measure.covariance
-        covar_mat_elems = convert_symmetric_matrix_to_list_column_major(cover_mat)
-        pose_landmark_measure_dim = (
-            2 if isinstance(measure, PoseToLandmarkMeasurement2D) else 3
-        )
-        assert len(covar_mat_elems) == _num_elems_symmetric_matrix(
-            pose_landmark_measure_dim
-        )
         if isinstance(measure, PoseToLandmarkMeasurement2D):
-            measurement_values = f"{measure.x} {measure.y}"
-            measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            full_string = f"{rel_pose_landmark_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
-            return full_string
+            measurement_values = f"{measure.x:.{fprec}f} {measure.y:.{fprec}f}"
         elif isinstance(measure, PoseToLandmarkMeasurement3D):
-            measurement_values = f"{measure.x} {measure.y} {measure.z}"
-            measurement_noise = " ".join([str(x) for x in covar_mat_elems])
-            full_string = f"{rel_pose_landmark_type} {measure.timestamp} {measurement_connectivity} {measurement_values} {measurement_noise}"
-            return full_string
+            measurement_values = (
+                f"{measure.x:.{fprec}f} {measure.y:.{fprec}f} {measure.z:.{fprec}f}"
+            )
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
+        req_covar_dim = 2 if isinstance(measure, PoseMeasurement2D) else 3
+        measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
+            measure.covariance, req_covar_dim, fprec
+        )
+        return f"{rel_pose_landmark_type} {measure.timestamp:.9f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:
@@ -233,7 +233,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
 
         for range_measure in fg.range_measurements:
             f.write(
-                f"{range_measure_type} {range_measure.timestamp} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist} {range_measure.variance}\n"
+                f"{range_measure_type} {range_measure.timestamp:.9f} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist:.{fprec}f} {range_measure.variance:.{fprec}f}\n"
             )
 
     logger.info(f"Saved factor graph in PyFG text format to {fpath}")
@@ -288,9 +288,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         RANGE_MEASURE_TYPE: "RANGE_MEASURE",
     }
 
-    pose_state_dim = (
-        3 if dim == 2 else 7
-    )  # 3 for 2D, 7 for 3D (quaternion representation)
+    pose_state_dim = 3 if dim == 2 else 7
 
     def _get_pose_var_from_line(line: str) -> POSE_VARIABLE_TYPES:
         line_parts = line.split(" ")
@@ -306,7 +304,6 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
                 true_theta=theta,
                 timestamp=pose_var_timestamp,
             )
-
         elif dim == 3:
             assert line_parts[0] == POSE_TYPE_3D
             assert len(line_parts) == 10
@@ -448,10 +445,8 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             raise ValueError(f"Unknown dimension {dim}")
 
     measurement_metadata_dim = 4
-    pose_pose_measure_dim = 3 if dim == 2 else 6  # 3 for 2D, 6 for 3D
-    num_trans_and_rot_entries = (
-        3 if dim == 2 else 7
-    )  # 3 for 2D, 7 for 3D (quaternion representation)
+    num_trans_and_rot_entries = 3 if dim == 2 else 7
+    pose_pose_measure_dim = 3 if dim == 2 else 6
     pose_pose_measure_noise_dim = _num_elems_symmetric_matrix(pose_pose_measure_dim)
 
     def _get_pose_pose_measure_from_line(line: str) -> POSE_MEASUREMENT_TYPES:
@@ -530,7 +525,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         line_parts = line.split(" ")
         assert (
             len(line_parts)
-            == 3 + pose_landmark_measure_dim + pose_landmark_measure_noise_dim
+            == 4 + pose_landmark_measure_dim + pose_landmark_measure_noise_dim
         )
         measure_timestamp = float(line_parts[1])
         pose_name = line_parts[2]
@@ -654,12 +649,13 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             else:
                 pyfg.add_loop_closure(pose_measure)
         elif line_type == "REL_POSE_LANDMARK":
-            raise NotImplementedError(
-                "We don't support relative pose to landmark measurements yet"
-            )
-            assert line.split(" ")[0] == rel_pose_landmark_type
-            pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
-            pyfg.add_loop_closure(pose_landmark_measure)
+            # raise NotImplementedError(
+            #     "We don't support relative pose to landmark measurements yet"
+            # )
+            pass
+            # assert line.split(" ")[0] == rel_pose_landmark_type
+            # pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
+            # pyfg.add_loop_closure(pose_landmark_measure)
         elif line_type == "RANGE_MEASURE":
             range_measure = _get_range_measure_from_line(line)
             pyfg.add_range_measurement(range_measure)
@@ -669,29 +665,3 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
     assert isinstance(pyfg, FactorGraphData)
     logger.info(f"Loaded factor graph in PyFG text format from {fpath}")
     return pyfg
-
-
-if __name__ == "__main__":
-    from py_factor_graph.io.pickle_file import parse_pickle_file
-    from os.path import expanduser
-
-    sample_file = expanduser("~/experimental_data/plaza/Plaza1/factor_graph.pickle")
-
-    fg = parse_pickle_file(sample_file)
-    fg.print_summary()
-    save_to_pyfg_text(fg, "/tmp/test.txt")
-    fg.animate_odometry(
-        show_gt=True,
-        draw_range_lines=True,
-        draw_range_circles=True,
-        num_timesteps_keep_ranges=10,
-    )
-
-    fg2 = read_from_pyfg_text("/tmp/test.txt")
-    fg2.print_summary()
-    fg2.animate_odometry(
-        show_gt=True,
-        draw_range_lines=True,
-        draw_range_circles=True,
-        num_timesteps_keep_ranges=10,
-    )

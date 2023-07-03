@@ -1,5 +1,5 @@
 import attr
-from typing import Tuple, Optional
+from typing import Optional, Tuple, Union
 import numpy as np
 from attrs import define, field
 from py_factor_graph.utils.attrib_utils import (
@@ -173,3 +173,7 @@ class LandmarkPrior3D:
     @property
     def covariance(self):
         return self.covariance_matrix
+
+
+POSE_PRIOR_TYPES = Union[PosePrior2D, PosePrior3D]
+LANDMARK_PRIOR_TYPES = Union[LandmarkPrior2D, LandmarkPrior3D]
