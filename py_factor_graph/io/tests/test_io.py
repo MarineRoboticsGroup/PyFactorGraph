@@ -11,7 +11,7 @@ tmp_dir = os.path.join(cur_dir, "tmp")
 if not os.path.exists(tmp_dir):
     os.makedirs(tmp_dir)
 
-# read two text files and checks if each line in both files is identical
+# read two text files and check if each line in both files is identical
 def _check_file_equality(file1, file2):
     with open(file1, "r") as f1, open(file2, "r") as f2:
         for line1, line2 in zip(f1, f2):
@@ -31,3 +31,6 @@ def test_pyfg_se3_file() -> None:
 
     # assert read and write files are equal
     assert _check_file_equality(data_file, write_file)
+
+    # remove temporary file
+    os.remove(write_file)
