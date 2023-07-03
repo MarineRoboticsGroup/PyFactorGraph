@@ -81,20 +81,18 @@ def _num_elems_symmetric_matrix(dim: int) -> int:
 
 
 def _get_measurement_noise_str_from_covariance_matrix(
-    covar: np.ndarray, req_covar_dim: int, fprec: int
+    covar: np.ndarray, fprec: int
 ) -> str:
     """Get the measurement noise string from a covariance matrix
 
     Args:
         covar (np.ndarray): covariance matrix.
-        req_covar_dim (int): required dimension of the covariance matrix.
         fprec (int): format precision.
 
     Returns:
         str: string containing measurement noise formatted for pyfg
     """
     covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar)
-    assert len(covar_mat_elems) == _num_elems_symmetric_matrix(req_covar_dim)
     measurement_noise = " ".join([f"{x:.{fprec}f}" for x in covar_mat_elems])
     return measurement_noise
 
@@ -149,9 +147,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             measurement_values = f"{pose_prior.x:.{fprec}f} {pose_prior.y:.{fprec}f} {pose_prior.z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown pose prior type {type(pose_prior)}")
-        req_covar_dim = 3 if isinstance(pose_prior, PosePrior2D) else 6
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
-            pose_prior.covariance, req_covar_dim, fprec
+            pose_prior.covariance, fprec
         )
         return f"{pose_prior_type} {pose_prior.timestamp:.9f} {pose_prior.name} {measurement_values} {measurement_noise}"
 
@@ -164,9 +161,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             measurement_values = f"{landmark_prior.x:.{fprec}f} {landmark_prior.y:.{fprec}f} {landmark_prior.z:.{fprec}f}"
         else:
             raise ValueError(f"Unknown landmark prior type {type(landmark_prior)}")
-        req_covar_dim = 2 if isinstance(pose_prior, LandmarkPrior2D) else 3
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
-            landmark_prior.covariance, req_covar_dim, fprec
+            landmark_prior.covariance, fprec
         )
         return f"{landmark_prior_type} {landmark_prior.timestamp:.9f} {landmark_prior.name} {measurement_values} {measurement_noise}"
 
@@ -181,9 +177,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             measurement_values = f"{measure.x:.{fprec}f} {measure.y:.{fprec}f} {measure.z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
-        req_covar_dim = 3 if isinstance(measure, PoseMeasurement2D) else 6
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
-            measure.covariance, req_covar_dim, fprec
+            measure.covariance, fprec
         )
         return f"{rel_pose_pose_type} {measure.timestamp:.9f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
@@ -197,9 +192,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             )
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
-        req_covar_dim = 2 if isinstance(measure, PoseToLandmarkMeasurement2D) else 3
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
-            measure.covariance, req_covar_dim, fprec
+            measure.covariance, fprec
         )
         return f"{rel_pose_landmark_type} {measure.timestamp:.9f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
