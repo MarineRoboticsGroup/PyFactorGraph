@@ -27,7 +27,7 @@ def test_pyfg_se3_file() -> None:
 
     # write factor graph data
     write_file = os.path.join(tmp_dir, "pyfg_text_se3_test_tmp.txt")
-    save_to_pyfg_text(factor_graph, write_file, 6)
+    save_to_pyfg_text(factor_graph, write_file)
 
     # assert read and write files are equal
-    # assert _check_file_equality(data_file, write_file)
+    assert _check_file_equality(data_file, write_file)
