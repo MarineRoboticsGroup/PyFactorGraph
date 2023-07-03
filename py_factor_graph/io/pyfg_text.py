@@ -149,7 +149,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             measurement_values = f"{pose_prior.x:.{fprec}f} {pose_prior.y:.{fprec}f} {pose_prior.z:.{fprec}f} {qx:.{fprec}f} {qy:.{fprec}f} {qz:.{fprec}f} {qw:.{fprec}f}"
         else:
             raise ValueError(f"Unknown pose prior type {type(pose_prior)}")
-        req_covar_dim = 3 if isinstance(pose_prior, PoseMeasurement2D) else 6
+        req_covar_dim = 3 if isinstance(pose_prior, PosePrior2D) else 6
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
             pose_prior.covariance, req_covar_dim, fprec
         )
@@ -197,7 +197,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str, fprec: int = 9):
             )
         else:
             raise ValueError(f"Unknown measurement type {type(measure)}")
-        req_covar_dim = 2 if isinstance(measure, PoseMeasurement2D) else 3
+        req_covar_dim = 2 if isinstance(measure, PoseToLandmarkMeasurement2D) else 3
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
             measure.covariance, req_covar_dim, fprec
         )
