@@ -14,20 +14,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_measurement_precisions_from_info_matrix,
     load_symmetric_matrix_column_major,
 )
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 SE3_VARIABLE = "VERTEX_SE3:QUAT"
 SE2_VARIABLE = "VERTEX_SE2:QUAT"

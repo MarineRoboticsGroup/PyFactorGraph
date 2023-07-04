@@ -50,22 +50,7 @@ from py_factor_graph.utils.plot_utils import (
     draw_range_measurement,
 )
 from py_factor_graph.utils.attrib_utils import is_dimension
-
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 
 @attr.s

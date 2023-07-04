@@ -4,9 +4,6 @@ from os.path import isfile, dirname, isdir
 from os import makedirs
 import numpy as np
 import attr
-import logging
-
-logger = logging.getLogger(__name__)
 
 from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_transformation_matrix,
@@ -15,6 +12,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_translation_from_transformation_matrix,
     _check_transformation_matrix,
 )
+from py_factor_graph.utils.logging_utils import logger
 
 
 @attr.s(frozen=True)

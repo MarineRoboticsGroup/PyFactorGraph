@@ -32,24 +32,11 @@ from py_factor_graph.measurements import (
     PoseMeasurement3D,
     PoseToLandmarkMeasurement2D,
     PoseToLandmarkMeasurement3D,
+    FGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
     POSE_TO_LANDMARK_MEASUREMENT_TYPES,
-    FGRangeMeasurement,
 )
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 
 POSE_TYPE_2D = "VERTEX_SE2"
@@ -669,7 +656,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             pass
             # assert line.split(" ")[0] == rel_pose_landmark_measure_type
             # pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
-            # pyfg.add_loop_closure(pose_landmark_measure)
+            # pyfg.add_pose_landmark_measurement(pose_landmark_measure)
         elif line_type == range_measure_type:
             range_measure = _get_range_measure_from_line(line)
             pyfg.add_range_measurement(range_measure)

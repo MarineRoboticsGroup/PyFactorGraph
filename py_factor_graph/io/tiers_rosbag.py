@@ -30,20 +30,7 @@ from py_factor_graph.calibrations.range_measurement_calibration import (
 )
 
 from py_factor_graph.modifiers import skip_first_n_poses
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 
 NUM_TURTLES = 5

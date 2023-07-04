@@ -1,12 +1,10 @@
 from os.path import isfile
 import pickle
-import logging
 
 from py_factor_graph.factor_graph import (
     FactorGraphData,
 )
-
-logger = logging.getLogger(__name__)
+from py_factor_graph.utils.logging_utils import logger
 
 
 def parse_pickle_file(filepath: str) -> FactorGraphData:
