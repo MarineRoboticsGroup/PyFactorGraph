@@ -142,7 +142,7 @@ def get_info_matrix_from_measurement_precisions(
     assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
     if mat_dim == 3:
         trans_info = [trans_precision] * 2
-        rot_info = [2 * rot_precision]
+        rot_info = [rot_precision]
     if mat_dim == 6:
         trans_info = [trans_precision] * 3
         rot_info = [2 * rot_precision] * 3
