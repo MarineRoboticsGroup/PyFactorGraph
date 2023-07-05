@@ -260,6 +260,9 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
             else:
                 raise ValueError(f"Unknown measurement type {type(loop_closure)}")
 
+        for pose_landmark_measure in fg.pose_landmark_measurements:
+            f.write(_get_pose_landmark_measure_string(pose_landmark_measure) + "\n")
+
         for range_measure in fg.range_measurements:
             f.write(_get_range_measure_string(range_measure) + "\n")
 
@@ -650,7 +653,6 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             else:
                 pyfg.add_loop_closure(pose_measure)
         elif line_type == rel_pose_landmark_measure_type:
-
             pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
             pyfg.add_pose_landmark_measurement(pose_landmark_measure)
         elif line_type == range_measure_type:
