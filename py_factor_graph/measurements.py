@@ -450,6 +450,6 @@ class AmbiguousFGRangeMeasurement:
 
 
 POSE_MEASUREMENT_TYPES = Union[PoseMeasurement2D, PoseMeasurement3D]
-POSE_TO_LANDMARK_MEASUREMENT_TYPES = Union[
+POSE_LANDMARK_MEASUREMENT_TYPES = Union[
     PoseToLandmarkMeasurement2D, PoseToLandmarkMeasurement3D
 ]

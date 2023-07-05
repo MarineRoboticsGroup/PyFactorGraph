@@ -33,7 +33,7 @@ from py_factor_graph.measurements import (
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
-    POSE_TO_LANDMARK_MEASUREMENT_TYPES,
+    POSE_LANDMARK_MEASUREMENT_TYPES,
 )
 from py_factor_graph.priors import (
     PosePrior2D,
@@ -75,7 +75,7 @@ class FactorGraphData:
         Same structure as pose_variables.
         loop_closure_measurements (List[PoseMeasurement2D]): the loop closures.
         ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement2D]): the ambiguous loop closures.
-        pose_to_landmark_measurements (List[POSE_TO_LANDMARK_MEASUREMENT_TYPES]): the pose to landmark measurements.
+        pose_landmark_measurements (List[POSE_LANDMARK_MEASUREMENT_TYPES]): the pose to landmark measurements.
         range_measurements (List[FGRangeMeasurement]): the range measurements.
         ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): the ambiguous range measurements.
         pose_priors (List[PosePrior2D]): the pose priors.
@@ -103,10 +103,10 @@ class FactorGraphData:
     )  # TODO: extend to AmbiguousPoseMeasurement3D
 
     # pose to landmark measurements
-    pose_to_landmark_measurements: List[POSE_TO_LANDMARK_MEASUREMENT_TYPES] = attr.ib(
+    pose_landmark_measurements: List[POSE_LANDMARK_MEASUREMENT_TYPES] = attr.ib(
         factory=list
     )
-    # TODO: add ambiguous pose_to_landmark_measurements
+    # TODO: add ambiguous pose_landmark_measurements
 
     # range measurements
     range_measurements: List[FGRangeMeasurement] = attr.ib(factory=list)
@@ -162,8 +162,10 @@ class FactorGraphData:
         line += "\n"
 
         # add pose to landmark measurements
-        line += f"Pose to landmark measurements: {len(self.pose_to_landmark_measurements)}\n"
-        for x in self.pose_to_landmark_measurements:
+        line += (
+            f"Pose to landmark measurements: {len(self.pose_landmark_measurements)}\n"
+        )
+        for x in self.pose_landmark_measurements:
             line += f"{x}\n"
         line += "\n"
 
@@ -219,14 +221,14 @@ class FactorGraphData:
         num_poses = self.num_poses
         num_landmarks = self.num_landmarks
         num_odom_measurements = self.num_odom_measurements
-        num_pose_to_landmark_measurements = self.num_pose_to_landmark_measurements
+        num_pose_landmark_measurements = self.num_pose_landmark_measurements
         num_range_measurements = self.num_range_measurements
         num_loop_closures = self.num_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
-            f"{num_pose_to_landmark_measurements} pose to landmark, "
+            f"{num_pose_landmark_measurements} pose to landmark, "
             f"{num_range_measurements} range, {num_loop_closures} loop closures "
             f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
@@ -343,13 +345,13 @@ class FactorGraphData:
         return info
 
     @property
-    def num_pose_to_landmark_measurements(self) -> int:
+    def num_pose_landmark_measurements(self) -> int:
         """Returns the number of pose to landmark measurements.
 
         Returns:
             int: the number of pose to landmark measurements
         """
-        return len(self.pose_to_landmark_measurements)
+        return len(self.pose_landmark_measurements)
 
     @property
     def num_range_measurements(self) -> int:
@@ -448,9 +450,9 @@ class FactorGraphData:
                 factor_vars.add(odom.base_pose)
                 factor_vars.add(odom.to_pose)
 
-        for pose_to_landmark_measure in self.pose_to_landmark_measurements:
-            factor_vars.add(pose_to_landmark_measure.pose_name)
-            factor_vars.add(pose_to_landmark_measure.landmark_name)
+        for pose_landmark_measure in self.pose_landmark_measurements:
+            factor_vars.add(pose_landmark_measure.pose_name)
+            factor_vars.add(pose_landmark_measure.landmark_name)
 
         for range_measure in self.range_measurements:
             range_assoc = range_measure.association
@@ -460,18 +462,16 @@ class FactorGraphData:
         return set(self.all_variable_names) - factor_vars
 
     @property
-    def pose_to_landmark_measures_association_dict(
+    def pose_landmark_measures_association_dict(
         self,
-    ) -> Dict[Tuple[str, str], List[POSE_TO_LANDMARK_MEASUREMENT_TYPES]]:
+    ) -> Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]]:
         """Returns a mapping from pose variables to their pose to landmark measurements.
 
         Returns:
-            Dict[Tuple[str, str], List[POSE_TO_LANDMARK_MEASUREMENT_TYPES]]: the mapping from pose variables to their pose to landmark measurements.
+            Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]]: the mapping from pose variables to their pose to landmark measurements.
         """
-        measures_dict: Dict[
-            Tuple[str, str], List[POSE_TO_LANDMARK_MEASUREMENT_TYPES]
-        ] = {}
-        for measure in self.pose_to_landmark_measurements:
+        measures_dict: Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]] = {}
+        for measure in self.pose_landmark_measurements:
             association = (measure.pose_name, measure.landmark_name)
             if association not in measures_dict:
                 measures_dict[association] = []
@@ -677,9 +677,9 @@ class FactorGraphData:
                     logger.info(odom)
                     return False
 
-        for pose_to_landmark_measure in self.pose_to_landmark_measurements:
-            if pose_to_landmark_measure.translation_precision < 1:
-                logger.info(pose_to_landmark_measure)
+        for pose_landmark_measure in self.pose_landmark_measurements:
+            if pose_landmark_measure.translation_precision < 1:
+                logger.info(pose_landmark_measure)
                 return False
 
         for range_measure in self.range_measurements:
@@ -886,27 +886,27 @@ class FactorGraphData:
         """
         self.ambiguous_loop_closure_measurements.append(ambiguous_loop_closure)
 
-    def add_pose_to_landmark_measurement(
-        self, pose_to_landmark_meas: POSE_TO_LANDMARK_MEASUREMENT_TYPES
+    def add_pose_landmark_measurement(
+        self, pose_landmark_meas: POSE_LANDMARK_MEASUREMENT_TYPES
     ) -> None:
         """Adds a pose to landmark measurement to the list of pose to landmark measurements.
 
         Args:
             pose_landmark_meas (POSE_MEASUREMENT_TYPES): the pose to landmark measurement to add
         """
-        self._check_measurement_dimension(pose_to_landmark_meas)
-        self.pose_to_landmark_measurements.append(pose_to_landmark_meas)
+        self._check_measurement_dimension(pose_landmark_meas)
+        self.pose_landmark_measurements.append(pose_landmark_meas)
 
         # check that we are not adding a measurement between variables that do not exist
-        pose_name = pose_to_landmark_meas.pose_name
+        pose_name = pose_landmark_meas.pose_name
         assert self.pose_exists(pose_name), f"{pose_name} does not exist"
-        landmark_name = pose_to_landmark_meas.landmark_name
+        landmark_name = pose_landmark_meas.landmark_name
         assert self.landmark_exists(landmark_name), f"{landmark_name} does not exist"
 
         # update max and min measurement weights
-        pose_to_landmark_weight = pose_to_landmark_meas.translation_precision
+        pose_landmark_weight = pose_landmark_meas.translation_precision
         self._update_max_min_measurement_weights(
-            pose_to_landmark_weight, pose_to_landmark_weight
+            pose_landmark_weight, pose_landmark_weight
         )
 
     def add_range_measurement(self, range_meas: FGRangeMeasurement) -> None:
@@ -1729,12 +1729,12 @@ class FactorGraphData:
             )
 
     def _check_measurement_dimension(
-        self, measure: Union[POSE_MEASUREMENT_TYPES, POSE_TO_LANDMARK_MEASUREMENT_TYPES]
+        self, measure: Union[POSE_MEASUREMENT_TYPES, POSE_LANDMARK_MEASUREMENT_TYPES]
     ) -> None:
         """Checks that the measurement is the correct dimension
 
         Args:
-            measure (Union[POSE_MEASUREMENT_TYPES, POSE_TO_LANDMARK_MEASUREMENT_TYPES]): The measurement to check
+            measure (Union[POSE_MEASUREMENT_TYPES, POSE_LANDMARK_MEASUREMENT_TYPES]): The measurement to check
 
         Raises:
             ValueError: if the measurement is not the correct dimension

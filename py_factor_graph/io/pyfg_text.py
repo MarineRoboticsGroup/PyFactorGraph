@@ -34,7 +34,7 @@ from py_factor_graph.measurements import (
     PoseToLandmarkMeasurement3D,
     FGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
-    POSE_TO_LANDMARK_MEASUREMENT_TYPES,
+    POSE_LANDMARK_MEASUREMENT_TYPES,
 )
 from py_factor_graph.utils.logging_utils import logger
 
@@ -213,7 +213,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         return f"{rel_pose_pose_measure_type} {rel_pose_pose_measure.timestamp:.{time_fprec}f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     def _get_pose_landmark_measure_string(
-        rel_pose_landmark_measure: POSE_TO_LANDMARK_MEASUREMENT_TYPES,
+        rel_pose_landmark_measure: POSE_LANDMARK_MEASUREMENT_TYPES,
     ):
         measurement_connectivity = f"{rel_pose_landmark_measure.pose_name} {rel_pose_landmark_measure.landmark_name}"
         if isinstance(rel_pose_landmark_measure, PoseToLandmarkMeasurement2D):
@@ -527,7 +527,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
 
     def _get_pose_landmark_measure_from_line(
         line: str,
-    ) -> POSE_TO_LANDMARK_MEASUREMENT_TYPES:
+    ) -> POSE_LANDMARK_MEASUREMENT_TYPES:
         line_parts = line.split(" ")
         assert (
             len(line_parts)
@@ -650,13 +650,9 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             else:
                 pyfg.add_loop_closure(pose_measure)
         elif line_type == rel_pose_landmark_measure_type:
-            # raise NotImplementedError(
-            #     "We don't support relative pose to landmark measurements yet"
-            # )
-            pass
-            # assert line.split(" ")[0] == rel_pose_landmark_measure_type
-            # pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
-            # pyfg.add_pose_landmark_measurement(pose_landmark_measure)
+
+            pose_landmark_measure = _get_pose_landmark_measure_from_line(line)
+            pyfg.add_pose_landmark_measurement(pose_landmark_measure)
         elif line_type == range_measure_type:
             range_measure = _get_range_measure_from_line(line)
             pyfg.add_range_measurement(range_measure)
