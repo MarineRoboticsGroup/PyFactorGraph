@@ -129,7 +129,7 @@ def _get_pyfg_types(dim: int) -> tuple:
     )
 
 
-def save_to_pyfg_text(fg: FactorGraphData, fpath: str):
+def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
     """Save factor graph to PyFG file format.
 
     Args:
