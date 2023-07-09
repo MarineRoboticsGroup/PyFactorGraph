@@ -322,7 +322,6 @@ class FGRangeMeasurement:
 
     Arguments:
         association (Tuple[str, str]): the data associations of the measurement.
-            First association is the pose variable
         dist (float): The measured range
         stddev (float): The standard deviation
         timestamp (float): seconds since epoch
@@ -344,8 +343,7 @@ class FGRangeMeasurement:
         Raises:
             ValueError: is not a 2-tuple
             ValueError: the associations are identical
-            ValueError: the first association is not a valid pose key
-            ValueError: the second association is not a valid landmark key
+            ValueError: the associations are not valid pose or landmark keys
         """
         assert all(isinstance(x, str) for x in value)
         if len(value) != 2:
@@ -353,11 +351,17 @@ class FGRangeMeasurement:
                 "Range measurements must have exactly two variables associated with."
             )
         if value[0] == value[1]:
-            raise ValueError(f"Range measurements must have unique variables{value}")
-        if value[0].startswith("L"):
-            raise ValueError("First association must be a pose - cannot start with L")
-        if not value[1][0].isalpha() and value[1][1:].isnumeric():
-            raise ValueError(f"Second association was not a valid variable: {value[1]}")
+            raise ValueError(f"Range measurements must have unique variables: {value}")
+        if (
+            not (value[0].startswith("A") or value[0].startswith("L"))
+            and value[0][1:].isnumeric()
+        ):
+            raise ValueError(f"First association is not a valid variable: {value[0]}")
+        if (
+            not (value[1].startswith("A") or value[1].startswith("L"))
+            and value[1][1:].isnumeric()
+        ):
+            raise ValueError(f"Second association is not a valid variable: {value[1]}")
 
     @property
     def weight(self) -> float:
@@ -367,16 +371,16 @@ class FGRangeMeasurement:
         return 1 / (self.stddev**2)
 
     @property
-    def pose_key(self) -> str:
+    def first_key(self) -> str:
         """
-        Get the pose key from the association
+        Get the first key from the association
         """
         return self.association[0]
 
     @property
-    def landmark_key(self) -> str:
+    def second_key(self) -> str:
         """
-        Get the landmark key from the association
+        Get the second key from the association
         """
         return self.association[1]
 

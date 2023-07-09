@@ -230,7 +230,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         return f"{rel_pose_landmark_measure_type} {rel_pose_landmark_measure.timestamp:.{time_fprec}f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     def _get_range_measure_string(range_measure: FGRangeMeasurement):
-        return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.pose_key} {range_measure.landmark_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
+        return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
 
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:

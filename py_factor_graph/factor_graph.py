@@ -705,13 +705,14 @@ class FactorGraphData:
         """
         ranges: List[List[float]] = [[] for _ in range(self.num_landmarks)]
         for range_measure in self.range_measurements:
-            beacon_key = range_measure.landmark_key
-            if "L" in beacon_key:
-                beacon_idx = int(beacon_key[1:])
-            else:
-                continue
+            if "L" in range_measure.first_key:
+                beacon_idx = int(range_measure.first_key[1:])
+                ranges[beacon_idx].append(range_measure.dist)
 
-            ranges[beacon_idx].append(range_measure.dist)
+            if "L" in range_measure.second_key:
+                beacon_idx = int(range_measure.second_key[1:])
+                ranges[beacon_idx].append(range_measure.dist)
+
         return ranges
 
     #### Add data
@@ -1351,7 +1352,7 @@ class FactorGraphData:
             filewriter = open(filename, "w")
 
             for range_measurement in self.range_measurements:
-                line = f"{range_measurement.timestamp} {range_measurement.pose_key} {range_measurement.landmark_key} {range_measurement.dist}"
+                line = f"{range_measurement.timestamp} {range_measurement.first_key} {range_measurement.second_key} {range_measurement.dist}"
                 filewriter.write(line)
 
             filewriter.close()
