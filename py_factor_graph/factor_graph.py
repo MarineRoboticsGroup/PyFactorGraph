@@ -1700,7 +1700,31 @@ class FactorGraphData:
 
     #### checks on inputs ####
 
-    # TODO: reduce code duplication through either variable, measurement, prior class refactoring of through additional typing
+    def _dimension_logger(self, is_2d: bool, is_3d: bool, pyfg_type: type) -> None:
+        """Checks the correct dimension against is_2d and is_3d corresponding to pyfg_type
+
+        Args:
+            is_2d (bool): True if 2D, and False otherwise
+            is_3d (bool): True if 3D, and False otherwise
+            pyfg_type: the variable or measurement type corresponding to is_2d and is_3d
+
+        Raises:
+            ValueError: if the pyfg_type is not the correct dimension
+        """
+        if not (is_2d or is_3d):
+            raise ValueError(f"Variable must be either 2D or 3D, but got {pyfg_type}")
+
+        if is_2d and self.dimension != 2:
+            raise ValueError(
+                f"Variable is 2D but the dimension of the graph is {self.dimension}"
+            )
+
+        if is_3d and self.dimension != 3:
+            raise ValueError(
+                f"Variable is 3D but the dimension of the graph is {self.dimension}"
+            )
+
+    # TODO: reduce code duplication through either variable, measurement, prior class refactoring or through additional typing. Currently, pre-commit prevents taking the union of all variable and measurement types.
 
     def _check_variable_dimension(
         self, var: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]
@@ -1715,18 +1739,7 @@ class FactorGraphData:
         """
         is_2d = isinstance(var, PoseVariable2D) or isinstance(var, LandmarkVariable2D)
         is_3d = isinstance(var, PoseVariable3D) or isinstance(var, LandmarkVariable3D)
-        if not (is_2d or is_3d):
-            raise ValueError(f"Variable must be either 2D or 3D, but got {type(var)}")
-
-        if is_2d and self.dimension != 2:
-            raise ValueError(
-                f"Variable is 2D but the dimension of the graph is {self.dimension}"
-            )
-
-        if is_3d and self.dimension != 3:
-            raise ValueError(
-                f"Variable is 3D but the dimension of the graph is {self.dimension}"
-            )
+        self._dimension_logger(is_2d, is_3d, type(var))
 
     def _check_measurement_dimension(
         self, measure: Union[POSE_MEASUREMENT_TYPES, POSE_LANDMARK_MEASUREMENT_TYPES]
@@ -1745,20 +1758,7 @@ class FactorGraphData:
         is_3d = isinstance(measure, PoseMeasurement3D) or isinstance(
             measure, PoseToLandmarkMeasurement3D
         )
-        if not (is_2d or is_3d):
-            raise ValueError(
-                f"Measurement must be either 2D or 3D, but got {type(measure)}"
-            )
-
-        if is_2d and self.dimension != 2:
-            raise ValueError(
-                f"Measurement is 2D but the dimension of the graph is {self.dimension}"
-            )
-
-        if is_3d and self.dimension != 3:
-            raise ValueError(
-                f"Measurement is 3D but the dimension of the graph is {self.dimension}"
-            )
+        self._dimension_logger(is_2d, is_3d, type(measure))
 
     def _check_prior_dimension(
         self, prior_var: Union[POSE_PRIOR_TYPES, LANDMARK_PRIOR_TYPES]
@@ -1766,10 +1766,10 @@ class FactorGraphData:
         """Checks that the prior is the correct dimension
 
         Args:
-            prior_var (Union[POSE_PRIOR_TYPES, LANDMARK_PRIOR_TYPES]): The variable to check
+            prior_var (Union[POSE_PRIOR_TYPES, LANDMARK_PRIOR_TYPES]): The prior to check
 
         Raises:
-            ValueError: if the variable is not the correct dimension
+            ValueError: if the prior is not the correct dimension
         """
         is_2d = isinstance(prior_var, PosePrior2D) or isinstance(
             prior_var, LandmarkPrior2D
@@ -1777,17 +1777,4 @@ class FactorGraphData:
         is_3d = isinstance(prior_var, PosePrior3D) or isinstance(
             prior_var, LandmarkPrior3D
         )
-        if not (is_2d or is_3d):
-            raise ValueError(
-                f"Variable must be either 2D or 3D, but got {type(prior_var)}"
-            )
-
-        if is_2d and self.dimension != 2:
-            raise ValueError(
-                f"Variable is 2D but the dimension of the graph is {self.dimension}"
-            )
-
-        if is_3d and self.dimension != 3:
-            raise ValueError(
-                f"Variable is 3D but the dimension of the graph is {self.dimension}"
-            )
+        self._dimension_logger(is_2d, is_3d, type(prior_var))
