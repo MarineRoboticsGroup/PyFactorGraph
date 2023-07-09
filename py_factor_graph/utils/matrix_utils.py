@@ -294,7 +294,7 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
 
 
 def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
-    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w) and ensures w is positive by convention
+    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w). The function ensures w is positive by convention, given R(-q) = R(q)
 
     Args:
         mat (np.ndarray): the rotation matrix
