@@ -119,7 +119,7 @@ def get_measurement_precisions_from_covariance_matrix(
 
 
 def get_measurement_precisions_from_covariances(
-    trans_cov: float, rot_cov: float
+    trans_cov: float, rot_cov: float, mat_dim: int
 ) -> Tuple[float, float]:
     """Converts the trans covariance and rot covariance to measurement
     precisions (assuming isotropic noise)
@@ -127,13 +127,20 @@ def get_measurement_precisions_from_covariances(
     Args:
         trans_cov (float): covariance of translation measurements
         rot_cov (float): covariance of rotation measurements
+        mat_dim (int): the dimension of the matrix (3 or 6)
 
     Returns:
         Tuple[float, float]: (trans precision, rot precision)
     """
-    trans_precision = 1 / trans_cov
-    rot_precision = 1 / (2 * rot_cov)
-    return trans_precision, rot_precision
+    assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
+    if mat_dim == 3:
+        covars = [trans_cov] * 2 + [rot_cov]
+    elif mat_dim == 6:
+        covars = [trans_cov] * 3 + [rot_cov] * 3
+    else:
+        raise ValueError(f"Invalid dimension: {mat_dim}")
+    covar_mat = np.diag(covars)
+    return get_measurement_precisions_from_covariance_matrix(covar_mat, mat_dim)
 
 
 def get_info_matrix_from_measurement_precisions(
