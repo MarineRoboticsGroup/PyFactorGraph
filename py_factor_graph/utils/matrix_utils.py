@@ -3,27 +3,24 @@ import scipy.linalg as la  # type: ignore
 import scipy.spatial
 from typing import List, Tuple, Optional
 
-import logging
-
-logger = logging.getLogger(__name__)
+from py_factor_graph.utils.logging_utils import logger
 
 
 def get_matrix_determinant(mat: np.ndarray) -> float:
-    """returns the determinant of the matrix
+    """Returns the determinant of the matrix
 
     Args:
-        mat (np.ndarray): [description]
+        mat (np.ndarray): the matrix
 
     Returns:
-        float: [description]
+        float: the determinant
     """
     _check_square(mat)
     return float(np.linalg.det(mat))
 
 
 def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
-    """
-    Rounds a matrix to special orthogonal form.
+    """Rounds a matrix to special orthogonal form.
 
     Args:
         mat (np.ndarray): the matrix to round
@@ -45,12 +42,13 @@ def round_to_special_orthogonal(mat: np.ndarray) -> np.ndarray:
 def get_measurement_precisions_from_info_matrix(
     info_mat: np.ndarray, matrix_dim: Optional[int] = None
 ) -> Tuple[float, float]:
-    """Computes the optimal measurement precisions from the information matrix
+    """Computes the optimal measurement precisions (assuming isotropic noise) from the information matrix
 
     Based on SE-Sync:SESync_utils.cpp:113-124
 
     Args:
         info_mat (np.ndarray): the information matrix
+        matrix_dim (Optional[int] = None): the information matrix dimension
 
     Returns:
         Tuple[float, float]: (translation precision, rotation precision)
@@ -73,15 +71,19 @@ def get_measurement_precisions_from_info_matrix(
 def get_measurement_precisions_from_covariance_matrix(
     covar_mat: np.ndarray, matrix_dim: Optional[int] = None
 ) -> Tuple[float, float]:
-    """Computes the optimal measurement precisions from the covariance matrix
+    """Computes the optimal measurement precisions (assuming isotropic noise) from the covariance matrix
 
     Based on SE-Sync:SESync_utils.cpp:113-124
 
     Args:
         covar_mat (np.ndarray): the covariance matrix
+        matrix_dim (Optional[int] = None): the covariance matrix dimension
 
     Returns:
         Tuple[float, float]: (translation precision, rotation precision)
+
+    Raises:
+        ValueError: the dimension of the covariance matrix is invalid
     """
     _check_square(covar_mat)
     dim = covar_mat.shape[0]
@@ -119,30 +121,46 @@ def get_measurement_precisions_from_covariance_matrix(
 
 
 def get_measurement_precisions_from_covariances(
-    trans_cov: float, rot_cov: float
+    trans_cov: float, rot_cov: float, mat_dim: int
 ) -> Tuple[float, float]:
-    """Converts the trans covariance and rot covariance to measurement
+    """Converts the translation covariance and rotation covariance to measurement
     precisions (assuming isotropic noise)
 
     Args:
-        trans_cov (float): covariance of translation measurements
-        rot_cov (float): covariance of rotation measurements
+        trans_cov (float): translation measurement covariance
+        rot_cov (float): rotation measurement covariance
 
     Returns:
-        Tuple[float, float]: (trans precision, rot precision)
+        Tuple[float, float]: (translation precision, rotation precision)
     """
-    trans_precision = 1 / trans_cov
-    rot_precision = 1 / (2 * rot_cov)
-    return trans_precision, rot_precision
+    assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
+    if mat_dim == 3:
+        covars = [trans_cov] * 2 + [rot_cov]
+    elif mat_dim == 6:
+        covars = [trans_cov] * 3 + [rot_cov] * 3
+    else:
+        raise ValueError(f"Invalid dimension: {mat_dim}")
+    covar_mat = np.diag(covars)
+    return get_measurement_precisions_from_covariance_matrix(covar_mat, mat_dim)
 
 
 def get_info_matrix_from_measurement_precisions(
     trans_precision: float, rot_precision: float, mat_dim: int
 ) -> np.ndarray:
+    """Computes the information matrix from measurement precisions (assuming isotropic noise)
+
+    Args:
+        trans_precision (float): the translation precision
+        rot_precision (float): the rotation precision
+        mat_dim (int): the matrix dimension (3 for 2D, 6 for 3D)
+
+    Returns:
+        np.ndarray: the information matrix
+    """
     assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
     if mat_dim == 3:
         trans_info = [trans_precision] * 2
-        rot_info = [2 * rot_precision]
+        rot_info = [rot_precision]
     if mat_dim == 6:
         trans_info = [trans_precision] * 3
         rot_info = [2 * rot_precision] * 3
@@ -153,6 +171,16 @@ def get_info_matrix_from_measurement_precisions(
 def get_covariance_matrix_from_measurement_precisions(
     trans_precision: float, rot_precision: float, mat_dim: int
 ) -> np.ndarray:
+    """Computes the covariance matrix from measurement precisions (assuming isotropic noise)
+
+    Args:
+        trans_precision (float): the translation precision
+        rot_precision (float): the rotation precision
+        mat_dim (int): the matrix dimension (3 for 2D, 6 for 3D)
+
+    Returns:
+        np.ndarray: the covariance matrix
+    """
     info_mat = get_info_matrix_from_measurement_precisions(
         trans_precision, rot_precision, mat_dim
     )
@@ -161,8 +189,7 @@ def get_covariance_matrix_from_measurement_precisions(
 
 
 def get_theta_from_rotation_matrix_so_projection(mat: np.ndarray) -> float:
-    """
-    Returns theta from the projection of the matrix M onto the special
+    """Returns theta from the projection of the matrix M onto the special
     orthogonal group
 
     Args:
@@ -177,8 +204,7 @@ def get_theta_from_rotation_matrix_so_projection(mat: np.ndarray) -> float:
 
 
 def get_theta_from_rotation_matrix(mat: np.ndarray) -> float:
-    """
-    Returns theta from a matrix M
+    """Returns theta from a matrix M
 
     Args:
         mat (np.ndarray): the candidate rotation matrix
@@ -199,6 +225,9 @@ def get_random_vector(dim: int, bounds: List[float]) -> np.ndarray:
 
     Returns:
         np.ndarray: the random vector
+
+    Raises:
+        ValueError: the dimension of the vector is invalid
     """
     assert dim in [2, 3]
     assert len(bounds) == dim * 2
@@ -231,8 +260,7 @@ def get_rotation_matrix_from_theta(theta: float) -> np.ndarray:
 
 
 def get_rotation_matrix_from_rpy(rpy: np.ndarray) -> np.ndarray:
-    """
-    Returns the 3x3 rotation matrix from roll, pitch, yaw angles
+    """Returns the 3x3 rotation matrix from roll, pitch, yaw angles
 
     Args:
         rpy (np.ndarray): the roll, pitch, yaw angles
@@ -294,7 +322,8 @@ def get_rotation_matrix_from_quat(quat: np.ndarray) -> np.ndarray:
 
 
 def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
-    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w)
+    """Returns the quaternion from a rotation matrix in scalar-last (x, y, z, w).
+    The function ensures w is positive by convention, given R(-q) = R(q)
 
     Args:
         mat (np.ndarray): the rotation matrix
@@ -315,6 +344,10 @@ def get_quat_from_rotation_matrix(mat: np.ndarray) -> np.ndarray:
     assert isinstance(rot, scipy.spatial.transform.Rotation)
     quat = rot.as_quat()
     assert isinstance(quat, np.ndarray)
+
+    if quat[-1] < 0:
+        quat = np.negative(quat)
+
     return quat
 
 
@@ -357,6 +390,7 @@ def get_random_rotation_matrix(dim: int = 2) -> np.ndarray:
 
 
 def get_random_transformation_matrix(dim: int = 2) -> np.ndarray:
+    """Returns a random transformation matrix of size dim x dim"""
     if dim == 2:
         R = get_random_rotation_matrix(dim)
         t = get_random_vector(dim, [-10, 10, -10, 10])
@@ -366,8 +400,7 @@ def get_random_transformation_matrix(dim: int = 2) -> np.ndarray:
 
 
 def make_transformation_matrix(R: np.ndarray, t: np.ndarray) -> np.ndarray:
-    """
-    Returns the transformation matrix from a rotation matrix and translation vector
+    """Returns the transformation matrix from a rotation matrix and translation vector
 
     Args:
         R (np.ndarray): the rotation matrix
@@ -392,8 +425,7 @@ def make_transformation_matrix_from_theta(
     theta: float,
     translation: np.ndarray,
 ) -> np.ndarray:
-    """
-    Returns the transformation matrix from theta and translation
+    """Returns the transformation matrix from theta and translation
 
     Args:
         theta (float): the angle of rotation
@@ -409,8 +441,7 @@ def make_transformation_matrix_from_theta(
 def make_transformation_matrix_from_rpy(
     rpy: np.ndarray, trans: np.ndarray
 ) -> np.ndarray:
-    """
-    Returns the transformation matrix from rpy
+    """Returns the transformation matrix from rpy
 
     Args:
         rpy (np.ndarray): the rpy vector
@@ -433,9 +464,7 @@ def get_relative_transform_between_poses(
         pose_1 (np.ndarray): the second pose
 
     Raises:
-        error: _description_
-        ValueError: _description_
-        ValueError: _description_
+        ValueError: Poses are of different dimension
     """
     if pose_0.shape != pose_1.shape:
         raise ValueError(
@@ -466,16 +495,55 @@ def get_relative_rot_and_trans_between_poses(
     return (rot, trans)
 
 
+def apply_transformation_matrix_perturbation(
+    transformation_matrix: np.ndarray,
+    perturb_magnitude: float,
+    perturb_rotation: float,
+) -> np.ndarray:
+    """Applies a random SE(2) perturbation to a transformation matrix
+
+    Args:
+        transformation_matrix (np.ndarray): the unperturbed transformation matrix
+        perturb_magnitude (float): the magnitude of perturbing translation
+        perturb_rotation (float): the perturbing rotation
+
+    Returns:
+        np.ndarray: the perturbed transformation
+    """
+    _check_transformation_matrix(transformation_matrix)
+
+    # get the x/y perturbation
+    perturb_direction = np.random.uniform(0, 2 * np.pi)
+    perturb_x = np.cos(perturb_direction) * perturb_magnitude
+    perturb_y = np.sin(perturb_direction) * perturb_magnitude
+
+    # get the rotation perturbation
+    perturb_theta = np.random.choice([-1, 1]) * perturb_rotation
+
+    # compose the perturbation into a transformation matrix
+    rand_trans = np.eye(3)
+    rand_trans[:2, :2] = get_rotation_matrix_from_theta(perturb_theta)
+    rand_trans[:2, 2] = perturb_x, perturb_y
+    _check_transformation_matrix(rand_trans)
+
+    # perturb curr pose
+    return transformation_matrix @ rand_trans
+
+
 #### test functions ####
 
 
-def _check_rotation_matrix(R: np.ndarray, assert_test: bool = False):
+def _check_rotation_matrix(R: np.ndarray, assert_test: bool = False) -> None:
     """
     Checks that R is a rotation matrix.
 
     Args:
         R (np.ndarray): the candidate rotation matrix
-        assert_test (bool): if false just print if not rotation matrix, otherwise raise error
+        assert_test (bool, optional): if false just print if not rotation matrix, otherwise raise error
+
+    Raises:
+        ValueError: the candidate rotation matrix is not orthogonal
+        ValueError: the candidate rotation matrix determinant is incorrect
     """
     d = R.shape[0]
     is_orthogonal = np.allclose(R @ R.T, np.eye(d), rtol=1e-3, atol=1e-3)
@@ -491,18 +559,20 @@ def _check_rotation_matrix(R: np.ndarray, assert_test: bool = False):
             raise ValueError(f"R det incorrect {np.linalg.det(R)}")
 
 
-def _check_square(mat: np.ndarray):
+def _check_square(mat: np.ndarray) -> None:
+    """Checks that a matrix is square"""
     assert mat.shape[0] == mat.shape[1], "matrix must be square"
 
 
-def _check_symmetric(mat):
+def _check_symmetric(mat) -> None:
+    """Checks that a matrix is symmetric"""
     assert np.allclose(mat, mat.T)
 
 
-def _check_psd(mat: np.ndarray):
+def _check_psd(mat: np.ndarray) -> None:
     """Checks that a matrix is positive semi-definite"""
     assert isinstance(mat, np.ndarray)
-    if is_diagonal(mat):
+    if _is_diagonal(mat):
         assert np.all(np.diag(mat) >= 0)
     else:
         min_eigval = np.min(la.eigvalsh(mat))
@@ -511,7 +581,7 @@ def _check_psd(mat: np.ndarray):
         assert min_eigval + 1e-1 >= 0.0, f"min eigenvalue is {min_eigval}"
 
 
-def _check_is_laplacian(L: np.ndarray):
+def _check_is_laplacian(L: np.ndarray) -> None:
     """Checks that a matrix is a Laplacian based on well-known properties
 
     Must be:
@@ -532,15 +602,16 @@ def _check_is_laplacian(L: np.ndarray):
 
 def _check_transformation_matrix(
     T: np.ndarray, assert_test: bool = True, dim: Optional[int] = None
-):
+) -> None:
     """Checks that the matrix passed in is a homogeneous transformation matrix.
     If assert_test is True, then this is in the form of assertions, otherwise we
     just print out error messages but continue
 
     Args:
-        T (np.ndarray): the matrix to test
+        T (np.ndarray): the homogeneous transformation matrix to test
         assert_test (bool, optional): Whether this is a 'hard' test and is
         asserted or just a 'soft' test and only prints message if test fails. Defaults to True.
+        dim (Optional[int] = None): dimension of the homogeneous transformation matrix
     """
     _check_square(T)
     matrix_dim = T.shape[0]
@@ -566,7 +637,7 @@ def _check_transformation_matrix(
     ), f"Transformation matrix bottom row is {bottom} but should be {bottom_expected}"
 
 
-def is_diagonal(mat: np.ndarray) -> bool:
+def _is_diagonal(mat: np.ndarray) -> bool:
     """Checks if a matrix is diagonal
 
     Args:
@@ -578,12 +649,15 @@ def is_diagonal(mat: np.ndarray) -> bool:
     return np.allclose(mat, np.diag(np.diag(mat)))
 
 
-def is_approx_isotropic(mat: np.ndarray, eps: float = 15e-1) -> bool:
+def _is_approx_isotropic(mat: np.ndarray, eps: float = 15e-1) -> bool:
     """Checks that the covariance/info matrix is approximately isotropic in the
     translation and rotation components
 
     Args:
-        covar (np.ndarray): the covariance matrix
+        mat (np.ndarray): the covariance/info matrix
+
+    Returns:
+        bool: True if covariance/info matrix is approximately isotropic, False otherwise
     """
     try:
         _check_psd(mat)
@@ -627,53 +701,15 @@ def is_approx_isotropic(mat: np.ndarray, eps: float = 15e-1) -> bool:
     return translations_close and rotations_close
 
 
-#### print functions ####
-
-
-def apply_transformation_matrix_perturbation(
-    transformation_matrix,
-    perturb_magnitude: Optional[float],
-    perturb_rotation: Optional[float],
-) -> np.ndarray:
-    """Applies a random SE(2) perturbation to a transformation matrix
-
-    Args:
-        transformation_matrix ([type]): [description]
-        perturb_magnitude (Optional[float]): [description]
-        perturb_rotation (Optional[float]): [description]
-
-    Returns:
-        np.ndarray: [description]
-    """
-    _check_transformation_matrix(transformation_matrix)
-
-    # get the x/y perturbation
-    perturb_direction = np.random.uniform(0, 2 * np.pi)
-    perturb_x = np.cos(perturb_direction) * perturb_magnitude
-    perturb_y = np.sin(perturb_direction) * perturb_magnitude
-
-    # get the rotation perturbation
-    perturb_theta = np.random.choice([-1, 1]) * perturb_rotation
-
-    # compose the perturbation into a transformation matrix
-    rand_trans = np.eye(3)
-    rand_trans[:2, :2] = get_rotation_matrix_from_theta(perturb_theta)
-    rand_trans[:2, 2] = perturb_x, perturb_y
-    _check_transformation_matrix(rand_trans)
-
-    # perturb curr pose
-    return transformation_matrix @ rand_trans
-
-
 #### I/O functions ####
 
 
-def get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
+def get_covariance_matrix_from_list(covar_list: List[float]) -> np.ndarray:
     """
     Converts a list of floats to a covariance matrix.
 
     Args:
-        covar_list (List): a list of floats representing the covariance matrix
+        covar_list (List[float]): a list of floats representing the covariance matrix
 
     Returns:
         np.ndarray: the covariance matrix
@@ -696,20 +732,41 @@ def get_covariance_matrix_from_list(covar_list: List) -> np.ndarray:
     return covar_matrix
 
 
-def load_symmetric_matrix_column_major(vals: List[float], size: int) -> np.ndarray:
-    assert len(vals) == size * (size + 1) / 2
-    assert all(isinstance(val, float) for val in vals)
+def get_symmetric_matrix_from_list_column_major(
+    list_col_major: List[float], size: int
+) -> np.ndarray:
+    """
+    Converts a list of floats in column major order to a symmetric matrix.
+
+    Args:
+        list_col_major (List[float]): a list of floats representing the symmetric matrix in column major order
+        size (int): the symmetric matrix dimension
+
+    Returns:
+        np.ndarray: the symmetric matrix
+    """
+    assert len(list_col_major) == size * (size + 1) / 2
+    assert all(isinstance(val, float) for val in list_col_major)
     mat = np.zeros((size, size))
     idx = 0
     for i in range(size):
         for j in range(i, size):
-            mat[i, j] = vals[idx]
-            mat[j, i] = vals[idx]
+            mat[i, j] = list_col_major[idx]
+            mat[j, i] = list_col_major[idx]
             idx += 1
     return mat
 
 
-def convert_symmetric_matrix_to_list_column_major(mat: np.ndarray) -> List[float]:
+def get_list_column_major_from_symmetric_matrix(mat: np.ndarray) -> List[float]:
+    """
+    Converts a symmetric matrix to a list of floats in column major order
+
+    Args:
+        mat (np.ndarray): the symmetric matrix
+
+    Returns:
+        List[float]: a list of floats representing the symmetric matrix in column major order
+    """
     _check_symmetric(mat)
     size = mat.shape[0]
     vals = []

@@ -183,7 +183,7 @@ def make_variable_name_validator(type: str) -> Callable:
     form
 
     "<Letter><Number>"
-    Poses should not start with 'L' : Poses = "A1", "B27", "C19"
+    Poses should NOT start with 'L' : Poses = "A1", "B27", "C19"
     Landmarks should start with 'L' : Landmarks = "L1", "L2", "L3"
 
     Args:
@@ -228,7 +228,7 @@ def general_variable_name_validator(instance, attribute, value) -> None:
     Return validator for variable names. Should be a string of form
 
     "<Letter><Number>"
-    Poses should not start with 'L' : Poses = "A1", "B27", "C19"
+    Poses should NOT start with 'L' : Poses = "A1", "B27", "C19"
     Landmarks should start with 'L' : Landmarks = "L1", "L2", "L3"
 
     Args:

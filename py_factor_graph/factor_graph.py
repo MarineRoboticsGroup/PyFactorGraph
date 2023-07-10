@@ -28,15 +28,20 @@ from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
     AmbiguousPoseMeasurement2D,
+    PoseToLandmarkMeasurement2D,
+    PoseToLandmarkMeasurement3D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
+    POSE_LANDMARK_MEASUREMENT_TYPES,
 )
 from py_factor_graph.priors import (
     PosePrior2D,
+    PosePrior3D,
     LandmarkPrior2D,
     LandmarkPrior3D,
-    PosePrior3D,
+    POSE_PRIOR_TYPES,
+    LANDMARK_PRIOR_TYPES,
 )
 from py_factor_graph.utils.name_utils import (
     get_robot_idx_from_frame_name,
@@ -50,22 +55,7 @@ from py_factor_graph.utils.plot_utils import (
     draw_range_measurement,
 )
 from py_factor_graph.utils.attrib_utils import is_dimension
-
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 
 @attr.s
@@ -75,7 +65,7 @@ class FactorGraphData:
     gaussian measurements.
 
     Ambiguous measurements are used to represent cases where data association
-    was uncertain
+    was uncertain.
 
     Args:
         pose_variables (List[List[POSE_VARIABLE_TYPES]]): the pose chains. Each
@@ -83,18 +73,17 @@ class FactorGraphData:
         landmark_variables (List[LANDMARK_VARIABLE_TYPES]): the landmark variables
         odom_measurements (List[List[PoseMeasurement2D]]): the odom measurements.
         Same structure as pose_variables.
-        loop_closure_measurements (List[PoseMeasurement2D]): the loop closures
-        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement2D]): a
-        list of ambiguous loop closures.
-        range_measurements (List[FGRangeMeasurement]): the range measurements
-        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): a list
-        of ambiguous range measurements.
-        pose_priors (List[PosePrior2D]): the pose priors
-        landmark_priors (List[LandmarkPrior2D]): the landmark priors
-        dimension (int): the dimension of the factor graph (e.g. 3 for 3D)
+        loop_closure_measurements (List[PoseMeasurement2D]): the loop closures.
+        ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement2D]): the ambiguous loop closures.
+        pose_landmark_measurements (List[POSE_LANDMARK_MEASUREMENT_TYPES]): the pose to landmark measurements.
+        range_measurements (List[FGRangeMeasurement]): the range measurements.
+        ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): the ambiguous range measurements.
+        pose_priors (List[PosePrior2D]): the pose priors.
+        landmark_priors (List[LandmarkPrior2D]): the landmark priors.
+        dimension (int): the dimension of the factor graph (e.g. 3 for 3D).
 
     Raises:
-        ValueError: inputs do not match criteria
+        ValueError: inputs do not match criteria.
     """
 
     # latent dimension of the space (e.g. 2D or 3D)
@@ -111,7 +100,13 @@ class FactorGraphData:
     loop_closure_measurements: List[POSE_MEASUREMENT_TYPES] = attr.ib(factory=list)
     ambiguous_loop_closure_measurements: List[AmbiguousPoseMeasurement2D] = attr.ib(
         factory=list
+    )  # TODO: extend to AmbiguousPoseMeasurement3D
+
+    # pose to landmark measurements
+    pose_landmark_measurements: List[POSE_LANDMARK_MEASUREMENT_TYPES] = attr.ib(
+        factory=list
     )
+    # TODO: add ambiguous pose_landmark_measurements
 
     # range measurements
     range_measurements: List[FGRangeMeasurement] = attr.ib(factory=list)
@@ -120,10 +115,8 @@ class FactorGraphData:
     )
 
     # priors
-    pose_priors: List[Union[PosePrior2D, PosePrior3D]] = attr.ib(factory=list)
-    landmark_priors: List[Union[LandmarkPrior2D, LandmarkPrior3D]] = attr.ib(
-        factory=list
-    )
+    pose_priors: List[POSE_PRIOR_TYPES] = attr.ib(factory=list)
+    landmark_priors: List[LANDMARK_PRIOR_TYPES] = attr.ib(factory=list)
 
     # useful helper values
     x_min: Optional[float] = attr.ib(default=None)
@@ -165,6 +158,14 @@ class FactorGraphData:
         # add ambiguous loop closure measurements
         line += f"Ambiguous Loop Closure Measurements: {len(self.ambiguous_loop_closure_measurements)}\n"
         for x in self.ambiguous_loop_closure_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
+        # add pose to landmark measurements
+        line += (
+            f"Pose to landmark measurements: {len(self.pose_landmark_measurements)}\n"
+        )
+        for x in self.pose_landmark_measurements:
             line += f"{x}\n"
         line += "\n"
 
@@ -220,14 +221,16 @@ class FactorGraphData:
         num_poses = self.num_poses
         num_landmarks = self.num_landmarks
         num_odom_measurements = self.num_odom_measurements
+        num_pose_landmark_measurements = self.num_pose_landmark_measurements
         num_range_measurements = self.num_range_measurements
         num_loop_closures = self.num_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
+            f"{num_pose_landmark_measurements} pose to landmark, "
             f"{num_range_measurements} range, {num_loop_closures} loop closures "
-            f"interrobot loop closures: {self.interrobot_loop_closure_info}"
+            f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
         logger.info(msg)
@@ -342,6 +345,15 @@ class FactorGraphData:
         return info
 
     @property
+    def num_pose_landmark_measurements(self) -> int:
+        """Returns the number of pose to landmark measurements.
+
+        Returns:
+            int: the number of pose to landmark measurements
+        """
+        return len(self.pose_landmark_measurements)
+
+    @property
     def num_range_measurements(self) -> int:
         """Returns the number of range measurements.
 
@@ -393,6 +405,11 @@ class FactorGraphData:
 
     @property
     def variable_true_positions_dict(self) -> Dict[str, Tuple]:
+        """Returns the pose and landmark variable true positions as a dict.
+
+        Returns:
+            Dict[str, Tuple]: a dict of the pose and landmark variables true positions.
+        """
         variable_positions_dict: Dict[str, Tuple] = {}
         pose_variables_dict = self.pose_variables_dict
         for pose_name, pose in pose_variables_dict.items():
@@ -422,11 +439,20 @@ class FactorGraphData:
 
     @property
     def unconnected_variable_names(self) -> Set[str]:
+        """Returns all of the unconnected variable names
+
+        Returns:
+            Set[str]: a set of all the unconnected variable names
+        """
         factor_vars: Set[str] = set()
         for odom_chain in self.odom_measurements:
             for odom in odom_chain:
                 factor_vars.add(odom.base_pose)
                 factor_vars.add(odom.to_pose)
+
+        for pose_landmark_measure in self.pose_landmark_measurements:
+            factor_vars.add(pose_landmark_measure.pose_name)
+            factor_vars.add(pose_landmark_measure.landmark_name)
 
         for range_measure in self.range_measurements:
             range_assoc = range_measure.association
@@ -435,6 +461,24 @@ class FactorGraphData:
 
         return set(self.all_variable_names) - factor_vars
 
+    @property
+    def pose_landmark_measures_association_dict(
+        self,
+    ) -> Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]]:
+        """Returns a mapping from pose variables to their pose to landmark measurements.
+
+        Returns:
+            Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]]: the mapping from pose variables to their pose to landmark measurements.
+        """
+        measures_dict: Dict[Tuple[str, str], List[POSE_LANDMARK_MEASUREMENT_TYPES]] = {}
+        for measure in self.pose_landmark_measurements:
+            association = (measure.pose_name, measure.landmark_name)
+            if association not in measures_dict:
+                measures_dict[association] = []
+            measures_dict[association].append(measure)
+        return measures_dict
+
+    # TODO: function is redundant and should be deprecated
     @property
     def pose_to_range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
         """Returns a mapping from pose variables to their range measurements.
@@ -450,6 +494,7 @@ class FactorGraphData:
             measures_dict[associated_pose].append(measure)
         return measures_dict
 
+    # TODO: function is redundant and should be deprecated
     @property
     def both_poses_to_range_measures_dict(self) -> Dict[str, List[FGRangeMeasurement]]:
         """Returns a mapping from both pose variables to their range
@@ -473,9 +518,14 @@ class FactorGraphData:
         return measures_dict
 
     @property
-    def association_to_range_measures_dict(
+    def range_measures_association_dict(
         self,
     ) -> Dict[Tuple[str, str], List[FGRangeMeasurement]]:
+        """Returns a mapping from range measurement associations to their range measurements.
+
+        Returns:
+            Dict[Tuple[str, str], List[FGRangeMeasurement]]: the mapping from range measurement associations to their range measurements.
+        """
         measures_dict: Dict[Tuple[str, str], List[FGRangeMeasurement]] = {}
         for measure in self.range_measurements:
             association = measure.association
@@ -517,7 +567,7 @@ class FactorGraphData:
         return odom_traj
 
     @property
-    def odometry_trajectories_as_dict(self) -> Dict[str, np.ndarray]:
+    def odometry_trajectories_dict(self) -> Dict[str, np.ndarray]:
         """Returns the trajectories for each robot obtained from the odometry measurements.
 
         Returns:
@@ -640,6 +690,11 @@ class FactorGraphData:
                     logger.info(odom)
                     return False
 
+        for pose_landmark_measure in self.pose_landmark_measurements:
+            if pose_landmark_measure.translation_precision < 1:
+                logger.info(pose_landmark_measure)
+                return False
+
         for range_measure in self.range_measurements:
             if range_measure.weight < 1:
                 logger.info(range_measure)
@@ -663,18 +718,61 @@ class FactorGraphData:
         """
         ranges: List[List[float]] = [[] for _ in range(self.num_landmarks)]
         for range_measure in self.range_measurements:
-            beacon_key = range_measure.landmark_key
-            if "L" in beacon_key:
-                beacon_idx = int(beacon_key[1:])
-            else:
-                continue
+            if "L" in range_measure.first_key:
+                beacon_idx = int(range_measure.first_key[1:])
+                ranges[beacon_idx].append(range_measure.dist)
 
-            ranges[beacon_idx].append(range_measure.dist)
+            if "L" in range_measure.second_key:
+                beacon_idx = int(range_measure.second_key[1:])
+                ranges[beacon_idx].append(range_measure.dist)
+
         return ranges
 
     #### Add data
 
-    def add_pose_variable(self, pose_var: POSE_VARIABLE_TYPES):
+    def _update_max_min_xyz(
+        self, var: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]
+    ) -> None:
+        """Helper function for updating the maximum and minimum factor graph positional elements xy (for 2D) and xyz (for 3D)
+
+        Args:
+            var (Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]): variable to update the maximum and minimum factor graph positional elements
+        """
+        if self.x_min is None or self.x_min > var.true_x:
+            self.x_min = var.true_x
+        if self.x_max is None or self.x_max < var.true_x:
+            self.x_max = var.true_x
+        if self.y_min is None or self.y_min > var.true_y:
+            self.y_min = var.true_y
+        if self.y_max is None or self.y_max < var.true_y:
+            self.y_max = var.true_y
+
+        if isinstance(var, PoseVariable3D) or isinstance(var, LandmarkVariable3D):
+            if self.z_min is None or self.z_min > var.true_z:
+                self.z_min = var.true_z
+            if self.z_max is None or self.z_max < var.true_z:
+                self.z_max = var.true_z
+
+    def _update_max_min_measurement_weights(
+        self, max_weight: float, min_weight: float
+    ) -> None:
+        """Helper function for updating the maximum and minimum factor graph weights
+
+        Args:
+            max_weight (float): the maximum weight
+            min_weight (float): the minimum weight
+        """
+        if self.max_measure_weight is None:
+            self.max_measure_weight = max_weight
+        elif self.max_measure_weight < max_weight:
+            self.max_measure_weight = max_weight
+
+        if self.min_measure_weight is None:
+            self.min_measure_weight = min_weight
+        elif self.min_measure_weight > min_weight:
+            self.min_measure_weight = min_weight
+
+    def add_pose_variable(self, pose_var: POSE_VARIABLE_TYPES) -> None:
         """Adds a pose variable to the list of pose variables.
 
         Args:
@@ -690,43 +788,31 @@ class FactorGraphData:
         while len(self.pose_variables) <= robot_idx:
             self.pose_variables.append([])
 
-        # enforce that the list is sorted by time
+        # enforce that the list is sorted by time index
         new_pose_time_idx = get_time_idx_from_frame_name(pose_var.name)
         if len(self.pose_variables[robot_idx]) > 0:
             last_time_idx = get_time_idx_from_frame_name(
                 self.pose_variables[robot_idx][-1].name
             )
             if last_time_idx >= new_pose_time_idx:
+                logger.info(self.pose_variables)
+                logger.info(pose_var)
                 raise ValueError(
                     "Pose variables must be added in order of increasing time_idx"
                 )
 
         self.pose_variables[robot_idx].append(pose_var)
         self.existing_pose_variables.add(pose_var.name)
+        self._update_max_min_xyz(pose_var)
 
-        if self.x_min is None or self.x_min > pose_var.true_x:
-            self.x_min = pose_var.true_x
-        if self.x_max is None or self.x_max < pose_var.true_x:
-            self.x_max = pose_var.true_x
-        if self.y_min is None or self.y_min > pose_var.true_y:
-            self.y_min = pose_var.true_y
-        if self.y_max is None or self.y_max < pose_var.true_y:
-            self.y_max = pose_var.true_y
-
-        if isinstance(pose_var, PoseVariable3D):
-            if self.z_min is None or self.z_min > pose_var.true_z:
-                self.z_min = pose_var.true_z
-            if self.z_max is None or self.z_max < pose_var.true_z:
-                self.z_max = pose_var.true_z
-
-    def add_landmark_variable(self, landmark_var: LANDMARK_VARIABLE_TYPES):
+    def add_landmark_variable(self, landmark_var: LANDMARK_VARIABLE_TYPES) -> None:
         """Adds a landmark variable to the list of landmark variables.
 
         Args:
             landmark_var (LANDMARK_VARIABLE_TYPES): the landmark variable to add
 
         Raises:
-            ValueError: if the pose variable is not added in chronological order
+            ValueError: if the landmark variable is not added in chronological order
             (time indices must be ordered to ensure that the list is always
             ordered)
         """
@@ -740,28 +826,16 @@ class FactorGraphData:
                 logger.info(self.landmark_variables)
                 logger.info(landmark_var)
                 raise ValueError(
-                    "Landmark variables must be added in order of increasing index"
+                    "Landmark variables must be added in order of increasing time_idx"
                 )
 
         self.landmark_variables.append(landmark_var)
         self.existing_landmark_variables.add(landmark_var.name)
+        self._update_max_min_xyz(landmark_var)
 
-        if self.x_min is None or self.x_min > landmark_var.true_x:
-            self.x_min = landmark_var.true_x
-        if self.x_max is None or self.x_max < landmark_var.true_x:
-            self.x_max = landmark_var.true_x
-        if self.y_min is None or self.y_min > landmark_var.true_y:
-            self.y_min = landmark_var.true_y
-        if self.y_max is None or self.y_max < landmark_var.true_y:
-            self.y_max = landmark_var.true_y
-
-        if isinstance(landmark_var, LandmarkVariable3D):
-            if self.z_min is None or self.z_min > landmark_var.true_z:
-                self.z_min = landmark_var.true_z
-            if self.z_max is None or self.z_max < landmark_var.true_z:
-                self.z_max = landmark_var.true_z
-
-    def add_odom_measurement(self, robot_idx: int, odom_meas: POSE_MEASUREMENT_TYPES):
+    def add_odom_measurement(
+        self, robot_idx: int, odom_meas: POSE_MEASUREMENT_TYPES
+    ) -> None:
         """Adds an odom measurement to the list of odom measurements.
 
         Args:
@@ -774,7 +848,7 @@ class FactorGraphData:
 
         self.odom_measurements[robot_idx].append(odom_meas)
 
-        # check that we are not adding a measurement between variables that exist
+        # check that we are not adding a measurement between variables that do not exist
         base_pose = odom_meas.base_pose
         assert self.pose_exists(base_pose), f"{base_pose} does not exist"
         to_pose = odom_meas.to_pose
@@ -784,20 +858,12 @@ class FactorGraphData:
         max_odom_weight = max(
             odom_meas.translation_precision, odom_meas.rotation_precision
         )
-        if self.max_measure_weight is None:
-            self.max_measure_weight = max_odom_weight
-        elif self.max_measure_weight < max_odom_weight:
-            self.max_measure_weight = max_odom_weight
-
         min_odom_weight = min(
             odom_meas.translation_precision, odom_meas.rotation_precision
         )
-        if self.min_measure_weight is None:
-            self.min_measure_weight = min_odom_weight
-        elif self.min_measure_weight > min_odom_weight:
-            self.min_measure_weight = min_odom_weight
+        self._update_max_min_measurement_weights(max_odom_weight, min_odom_weight)
 
-    def add_loop_closure(self, loop_closure: POSE_MEASUREMENT_TYPES):
+    def add_loop_closure(self, loop_closure: POSE_MEASUREMENT_TYPES) -> None:
         """Adds a loop closure measurement to the list of loop closure measurements.
 
         Args:
@@ -806,38 +872,58 @@ class FactorGraphData:
         self._check_measurement_dimension(loop_closure)
         self.loop_closure_measurements.append(loop_closure)
 
-        # check that we are not adding a measurement between variables that exist
+        # check that we are not adding a measurement between variables that do not exist
         base_pose = loop_closure.base_pose
-        assert self.pose_exists(base_pose)
+        assert self.pose_exists(base_pose), f"{base_pose} does not exist"
         to_pose = loop_closure.to_pose
-        assert self.pose_exists(to_pose)
+        assert self.pose_exists(to_pose), f"{to_pose} does not exist"
 
         # update max and min measurement weights
-        max_odom_weight = max(
+        max_loop_closure_weight = max(
             loop_closure.translation_precision, loop_closure.rotation_precision
         )
-        if self.max_measure_weight is None:
-            self.max_measure_weight = max_odom_weight
-        elif self.max_measure_weight < max_odom_weight:
-            self.max_measure_weight = max_odom_weight
-
-        min_odom_weight = min(
+        min_loop_closure_weight = min(
             loop_closure.translation_precision, loop_closure.rotation_precision
         )
-        if self.min_measure_weight is None:
-            self.min_measure_weight = min_odom_weight
-        elif self.min_measure_weight > min_odom_weight:
-            self.min_measure_weight = min_odom_weight
+        self._update_max_min_measurement_weights(
+            max_loop_closure_weight, min_loop_closure_weight
+        )
 
-    def add_ambiguous_loop_closure(self, measure: AmbiguousPoseMeasurement2D):
+    # TODO: Add similar checks to add_odom_measurement and add_loop_closure. Extend function to AmbiguousPoseMeasurement3D and test
+    def add_ambiguous_loop_closure(
+        self, ambiguous_loop_closure: AmbiguousPoseMeasurement2D
+    ) -> None:
         """Adds an ambiguous loop closure measurement to the list of ambiguous loop closure measurements.
 
         Args:
             measure (AmbiguousPoseMeasurement2D): the ambiguous loop closure measurement to add
         """
-        self.ambiguous_loop_closure_measurements.append(measure)
+        self.ambiguous_loop_closure_measurements.append(ambiguous_loop_closure)
 
-    def add_range_measurement(self, range_meas: FGRangeMeasurement):
+    def add_pose_landmark_measurement(
+        self, pose_landmark_meas: POSE_LANDMARK_MEASUREMENT_TYPES
+    ) -> None:
+        """Adds a pose to landmark measurement to the list of pose to landmark measurements.
+
+        Args:
+            pose_landmark_meas (POSE_MEASUREMENT_TYPES): the pose to landmark measurement to add
+        """
+        self._check_measurement_dimension(pose_landmark_meas)
+        self.pose_landmark_measurements.append(pose_landmark_meas)
+
+        # check that we are not adding a measurement between variables that do not exist
+        pose_name = pose_landmark_meas.pose_name
+        assert self.pose_exists(pose_name), f"{pose_name} does not exist"
+        landmark_name = pose_landmark_meas.landmark_name
+        assert self.landmark_exists(landmark_name), f"{landmark_name} does not exist"
+
+        # update max and min measurement weights
+        pose_landmark_weight = pose_landmark_meas.translation_precision
+        self._update_max_min_measurement_weights(
+            pose_landmark_weight, pose_landmark_weight
+        )
+
+    def add_range_measurement(self, range_meas: FGRangeMeasurement) -> None:
         """Adds a range measurement to the list of range measurements.
 
         Args:
@@ -863,7 +949,10 @@ class FactorGraphData:
         ):
             self.min_measure_weight = range_meas.weight
 
-    def add_ambiguous_range_measurement(self, measure: AmbiguousFGRangeMeasurement):
+    # TODO: implement similar checks to add_range_measurement
+    def add_ambiguous_range_measurement(
+        self, measure: AmbiguousFGRangeMeasurement
+    ) -> None:
         """Adds an ambiguous range measurement to the list of ambiguous range measurements.
 
         Args:
@@ -871,28 +960,22 @@ class FactorGraphData:
         """
         self.ambiguous_range_measurements.append(measure)
 
-    def add_pose_prior(self, pose_prior: Union[PosePrior2D, PosePrior3D]):
+    def add_pose_prior(self, pose_prior: POSE_PRIOR_TYPES) -> None:
         """Adds a pose prior to the list of pose priors.
 
         Args:
-            pose_prior (PosePrior2D): the pose prior to add
+            pose_prior (POSE_PRIOR_TYPES): the pose prior to add
         """
+        self._check_prior_dimension(pose_prior)
         self.pose_priors.append(pose_prior)
 
-    def add_landmark_prior(
-        self, landmark_prior: Union[LandmarkPrior2D, LandmarkPrior3D]
-    ):
+    def add_landmark_prior(self, landmark_prior: LANDMARK_PRIOR_TYPES) -> None:
         """Adds a landmark prior to the list of landmark priors.
 
         Args:
-            landmark_prior (LandmarkPrior2D): the landmark prior to add
+            landmark_prior (LANDMARK_PRIOR_TYPES): the landmark prior to add
         """
-        if self.dimension == 2:
-            assert isinstance(landmark_prior, LandmarkPrior2D)
-        elif self.dimension == 3:
-            assert isinstance(landmark_prior, LandmarkPrior3D)
-        else:
-            raise ValueError("Invalid dimension: {}".format(self.dimension))
+        self._check_prior_dimension(landmark_prior)
         self.landmark_priors.append(landmark_prior)
 
     #### Get pose chain variable names
@@ -910,6 +993,7 @@ class FactorGraphData:
 
     #### saving functionalities
 
+    # TODO: deprecate for pyfg_text.py
     def save_to_file(self, filepath: str):
         """
         Save the factor graph to a file. The format is determined by the file
@@ -939,6 +1023,7 @@ class FactorGraphData:
 
         logger.info(f"Saved data to {filepath}")
 
+    # TODO: deprecate for pyfg_text.py
     def _save_to_efg_format(
         self,
         data_file: str,
@@ -1183,6 +1268,7 @@ class FactorGraphData:
 
         file_writer.close()
 
+    # TODO: deprecate for pyfg_text.py
     def _save_to_pickle_format(self, data_file: str) -> None:
         """
         Save to pickle format.
@@ -1196,6 +1282,7 @@ class FactorGraphData:
         pickle.dump(self, pickle_file)
         pickle_file.close()
 
+    # TODO: deprecate for pyfg_text.py. We should instead have an io parser that converts between pyfg_text and plaza_format
     def _save_to_plaza_format(self, data_folder: str) -> None:
         """
         Save to five plaza file formats.
@@ -1278,7 +1365,7 @@ class FactorGraphData:
             filewriter = open(filename, "w")
 
             for range_measurement in self.range_measurements:
-                line = f"{range_measurement.timestamp} {range_measurement.pose_key} {range_measurement.landmark_key} {range_measurement.dist}"
+                line = f"{range_measurement.timestamp} {range_measurement.first_key} {range_measurement.second_key} {range_measurement.dist}"
                 filewriter.write(line)
 
             filewriter.close()
@@ -1290,6 +1377,7 @@ class FactorGraphData:
         save_TD_plaza()
         return
 
+    # TODO: deprecate for pyfg_text.py. We should instead have an io parser that converts between pyfg_text and tum
     def write_pose_gt_to_tum(self, data_dir: str) -> List[str]:
         """
         Write ground truth to TUM format.
@@ -1328,6 +1416,7 @@ class FactorGraphData:
 
         return gt_files
 
+    # TODO: deprecate for pyfg_text.py. We should instead have an io parser that converts between pyfg_text and tum
     def write_pose_odom_to_tum(self, data_dir: str) -> List[str]:
         """Write odometry to TUM format.
 
@@ -1383,6 +1472,7 @@ class FactorGraphData:
 
     #### plotting functions ####
 
+    # TODO: move to io
     def plot_odom_precisions(self) -> None:
         """
         Plot the translation and rotation precisions on two separate
@@ -1405,6 +1495,7 @@ class FactorGraphData:
 
         plt.show(block=True)
 
+    # TODO: move to io
     def plot_ranges(self) -> None:
         num_beacons = self.num_landmarks
         ranges = self.get_ranges_by_beacon()
@@ -1421,6 +1512,7 @@ class FactorGraphData:
 
         plt.show(block=True)
 
+    # TODO: move to io
     def animate_odometry(
         self,
         show_gt: bool = False,
@@ -1625,27 +1717,19 @@ class FactorGraphData:
 
     #### checks on inputs ####
 
-    def _check_variable_dimension(
-        self, pose_var: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]
-    ) -> None:
-        """Checks that the variable is the correct dimension
+    def _dimension_logger(self, is_2d: bool, is_3d: bool, pyfg_type: type) -> None:
+        """Checks the correct dimension against is_2d and is_3d corresponding to pyfg_type
 
         Args:
-            pose_var (Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]): The variable to check
+            is_2d (bool): True if 2D, and False otherwise
+            is_3d (bool): True if 3D, and False otherwise
+            pyfg_type: the variable or measurement type corresponding to is_2d and is_3d
 
         Raises:
-            ValueError: if the variable is not the correct dimension
+            ValueError: if the pyfg_type is not the correct dimension
         """
-        is_2d = isinstance(pose_var, PoseVariable2D) or isinstance(
-            pose_var, LandmarkVariable2D
-        )
-        is_3d = isinstance(pose_var, PoseVariable3D) or isinstance(
-            pose_var, LandmarkVariable3D
-        )
         if not (is_2d or is_3d):
-            raise ValueError(
-                f"Variable must be either 2D or 3D, but got {type(pose_var)}"
-            )
+            raise ValueError(f"Variable must be either 2D or 3D, but got {pyfg_type}")
 
         if is_2d and self.dimension != 2:
             raise ValueError(
@@ -1657,28 +1741,57 @@ class FactorGraphData:
                 f"Variable is 3D but the dimension of the graph is {self.dimension}"
             )
 
-    def _check_measurement_dimension(self, measure: POSE_MEASUREMENT_TYPES) -> None:
+    # TODO: reduce code duplication through either variable, measurement, prior class refactoring or through additional typing. Currently, pre-commit prevents taking the union of all variable and measurement types.
+
+    def _check_variable_dimension(
+        self, var: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]
+    ) -> None:
+        """Checks that the variable is the correct dimension
+
+        Args:
+            pose_var (Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]): The variable to check
+
+        Raises:
+            ValueError: if the variable is not the correct dimension
+        """
+        is_2d = isinstance(var, PoseVariable2D) or isinstance(var, LandmarkVariable2D)
+        is_3d = isinstance(var, PoseVariable3D) or isinstance(var, LandmarkVariable3D)
+        self._dimension_logger(is_2d, is_3d, type(var))
+
+    def _check_measurement_dimension(
+        self, measure: Union[POSE_MEASUREMENT_TYPES, POSE_LANDMARK_MEASUREMENT_TYPES]
+    ) -> None:
         """Checks that the measurement is the correct dimension
 
         Args:
-            measure (POSE_MEASUREMENT_TYPES): The measurement to check
+            measure (Union[POSE_MEASUREMENT_TYPES, POSE_LANDMARK_MEASUREMENT_TYPES]): The measurement to check
 
         Raises:
             ValueError: if the measurement is not the correct dimension
         """
-        is_2d = isinstance(measure, PoseMeasurement2D)
-        is_3d = isinstance(measure, PoseMeasurement3D)
-        if not (is_2d or is_3d):
-            raise ValueError(
-                f"Measurement must be either 2D or 3D, but got {type(measure)}"
-            )
+        is_2d = isinstance(measure, PoseMeasurement2D) or isinstance(
+            measure, PoseToLandmarkMeasurement2D
+        )
+        is_3d = isinstance(measure, PoseMeasurement3D) or isinstance(
+            measure, PoseToLandmarkMeasurement3D
+        )
+        self._dimension_logger(is_2d, is_3d, type(measure))
 
-        if is_2d and self.dimension != 2:
-            raise ValueError(
-                f"Measurement is 2D but the dimension of the graph is {self.dimension}"
-            )
+    def _check_prior_dimension(
+        self, prior_var: Union[POSE_PRIOR_TYPES, LANDMARK_PRIOR_TYPES]
+    ) -> None:
+        """Checks that the prior is the correct dimension
 
-        if is_3d and self.dimension != 3:
-            raise ValueError(
-                f"Measurement is 3D but the dimension of the graph is {self.dimension}"
-            )
+        Args:
+            prior_var (Union[POSE_PRIOR_TYPES, LANDMARK_PRIOR_TYPES]): The prior to check
+
+        Raises:
+            ValueError: if the prior is not the correct dimension
+        """
+        is_2d = isinstance(prior_var, PosePrior2D) or isinstance(
+            prior_var, LandmarkPrior2D
+        )
+        is_3d = isinstance(prior_var, PosePrior3D) or isinstance(
+            prior_var, LandmarkPrior3D
+        )
+        self._dimension_logger(is_2d, is_3d, type(prior_var))

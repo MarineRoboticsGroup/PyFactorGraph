@@ -1,5 +1,5 @@
 import attr
-from typing import Tuple, Optional
+from typing import Optional, Tuple, Union
 import numpy as np
 from attrs import define, field
 from py_factor_graph.utils.attrib_utils import (
@@ -9,6 +9,7 @@ from py_factor_graph.utils.attrib_utils import (
     positive_float_validator,
 )
 from py_factor_graph.utils.matrix_utils import (
+    get_covariance_matrix_from_measurement_precisions,
     get_rotation_matrix_from_theta,
     get_quat_from_rotation_matrix,
 )
@@ -51,12 +52,8 @@ class PosePrior2D:
 
     @property
     def covariance(self):
-        return np.diag(
-            [
-                1 / self.translation_precision,
-                1 / self.translation_precision,
-                1 / self.rotation_precision,
-            ]
+        return get_covariance_matrix_from_measurement_precisions(
+            self.translation_precision, self.rotation_precision, mat_dim=3
         )
 
 
@@ -91,15 +88,8 @@ class PosePrior3D:
 
     @property
     def covariance(self) -> np.ndarray:
-        return np.diag(
-            [
-                1 / self.translation_precision,
-                1 / self.translation_precision,
-                1 / self.translation_precision,
-                1 / self.rotation_precision,
-                1 / self.rotation_precision,
-                1 / self.rotation_precision,
-            ]
+        return get_covariance_matrix_from_measurement_precisions(
+            self.translation_precision, self.rotation_precision, mat_dim=6
         )
 
     @property
@@ -173,3 +163,7 @@ class LandmarkPrior3D:
     @property
     def covariance(self):
         return self.covariance_matrix
+
+
+POSE_PRIOR_TYPES = Union[PosePrior2D, PosePrior3D]
+LANDMARK_PRIOR_TYPES = Union[LandmarkPrior2D, LandmarkPrior3D]

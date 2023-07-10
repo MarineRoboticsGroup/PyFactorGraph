@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import copy
 import itertools
+import random
 from attrs import define, field
 
 from py_factor_graph.variables import (
@@ -41,22 +42,7 @@ from py_factor_graph.utils.attrib_utils import (
     probability_validator,
     positive_float_validator,
 )
-import random
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 
 @define
@@ -157,16 +143,16 @@ def add_landmark_at_position(
 
     for pose_chain in new_fg.pose_variables:
         for pose in pose_chain:
-            pose_to_landmark_dist = _dist_between_variables(pose, new_landmark)
+            pose_landmark_dist = _dist_between_variables(pose, new_landmark)
             if (
-                pose_to_landmark_dist <= range_measurement_model.sensing_horizon
+                pose_landmark_dist <= range_measurement_model.sensing_horizon
                 and np.random.rand() < range_measurement_model.measurement_prob
             ):
                 association = (pose.name, new_landmark_name)
                 range_measure = range_measurement_model.make_measurement(
-                    association, pose_to_landmark_dist, pose.timestamp
+                    association, pose_landmark_dist, pose.timestamp
                 )
-                # logger.warning(f"True range {pose_to_landmark_dist}, noisy range {range_measure.dist}")
+                # logger.warning(f"True range {pose_landmark_dist}, noisy range {range_measure.dist}")
                 new_fg.add_range_measurement(range_measure)
 
     return new_fg

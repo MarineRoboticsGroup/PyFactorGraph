@@ -63,7 +63,6 @@ auto/
 __pycache__/
 test.py
 
-
 # Cached Files from Python #
 ##########
 cached_planning/*.txt
@@ -72,7 +71,6 @@ trajs/*.txt
 *scrap*
 rigidity_dicts/*.json
 
-
 # PyTorch #
 ###########
 *.pt
@@ -80,7 +78,6 @@ rigidity_dicts/*.json
 # Executables/C++ #
 ###################
 build/
-
 
 # Tensorflow #
 ##############
@@ -97,10 +94,7 @@ build/
 *.png
 *.mp4
 *.jpg
-<<<<<<< HEAD
 *.xlsx
-=======
->>>>>>> fe892fc61eb06385eafaa8af2bef73d512f682ff
 
 # Blender #
 ###########
@@ -113,8 +107,3 @@ build/
 # ROS #
 #######
 *.bag
-
-<<<<<<< HEAD
-
-=======
->>>>>>> fe892fc61eb06385eafaa8af2bef73d512f682ff

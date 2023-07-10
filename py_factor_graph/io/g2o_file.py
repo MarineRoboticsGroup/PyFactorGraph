@@ -12,22 +12,9 @@ from py_factor_graph.factor_graph import (
 from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_quat,
     get_measurement_precisions_from_info_matrix,
-    load_symmetric_matrix_column_major,
+    get_symmetric_matrix_from_list_column_major,
 )
-
-import logging, coloredlogs
-
-logger = logging.getLogger(__name__)
-field_styles = {
-    "filename": {"color": "green"},
-    "levelname": {"bold": True, "color": "black"},
-    "name": {"color": "blue"},
-}
-coloredlogs.install(
-    level="INFO",
-    fmt="[%(filename)s:%(lineno)d] %(name)s %(levelname)s - %(message)s",
-    field_styles=field_styles,
-)
+from py_factor_graph.utils.logging_utils import logger
 
 SE3_VARIABLE = "VERTEX_SE3:QUAT"
 SE2_VARIABLE = "VERTEX_SE2:QUAT"
@@ -137,7 +124,7 @@ def convert_se3_measurement_line_to_pose_measurement(
     # parse information matrix
     info_mat_size = 6
     info_vals = [float(x) for x in line_items[cov_idx_bounds[0] : cov_idx_bounds[1]]]
-    info_mat = load_symmetric_matrix_column_major(info_vals, info_mat_size)
+    info_mat = get_symmetric_matrix_from_list_column_major(info_vals, info_mat_size)
     trans_precision, rot_precision = get_measurement_precisions_from_info_matrix(
         info_mat, matrix_dim=info_mat_size
     )
