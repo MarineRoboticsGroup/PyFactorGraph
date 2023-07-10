@@ -146,6 +146,23 @@ def get_measurement_precisions_from_covariances(
 def get_info_matrix_from_measurement_precisions(
     trans_precision: float, rot_precision: float, mat_dim: int
 ) -> np.ndarray:
+    """Directly computes the information matrix from the measurement precisions.
+    This involves an approximation in the rotational noise components, as precisions
+    indicate the Langevin distribution whereas the information matrix is based on
+    a Gaussian distribution.
+
+    for more details, see:
+        - SE-Sync Appendix A
+        - https://github.com/MarineRoboticsGroup/PyFactorGraph/pull/4#issuecomment-1628935943
+
+    Args:
+        trans_precision (float): the precision of the translation measurements
+        rot_precision (float): the precision of the rotation measurements
+        mat_dim (int): the dimension of the matrix (3 or 6)
+
+    Returns:
+        np.ndarray: the information matrix
+    """
     assert mat_dim in [3, 6], f"Only support 3x3 or 6x6 info matrices"
     if mat_dim == 3:
         trans_info = [trans_precision] * 2
