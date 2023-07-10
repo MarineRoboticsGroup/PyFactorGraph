@@ -582,6 +582,19 @@ class FactorGraphData:
         has_priors = len(self.pose_priors) > 0 or len(self.landmark_priors) > 0
         return has_priors
 
+    @property
+    def all_poses_have_times(self) -> bool:
+        """Returns True if all poses have times, and False otherwise.
+
+        Returns:
+            bool: True if all poses have times, and False otherwise
+        """
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                if pose.timestamp is None:
+                    return False
+        return True
+
     def pose_exists(self, pose_var_name: str) -> bool:
         """Returns whether pose variables exist.
 
@@ -1292,8 +1305,11 @@ class FactorGraphData:
 
         logger.debug(f"Writing ground truth to TUM format in {data_dir}")
         gt_files = []
+        possible_end_chars = [chr(ord("A") + i) for i in range(26)]
+        # remove 'L' from possible end chars because it is reserved for landmarks
+        possible_end_chars.remove("L")
         for i, pose_chain in enumerate(self.pose_variables):
-            filename = "gt_traj_" + chr(ord("A") + i) + ".tum"
+            filename = f"gt_traj_{possible_end_chars[i]}.tum"
             filepath = os.path.join(data_dir, filename)
             fw = open(filepath, "w")
 
@@ -1307,7 +1323,7 @@ class FactorGraphData:
                 )
 
             fw.close()
-            logger.info(f"Saved to {filepath}")
+            logger.debug(f"Saved to {filepath}")
             gt_files.append(filepath)
 
         return gt_files
