@@ -12,7 +12,7 @@ from py_factor_graph.factor_graph import (
 from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_quat,
     get_measurement_precisions_from_info_matrix,
-    load_symmetric_matrix_column_major,
+    get_symmetric_matrix_from_list_column_major,
 )
 from py_factor_graph.utils.logging_utils import logger
 
@@ -124,7 +124,7 @@ def convert_se3_measurement_line_to_pose_measurement(
     # parse information matrix
     info_mat_size = 6
     info_vals = [float(x) for x in line_items[cov_idx_bounds[0] : cov_idx_bounds[1]]]
-    info_mat = load_symmetric_matrix_column_major(info_vals, info_mat_size)
+    info_mat = get_symmetric_matrix_from_list_column_major(info_vals, info_mat_size)
     trans_precision, rot_precision = get_measurement_precisions_from_info_matrix(
         info_mat, matrix_dim=info_mat_size
     )

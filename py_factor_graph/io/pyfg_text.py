@@ -7,8 +7,8 @@ from py_factor_graph.utils.name_utils import (
 )
 from py_factor_graph.utils.matrix_utils import (
     get_rotation_matrix_from_quat,
-    load_symmetric_matrix_column_major,
-    convert_symmetric_matrix_to_list_column_major,
+    get_symmetric_matrix_from_list_column_major,
+    get_list_column_major_from_symmetric_matrix,
     get_measurement_precisions_from_covariance_matrix,
 )
 from py_factor_graph.variables import (
@@ -78,7 +78,7 @@ def _get_measurement_noise_str_from_covariance_matrix(
     Returns:
         str: string containing PyFG formatted measurement noise
     """
-    covar_mat_elems = convert_symmetric_matrix_to_list_column_major(covar)
+    covar_mat_elems = get_list_column_major_from_symmetric_matrix(covar)
     measurement_noise = " ".join([f"{x:.{fprec}f}" for x in covar_mat_elems])
 
     # correct formatting of negative zeros
@@ -366,7 +366,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             for x in line_parts[prior_metadata_dim + num_pose_prior_measure_entries :]
         ]
         assert len(covar_elements) == pose_prior_measure_noise_dim
-        covar_mat = load_symmetric_matrix_column_major(
+        covar_mat = get_symmetric_matrix_from_list_column_major(
             covar_elements, pose_prior_measurement_dim
         )
         (
@@ -428,7 +428,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             ]
         ]
         assert len(covar_elements) == landmark_prior_measure_noise_dim
-        covar_mat = load_symmetric_matrix_column_major(
+        covar_mat = get_symmetric_matrix_from_list_column_major(
             covar_elements, landmark_prior_measurement_dim
         )
         trans_precision = dim / (np.trace(covar_mat))
@@ -475,7 +475,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             for x in line_parts[measurement_metadata_dim + num_trans_and_rot_entries :]
         ]
         assert len(covar_elements) == pose_pose_measure_noise_dim
-        covar_mat = load_symmetric_matrix_column_major(
+        covar_mat = get_symmetric_matrix_from_list_column_major(
             covar_elements, pose_pose_measure_dim
         )
         (
@@ -551,7 +551,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             for x in line_parts[measurement_metadata_dim + pose_landmark_measure_dim :]
         ]
         assert len(covar_elements) == pose_landmark_measure_noise_dim
-        covar_mat = load_symmetric_matrix_column_major(
+        covar_mat = get_symmetric_matrix_from_list_column_major(
             covar_elements, pose_landmark_measure_dim
         )
         # augment the covariance matrix with identity matrix on block diagonal
