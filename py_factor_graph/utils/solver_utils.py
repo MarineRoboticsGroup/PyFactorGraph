@@ -23,6 +23,7 @@ class VariableValues:
     poses: Dict[str, np.ndarray] = attr.ib()
     landmarks: Dict[str, np.ndarray] = attr.ib()
     distances: Optional[Dict[Tuple[str, str], np.ndarray]] = attr.ib(default=None)
+    pose_times: Optional[Dict[str, float]] = attr.ib(default=None)
 
     @dim.validator
     def _check_dim(self, attribute, value: int):
@@ -142,6 +143,10 @@ class SolverResults:
             (xmin, xmax), (ymin, ymax)
         """
         return self.variables.limits
+
+    @property
+    def pose_times(self):
+        return self.variables.pose_times
 
 
 def save_results_to_file(
@@ -269,10 +274,11 @@ def save_to_tum(
         if not isdir(dirname(modified_path)):
             makedirs(dirname(modified_path))
 
+        pose_times = solved_results.pose_times
         with open(modified_path, "w") as f:
             translations = solved_results.translations
             quats = solved_results.rotations_quat
-            for i, pose_key in enumerate(pose_chain):
+            for pose_key in pose_chain:
                 trans_solve = translations[pose_key]
                 if len(trans_solve) == 2:
                     tx, ty = trans_solve
@@ -286,8 +292,11 @@ def save_to_tum(
 
                 quat_solve = quats[pose_key]
                 qx, qy, qz, qw = quat_solve
-                # TODO: Add actual timestamps
-                f.write(f"{i} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
+                i = pose_times[pose_key]
+                f.write(
+                    f"{i:6f} {tx:.5f} {ty:.5f} {tz:.5f} {qx:.8f} {qy:.8f} {qz:.8f} {qw:.8f}\n"
+                )
+                # f.write(f"{i} {tx} {ty} {tz} {qx} {qy} {qz} {qw}\n")
 
         if verbose and "/tmp/" not in modified_path:
             logger.info(f"Wrote: {modified_path}")
