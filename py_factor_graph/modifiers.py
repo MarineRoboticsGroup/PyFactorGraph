@@ -540,6 +540,30 @@ def _add_range_measurements_and_beacons_based_on_existing_poses(
         new_fg.add_range_measurement(range_meas)
 
 
+def _add_pose_priors_based_on_existing_poses(
+    new_fg: FactorGraphData, old_fg: FactorGraphData
+):
+    # add the pose priors
+    new_poses = new_fg.pose_variables_dict
+    for pose_prior in old_fg.pose_priors:
+        pose_name = pose_prior.name
+        if pose_name in new_poses:
+            new_pose_prior = copy.deepcopy(pose_prior)
+            new_fg.add_pose_prior(new_pose_prior)
+
+
+def _add_landmark_priors_based_on_existing_poses(
+    new_fg: FactorGraphData, old_fg: FactorGraphData
+):
+    # add the landmark priors
+    new_landmarks = new_fg.landmark_variables_dict
+    for landmark_prior in old_fg.landmark_priors:
+        landmark_name = landmark_prior.name
+        if landmark_name in new_landmarks:
+            new_landmark_prior = copy.deepcopy(landmark_prior)
+            new_fg.add_landmark_prior(new_landmark_prior)
+
+
 def take_first_n_poses(fg: FactorGraphData, n: int) -> FactorGraphData:
     """Returns a factor graph with only the first n poses. Effectively tries to
     cut off at a certain timestep without strictly requiring the timesteps be
@@ -573,6 +597,8 @@ def take_first_n_poses(fg: FactorGraphData, n: int) -> FactorGraphData:
 
     _add_loop_closures_based_on_existing_poses(new_fg, fg)
     _add_range_measurements_and_beacons_based_on_existing_poses(new_fg, fg)
+    _add_pose_priors_based_on_existing_poses(new_fg, fg)
+    _add_landmark_priors_based_on_existing_poses(new_fg, fg)
 
     return new_fg
 
@@ -596,6 +622,8 @@ def skip_first_n_poses(fg: FactorGraphData, n: int) -> FactorGraphData:
 
     _add_loop_closures_based_on_existing_poses(new_fg, fg)
     _add_range_measurements_and_beacons_based_on_existing_poses(new_fg, fg)
+    _add_pose_priors_based_on_existing_poses(new_fg, fg)
+    _add_landmark_priors_based_on_existing_poses(new_fg, fg)
 
     return new_fg
 
