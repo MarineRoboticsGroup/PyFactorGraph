@@ -159,6 +159,10 @@ class PoseMeasurement3D:
         default=None, validator=optional_float_validator
     )
 
+    def __attrs_post_init__(self):
+        if self.base_pose == self.to_pose:
+            raise ValueError(f"base_pose and to_pose cannot be the same: base: {self.base_pose}, to: {self.to_pose}")
+
     @property
     def rotation_matrix(self) -> np.ndarray:
         """
@@ -352,14 +356,18 @@ class FGRangeMeasurement:
             )
         if value[0] == value[1]:
             raise ValueError(f"Range measurements must have unique variables: {value}")
+
+        association_1_is_uppercase_letter = value[0][0].isalpha() and value[0][0].isupper()
+        association_1_ends_in_number = value[0][1:].isnumeric()
         if (
-            not (value[0].startswith("A") or value[0].startswith("L"))
-            and value[0][1:].isnumeric()
+            (not association_1_is_uppercase_letter) or (not association_1_ends_in_number)
         ):
             raise ValueError(f"First association is not a valid variable: {value[0]}")
+
+        association_2_is_uppercase_letter = value[1][0].isalpha() and value[1][0].isupper()
+        association_2_ends_in_number = value[1][1:].isnumeric()
         if (
-            not (value[1].startswith("A") or value[1].startswith("L"))
-            and value[1][1:].isnumeric()
+            (not association_2_is_uppercase_letter) or (not association_2_ends_in_number)
         ):
             raise ValueError(f"Second association is not a valid variable: {value[1]}")
 
