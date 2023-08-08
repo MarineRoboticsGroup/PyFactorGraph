@@ -82,7 +82,7 @@ def _get_measurement_noise_str_from_covariance_matrix(
     measurement_noise = " ".join([f"{x:.{fprec}f}" for x in covar_mat_elems])
 
     # correct formatting of negative zeros
-    measurement_noise = measurement_noise.replace("-0.", "0.")
+    measurement_noise = measurement_noise.replace("-0. ", "0. ")
     return measurement_noise
 
 
@@ -230,6 +230,14 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         return f"{rel_pose_landmark_measure_type} {rel_pose_landmark_measure.timestamp:.{time_fprec}f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     def _get_range_measure_string(range_measure: FGRangeMeasurement):
+        # make sure that the variance is non-zero after rounding to
+        # the desired precision
+        rounded_variance = round(range_measure.variance, covariance_fprec)
+        if rounded_variance == 0.0:
+            raise ValueError(
+                f"Range measurement variance is zero after rounding to {covariance_fprec} decimal places. "
+                "This will likely cause numerical issues. We suggest increasing the variance"
+            )
         return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
 
     with open(fpath, "w") as f:
