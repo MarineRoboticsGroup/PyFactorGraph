@@ -78,6 +78,16 @@ def _get_measurement_noise_str_from_covariance_matrix(
     Returns:
         str: string containing PyFG formatted measurement noise
     """
+
+    # make sure that the matrix is full rank even after rounding to fprec
+    rounded_covar = np.round(covar, fprec)
+    if np.linalg.matrix_rank(rounded_covar) != rounded_covar.shape[0]:
+        raise ValueError(
+            f"Covariance matrix is not full rank after rounding to {fprec} decimal places. "
+            "This will likely cause numerical issues. We suggest increasing the variance."
+            f"Matrix before rounding:\n{covar}\nMatrix after rounding:\n{rounded_covar}"
+        )
+
     covar_mat_elems = get_list_column_major_from_symmetric_matrix(covar)
     measurement_noise = " ".join([f"{x:.{fprec}f}" for x in covar_mat_elems])
 
@@ -236,7 +246,8 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         if rounded_variance == 0.0:
             raise ValueError(
                 f"Range measurement variance is zero after rounding to {covariance_fprec} decimal places. "
-                "This will likely cause numerical issues. We suggest increasing the variance"
+                "This will likely cause numerical issues. We suggest increasing the variance."
+                f"Variance before rounding: {range_measure.variance} Variance after rounding: {rounded_variance}"
             )
         return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
 
