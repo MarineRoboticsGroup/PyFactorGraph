@@ -4,13 +4,16 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
+import mpl_toolkits.mplot3d.art3d as art3d
+import mpl_toolkits.mplot3d.axes3d as axes3d
+
 from typing import Tuple, Union, Optional, List, Sequence
 from evo.tools import file_interface, plot as evoplot
 from py_factor_graph.utils.solver_utils import (
     SolverResults,
     save_to_tum,
 )
-from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
+from py_factor_graph.variables import PoseVariable2D, PoseVariable3D, LandmarkVariable2D, LandmarkVariable3D
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.utils.matrix_utils import get_theta_from_rotation_matrix
 
@@ -37,8 +40,8 @@ def draw_arrow(
         x (float): the x position of the arrow
         y (float): the y position of the arrow
         theta (float): the angle of the arrow
-        quiver_length (float, optional): the length of the arrow. Defaults to 0.1.
-        quiver_width (float, optional): the width of the arrow. Defaults to 0.01.
+        quiver_length (float, optional): the length of the arrow. Defaults to 1.
+        quiver_width (float, optional): the width of the arrow. Defaults to 0.1.
         color (str, optional): color of the arrow. Defaults to "black".
 
     Returns:
@@ -57,6 +60,45 @@ def draw_arrow(
         color=color,
     )
 
+def draw_arrow_3d(
+    ax: plt.Axes,
+    x: float,
+    y: float,
+    z: float,
+    dx: float,
+    dy: float,
+    dz: float,
+    quiver_length: float = 1,
+    color: str = "black",
+):
+    """Draws an arrow on the given axes
+
+    Args:
+        ax (plt.Axes): the axes to draw the arrow on
+        x (float): the x position of the arrow
+        y (float): the y position of the arrow
+        z (float): the z position of the arrow
+        dx (float): the x direction of the arrow
+        dy (float): the y direction of the arrow
+        dz (float): the z direction of the arrow
+        quiver_length (float, optional): the length of the arrow. Defaults to 1.
+        quiver_width (float, optional): the width of the arrow. Defaults to 0.1.
+        color (str, optional): color of the arrow. Defaults to "black".
+
+    Returns:
+        art3d.Line3DCollection: the arrow
+    """
+    return ax.quiver(
+        x,
+        y,
+        z,
+        dx,
+        dy,
+        dz,
+        length = quiver_length * 5.0,
+        color = color,
+        normalize = True,
+    )
 
 def draw_line(
     ax: plt.Axes,
@@ -94,6 +136,45 @@ def draw_line(
     ax.add_line(line)
     return line
 
+def draw_line_3d(
+    ax: plt.Axes,
+    x_start: float,
+    y_start: float,
+    z_start: float,
+    x_end: float,
+    y_end: float,
+    z_end: float,
+    color: str = "black",
+) -> art3d.Line3D:
+    """Draws a line on the given axes between the two points
+
+    Args:
+        ax (plt.Axes): the axes to draw the arrow on
+        x_start (float): the x position of the start of the line
+        y_start (float): the y position of the start of the line
+        z_start (float): the z position of the start of the line
+        x_end (float): the x position of the end of the line
+        y_end (float): the y position of the end of the line
+        z_end (float): the z position of the end of the line
+        color (str, optional): color of the arrow. Defaults to "black".
+
+    Returns:
+        art3d.Line3D: the arrow
+    """
+    # if color is grey lets make the line dashed and reduce the line width
+    if color == "grey":
+        line = art3d.Line3D(
+            [x_start, x_end],
+            [y_start, y_end],
+            [z_start, z_end],
+            color=color,
+            linestyle="dashed",
+            linewidth=0.5,
+        )
+    else:
+        line = art3d.Line3D([x_start, x_end], [y_start, y_end], [z_start, z_end],color=color)
+    ax.add_line(line)
+    return line
 
 def draw_circle(ax: plt.Axes, circle: np.ndarray, color="red") -> mpatches.Circle:
     assert circle.size == 3
@@ -116,6 +197,28 @@ def _get_pose_xytheta(
         theta = get_theta_from_rotation_matrix(pose[0:2, 0:2])
     return x, y, theta
 
+def _get_pose_3d(
+    pose: Union[np.ndarray, PoseVariable3D],
+) -> Tuple[float, float, float, float, float, float]:
+    assert isinstance(pose, np.ndarray) or isinstance(pose, PoseVariable3D)
+    if isinstance(pose, PoseVariable3D):
+        x = pose.true_x
+        y = pose.true_y
+        z = pose.true_z
+        dx = pose.true_rotation[0, 0]
+        dy = pose.true_rotation[1, 0]
+        dz = pose.true_rotation[2, 0]
+    else:
+        x = pose[0, 3]
+        y = pose[1, 3]
+        z = pose[2, 3]
+        dx = pose[0, 0]
+        dy = pose[1, 0]
+        dz = pose[2, 0]
+
+    length = np.sqrt(dx**2.0 + dy**2.0 + dz**2.0)
+    return x, y, z, dx / length, dy / length, dz / length
+
 
 def draw_pose(
     ax: plt.Axes,
@@ -134,6 +237,24 @@ def draw_pose(
         quiver_width=scale / 10,
     )
 
+def draw_pose_3d(
+    ax: plt.Axes,
+    pose: Union[np.ndarray, PoseVariable3D],
+    color="blue",
+    scale: float = 1,
+) -> art3d.Line3DCollection:
+    true_x, true_y, true_z, dx, dy, dz = _get_pose_3d(pose)
+    return draw_arrow_3d(
+        ax,
+        true_x,
+        true_y,
+        true_z,
+        dx,
+        dy,
+        dz,
+        color=color,
+        quiver_length=scale,
+    )
 
 def update_pose_arrow(
     arrow: mpatches.FancyArrow,
@@ -146,7 +267,6 @@ def update_pose_arrow(
     dy = quiver_length * math.sin(theta)
     arrow.set_data(x=x, y=y, dx=dx, dy=dy)
 
-
 def draw_traj(
     ax: plt.Axes,
     x_traj: Sequence[float],
@@ -158,6 +278,17 @@ def draw_traj(
     ax.add_line(line)
     return line
 
+def draw_traj_3d(
+    ax: plt.Axes,
+    x_traj: Sequence[float],
+    y_traj: Sequence[float],
+    z_traj: Sequence[float],
+    color: str = "black",
+) -> art3d.Line3D:
+    assert len(x_traj) == len(y_traj) and len(x_traj) == len(z_traj) and len(y_traj) == len(z_traj)
+    line = art3d.Line3D(x_traj, y_traj, z_traj, color=color)
+    ax.add_line(line)
+    return line
 
 def update_traj(
     line: mlines.Line2D,
@@ -174,6 +305,11 @@ def draw_landmark_variable(ax: plt.Axes, landmark: LandmarkVariable2D):
     true_y = landmark.true_y
     ax.scatter(true_x, true_y, color="green", marker=(5, 2))
 
+def draw_landmark_variable_3d(ax: plt.Axes, landmark: LandmarkVariable3D):
+    true_x = landmark.true_x
+    true_y = landmark.true_y
+    true_z = landmark.true_z
+    ax.scatter(true_x, true_y, true_z, c="green", marker = (5, 2))
 
 def draw_loop_closure_measurement(
     ax: plt.Axes, base_loc: np.ndarray, to_pose: PoseVariable2D
@@ -220,6 +356,28 @@ def draw_range_measurement(
 
     return line, circle
 
+def draw_range_measurement_3d(
+    ax: plt.Axes,
+    range_measure: FGRangeMeasurement,
+    from_pose: PoseVariable3D,
+    to_landmark: Union[LandmarkVariable3D, PoseVariable3D],
+    add_line: bool = True,
+) -> Optional[mlines.Line2D]:
+    base_loc = from_pose.true_x, from_pose.true_y, from_pose.true_z
+    to_loc = to_landmark.true_x, to_landmark.true_y, to_landmark.true_z
+
+    x_start, y_start, z_start = base_loc
+    landmark_idx = int(to_landmark.name[1:])
+    c = get_color(landmark_idx)
+    c = "grey"
+
+    if add_line:
+        x_end, y_end, z_end = to_loc
+        line = draw_line_3d(ax, x_start, y_start, z_start, x_end, y_end, z_end, color=c)
+    else:
+        line = None
+
+    return line
 
 def visualize_solution(
     solution: SolverResults,

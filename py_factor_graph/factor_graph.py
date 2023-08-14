@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
+import mpl_toolkits.mplot3d.art3d as art3d
 
 from py_factor_graph.utils.matrix_utils import (
     get_translation_from_transformation_matrix,
@@ -49,10 +50,14 @@ from py_factor_graph.utils.name_utils import (
 )
 from py_factor_graph.utils.plot_utils import (
     draw_pose,
+    draw_pose_3d,
     update_pose_arrow,
     draw_traj,
+    draw_traj_3d,
     draw_landmark_variable,
+    draw_landmark_variable_3d,
     draw_range_measurement,
+    draw_range_measurement_3d,
 )
 from py_factor_graph.utils.attrib_utils import is_dimension
 from py_factor_graph.utils.logging_utils import logger
@@ -1702,6 +1707,209 @@ class FactorGraphData:
         legend_elements = [
             mlines.Line2D([0], [0], color=odom_color, label="odometry"),
             mlines.Line2D([0], [0], color=gt_color, label="ground truth"),
+        ]
+        ax.legend(handles=legend_elements)
+
+        ani = animation.FuncAnimation(
+            fig,
+            _update_animation,
+            frames=num_timesteps,
+            interval=pause_interval,
+            repeat=False,
+        )
+
+        plt.show(block=True)
+
+    # TODO: move to io
+    def animate_odometry_3d(
+        self,
+        show_gt: bool = False,
+        pause_interval: float = 0.01,
+        draw_range_lines: bool = False,
+        num_timesteps_keep_ranges: int = 1,
+    ) -> None:
+        """Makes an animation of the odometric chain for every robot
+
+        Args:
+            show_gt (bool, optional): whether to show the ground truth as well. Defaults to False.
+            pause (float, optional): How long to pause between frames. Defaults to 0.01.
+        """
+        assert self.dimension == 3, "Only 3D data can be animated"
+        assert (
+            self.x_min is not None and self.x_max is not None
+        ), "x_min and x_max must be set"
+        assert (
+            self.y_min is not None and self.y_max is not None
+        ), "y_min and y_max must be set"
+        assert (
+            self.z_min is not None and self.z_max is not None
+        ), "z_min and z_max must be set"
+
+        # set up plot
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+        # scale is the order of magnitude of the largest range
+        x_range = self.x_max - self.x_min
+        y_range = self.y_max - self.y_min
+        z_range = self.z_max - self.z_min
+        scale = max(x_range, y_range, z_range) / 100.0
+
+        def _format_viewport():
+            x_min = self.x_min - 0.1 * abs(self.x_min)
+            x_max = self.x_max + 0.1 * abs(self.x_max)
+            y_min = self.y_min - 0.1 * abs(self.y_min)
+            y_max = self.y_max + 0.1 * abs(self.y_max)
+            z_min = self.z_min - 0.1 * abs(self.z_min)
+            z_max = self.z_max + 0.1 * abs(self.z_max)
+            ax.set_xlim3d(x_min, x_max)
+            ax.set_ylim3d(y_min, y_max)
+            ax.set_zlim3d(z_min, z_max)
+
+            # set axes to be equal
+            ax.set_aspect("auto")
+
+        _format_viewport()
+
+        # go ahead and draw the landmarks
+        for landmark in self.landmark_variables:
+            assert isinstance(landmark, LandmarkVariable3D)
+            draw_landmark_variable_3d(ax, landmark)
+
+        # all of the objects to track for plotting the poses as arrows
+        odom_color = "blue"
+        gt_color = "red"
+
+        # all of the objects to track for plotting the trajectories as lines
+        odom_pose_traj_lines: List[art3d.Line3D] = [
+            draw_traj_3d(
+                ax,
+                [],
+                [],
+                [],
+                odom_color,
+            )
+            for robot_idx in range(self.num_robots)
+        ]
+        gt_pose_traj_lines: List[art3d.Line3D] = [
+            draw_traj_3d(
+                ax,
+                [],
+                [],
+                [],
+                gt_color,
+            )
+            for _ in range(self.num_robots)
+        ]
+
+        # get the trajectories as poses
+        odom_pose_trajs = self.odometry_trajectories
+        gt_pose_trajs = self.true_trajectories
+        assert len(odom_pose_trajs) == len(
+            gt_pose_trajs
+        ), "must be same number of odometry and ground truth pose chains"
+
+        def _get_xyz_traj_from_pose_traj(
+            pose_traj: List[np.ndarray],
+        ) -> Tuple[List[float], List[float], List[float]]:
+            x_traj = [pose[0, 3] for pose in pose_traj]
+            y_traj = [pose[1, 3] for pose in pose_traj]
+            z_traj = [pose[2, 3] for pose in pose_traj]
+            return x_traj, y_traj, z_traj
+
+        odom_xyz_history = [
+            _get_xyz_traj_from_pose_traj(pose_traj) for pose_traj in odom_pose_trajs
+        ]
+        gt_pose_xyz_history = [
+            _get_xyz_traj_from_pose_traj(pose_traj) for pose_traj in gt_pose_trajs
+        ]
+
+        num_timesteps = len(odom_pose_trajs[0])
+
+        def _update_traj_lines(timestep: int) -> None:
+            idx = min(timestep + 1, num_timesteps)
+            for robot_idx in range(self.num_robots):
+                odom_pose_traj_lines[robot_idx].set_data_3d(
+                    odom_xyz_history[robot_idx][0][:idx],
+                    odom_xyz_history[robot_idx][1][:idx],
+                    odom_xyz_history[robot_idx][2][:idx]
+                )
+                if show_gt:
+                    gt_pose_traj_lines[robot_idx].set_data_3d(
+                        gt_pose_xyz_history[robot_idx][0][:idx],
+                        gt_pose_xyz_history[robot_idx][1][:idx],
+                        gt_pose_xyz_history[robot_idx][2][:idx]
+                    )
+
+        prev_arrows = []
+
+        def _update_pose_arrows(timestep: int) -> None:
+            for arrow in prev_arrows:
+                arrow.remove()
+            prev_arrows.clear()
+
+            for robot_idx in range(self.num_robots):
+                arrow = draw_pose_3d(ax, odom_pose_trajs[robot_idx][timestep], color=odom_color, scale=scale)
+                prev_arrows.append(arrow)
+
+                if show_gt:
+                    arrow = draw_pose_3d(ax, gt_pose_trajs[robot_idx][timestep], color=gt_color, scale=scale)
+                    prev_arrows.append(arrow)
+
+        pose_range_measures = self.pose_to_range_measures_dict
+        pose_dict = self.pose_variables_dict
+        landmark_dict = self.landmark_variables_dict
+        range_line_drawings: List[art3d.Line3D] = []
+        range_timesteps_added: List[int] = []  # keep track of when we added the range
+
+        def _update_range_lines(timestep: int) -> None:
+            def _has_range_measures_to_remove():
+                return (
+                    len(range_timesteps_added) > 0
+                    and timestep - range_timesteps_added[0] > num_timesteps_keep_ranges
+                )
+
+            while _has_range_measures_to_remove():
+                drawn_line = range_line_drawings.pop(0)
+                range_timesteps_added.pop(0)
+
+                if drawn_line is not None:
+                    drawn_line.remove()
+
+            for robot_idx in range(self.num_robots):
+                pose = self.pose_variables[robot_idx][timestep]
+                assert isinstance(pose, PoseVariable3D)
+                if pose.name not in pose_range_measures:
+                    continue
+
+                associated_range_measures = pose_range_measures[pose.name]
+                for range_measure in associated_range_measures:
+                    other_var_name = range_measure.association[1]
+                    if other_var_name in landmark_dict:
+                        other_var = landmark_dict[other_var_name]  # type: ignore
+                    elif other_var_name in pose_dict:
+                        other_var = pose_dict[other_var_name]  # type: ignore
+
+                    assert isinstance(other_var, (PoseVariable3D, LandmarkVariable3D))
+                    drawn_line = draw_range_measurement_3d(
+                        ax,
+                        range_measure,
+                        pose,
+                        other_var,
+                        add_line=draw_range_lines,
+                    )
+                    range_line_drawings.append(drawn_line)
+                    range_timesteps_added.append(timestep)
+
+        def _update_animation(timestep: int) -> None:
+            _update_traj_lines(timestep)
+            _update_pose_arrows(timestep)
+            if draw_range_lines:
+                _update_range_lines(timestep)
+
+        # add a legend for blue = odometry, red = ground truth
+        legend_elements = [
+            art3d.Line3D([0], [0], [0], color=odom_color, label="odometry"),
+            art3d.Line3D([0], [0], [0], color=gt_color, label="ground truth"),
         ]
         ax.legend(handles=legend_elements)
 
