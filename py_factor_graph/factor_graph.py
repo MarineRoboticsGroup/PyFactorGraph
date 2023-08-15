@@ -1831,16 +1831,16 @@ class FactorGraphData:
                 odom_pose_traj_lines[robot_idx].set_data_3d(
                     odom_xyz_history[robot_idx][0][:idx],
                     odom_xyz_history[robot_idx][1][:idx],
-                    odom_xyz_history[robot_idx][2][:idx]
+                    odom_xyz_history[robot_idx][2][:idx],
                 )
                 if show_gt:
                     gt_pose_traj_lines[robot_idx].set_data_3d(
                         gt_pose_xyz_history[robot_idx][0][:idx],
                         gt_pose_xyz_history[robot_idx][1][:idx],
-                        gt_pose_xyz_history[robot_idx][2][:idx]
+                        gt_pose_xyz_history[robot_idx][2][:idx],
                     )
 
-        prev_arrows = []
+        prev_arrows: List[art3d.Line3DCollection] = []
 
         def _update_pose_arrows(timestep: int) -> None:
             for arrow in prev_arrows:
@@ -1848,11 +1848,21 @@ class FactorGraphData:
             prev_arrows.clear()
 
             for robot_idx in range(self.num_robots):
-                arrow = draw_pose_3d(ax, odom_pose_trajs[robot_idx][timestep], color=odom_color, scale=scale)
+                arrow = draw_pose_3d(
+                    ax,
+                    odom_pose_trajs[robot_idx][timestep],
+                    color=odom_color,
+                    scale=scale,
+                )
                 prev_arrows.append(arrow)
 
                 if show_gt:
-                    arrow = draw_pose_3d(ax, gt_pose_trajs[robot_idx][timestep], color=gt_color, scale=scale)
+                    arrow = draw_pose_3d(
+                        ax,
+                        gt_pose_trajs[robot_idx][timestep],
+                        color=gt_color,
+                        scale=scale,
+                    )
                     prev_arrows.append(arrow)
 
         pose_range_measures = self.pose_to_range_measures_dict

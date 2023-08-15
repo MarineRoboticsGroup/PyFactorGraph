@@ -134,7 +134,7 @@ def _set_variables_and_odometry(
     rotational_stddev: float = 0.005,
 ):
     trans_precision, rot_precision = get_measurement_precisions_from_covariances(
-        trans_cov=translational_stddev**2, rot_cov=rotational_stddev**2, mat_dim=2
+        trans_cov=translational_stddev**2, rot_cov=rotational_stddev**2, mat_dim=3
     )
     # only read the desired topics
     per_robot_odom_measures: Dict[str, List[Odometry]] = {
