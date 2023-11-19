@@ -33,6 +33,7 @@ from py_factor_graph.measurements import (
     PoseToLandmarkMeasurement2D,
     PoseToLandmarkMeasurement3D,
     FGRangeMeasurement,
+    FGBearingMeasurement,
     POSE_MEASUREMENT_TYPES,
     POSE_LANDMARK_MEASUREMENT_TYPES,
 )
@@ -52,6 +53,7 @@ REL_POSE_POSE_TYPE_3D = "EDGE_SE3:QUAT"
 REL_POSE_LANDMARK_TYPE_2D = "EDGE_SE2_XY"
 REL_POSE_LANDMARK_TYPE_3D = "EDGE_SE3_XYZ"
 RANGE_MEASURE_TYPE = "EDGE_RANGE"
+BEARING_MEASURE_TYPE = "EDGE_BEARING"
 
 
 def _num_elems_symmetric_matrix(dim: int) -> int:
@@ -110,6 +112,7 @@ def _get_pyfg_types(dim: int) -> tuple:
         rel_pose_pose_measure_type (str): PyFG formatted string for pose to pose measurements
         rel_pose_landmark_measure_type (str): PyFG formatted string for pose to landmark measurements
         range_measure_type (str): PyFG formatted string for range measurements
+        bearing_measure_type (str): PyFG formatted string for bearing measurements
     """
     assert dim == 2 or dim == 3
     if dim == 2:
@@ -126,7 +129,8 @@ def _get_pyfg_types(dim: int) -> tuple:
         landmark_prior_type = LANDMARK_PRIOR_3D
         rel_pose_pose_measure_type = REL_POSE_POSE_TYPE_3D
         rel_pose_landmark_measure_type = REL_POSE_LANDMARK_TYPE_3D
-    range_measure_type = RANGE_MEASURE_TYPE
+        range_measure_type = RANGE_MEASURE_TYPE
+        bearing_measure_type = BEARING_MEASURE_TYPE
 
     return (
         pose_var_type,
@@ -136,6 +140,7 @@ def _get_pyfg_types(dim: int) -> tuple:
         rel_pose_pose_measure_type,
         rel_pose_landmark_measure_type,
         range_measure_type,
+        bearing_measure_type,
     )
 
 
@@ -155,6 +160,7 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         rel_pose_pose_measure_type,
         rel_pose_landmark_measure_type,
         range_measure_type,
+        bearing_measure_type,
     ) = _get_pyfg_types(fg.dimension)
 
     # enforce formatting precisions
@@ -251,6 +257,19 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
             )
         return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
 
+    # [TODO]: potentially edit variance func
+    def _get_bearing_measure_string(bearing_measure: FGBearingMeasurement):
+        # make sure that the variance is non-zero after rounding to
+        # the desired precision
+        rounded_variance = round(bearing_measure.variance, covariance_fprec)
+        if rounded_variance == 0.0:
+            raise ValueError(
+                f"Bearing measurement variance is zero after rounding to {covariance_fprec} decimal places. "
+                "This will likely cause numerical issues. We suggest increasing the variance."
+                f"Variance before rounding: {bearing_measure.variance} Variance after rounding: {rounded_variance}"
+            )
+        return f"{bearing_measure_type} {bearing_measure.timestamp:.{time_fprec}f} {bearing_measure.first_key} {bearing_measure.second_key} {bearing_measure.bearing_azimuth:.{translation_fprec}f} {bearing_measure.bearing_elevation:.{translation_fprec}f} {bearing_measure.variance:.{covariance_fprec}f} {bearing_measure.variance:.{covariance_fprec}f}"
+
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:
             for pose in pose_chain:
@@ -285,6 +304,9 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         for range_measure in fg.range_measurements:
             f.write(_get_range_measure_string(range_measure) + "\n")
 
+        for bearing_measure in fg.bearing_measurements:
+            f.write(_get_bearing_measure_string(bearing_measure) + "\n")
+
     logger.info(f"Saved factor graph in PyFG text format to {fpath}")
 
 
@@ -314,6 +336,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         rel_pose_pose_measure_type,
         rel_pose_landmark_measure_type,
         range_measure_type,
+        bearing_measure_type,
     ) = _get_pyfg_types(dim)
 
     pose_state_dim = 3 if dim == 2 else 7
@@ -625,6 +648,26 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
             stddev=math.sqrt(variance),
             timestamp=measure_timestamp,
         )
+    
+    # [TODO]: check if return stddev should come from variance
+    def _get_bearing_measure_from_line(line: str) -> FGBearingMeasurement:
+        line_parts = line.split(" ")
+        assert len(line_parts) == 8
+        assert line_parts[0] == BEARING_MEASURE_TYPE
+        measure_timestamp = float(line_parts[1])
+        association = (line_parts[2], line_parts[3])
+        bearing_azimuth = float(line_parts[4])
+        bearing_elevation = float(line_parts[5])
+        azimuth_stddev = float(line_parts[6])
+        elevation_stddev = float(line_parts[7])
+        return FGBearingMeasurement(
+            association=association,
+            bearing_azimuth=bearing_azimuth,
+            bearing_elevation=bearing_elevation,
+            azimuth_stddev=azimuth_stddev,
+            elevation_stddev=elevation_stddev,
+            timestamp=measure_timestamp,
+        )
 
     def _rel_pose_pose_is_odom(measure: POSE_MEASUREMENT_TYPES) -> bool:
         base_pose_robot_idx = get_robot_idx_from_frame_name(measure.base_pose)
@@ -653,7 +696,7 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
 
         if line_type == pose_var_type:
             pose_var = _get_pose_var_from_line(line)
-            pyfg.add_pose_variable(pose_var)
+            pyfg.add_pose_variable(pose_var) 
         elif line_type == landmark_var_type:
             landmark_var = _get_landmark_var_from_line(line)
             pyfg.add_landmark_variable(landmark_var)
@@ -677,6 +720,9 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         elif line_type == range_measure_type:
             range_measure = _get_range_measure_from_line(line)
             pyfg.add_range_measurement(range_measure)
+        elif line_type == bearing_measure_type:
+            bearing_measure = _get_bearing_measure_from_line(line)
+            pyfg.add_bearing_measurement(bearing_measure)
         else:
             raise ValueError(f"Unknown PyFG type {type(line_type)}")
 

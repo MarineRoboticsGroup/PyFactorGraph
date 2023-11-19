@@ -4,6 +4,7 @@ from py_factor_graph.variables import PoseVariable2D, LandmarkVariable2D
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     FGRangeMeasurement,
+    FGBearingMeasurement,
 )
 from py_factor_graph.priors import (
     PosePrior2D,
@@ -46,6 +47,7 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
     pose_measure_header = "Factor SE2RelativeGaussianLikelihoodFactor"
     amb_measure_header = "Factor AmbiguousDataAssociationFactor"
     range_measure_header = "Factor SE2R2RangeGaussianLikelihoodFactor"
+    bearing_measure_header = "Factor SE2BearingLikelihoodFactor"
     pose_prior_header = "Factor UnarySE2ApproximateGaussianPriorFactor"
     landmark_prior_header = "Landmark"  # don't have any of these yet
 
@@ -118,6 +120,17 @@ def parse_efg_file(filepath: str) -> FactorGraphData:
                 stddev = float(line_items[5])
                 range_measure = FGRangeMeasurement((var1, var2), dist, stddev)
                 new_fg_data.add_range_measurement(range_measure)
+
+            elif line.startswith(bearing_measure_header):
+                line_items = line.split()
+                var1 = line_items[2]
+                var2 = line_items[3]
+                bearing_azimuth = float(line_items[4])
+                bearing_elevation = float(line_items[5])
+                azimuth_stddev = float(line_items[6])
+                elevation_stddev = float(line_items[7])
+                bearing_measure = FGBearingMeasurement((var1, var2), bearing_azimuth, bearing_elevation, azimuth_stddev, elevation_stddev)
+                new_fg_data.add_bearing_measurement(bearing_measure)
 
             elif line.startswith(pose_prior_header):
                 line_items = line.split()

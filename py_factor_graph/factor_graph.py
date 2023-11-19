@@ -33,6 +33,7 @@ from py_factor_graph.measurements import (
     PoseToLandmarkMeasurement3D,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
+    FGBearingMeasurement,
     POSE_MEASUREMENT_TYPES,
     POSE_LANDMARK_MEASUREMENT_TYPES,
 )
@@ -82,6 +83,7 @@ class FactorGraphData:
         ambiguous_loop_closure_measurements (List[AmbiguousPoseMeasurement2D]): the ambiguous loop closures.
         pose_landmark_measurements (List[POSE_LANDMARK_MEASUREMENT_TYPES]): the pose to landmark measurements.
         range_measurements (List[FGRangeMeasurement]): the range measurements.
+        bearing_measurements (List[FGBearingMeasurement]): the bearing measurements.
         ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): the ambiguous range measurements.
         pose_priors (List[PosePrior2D]): the pose priors.
         landmark_priors (List[LandmarkPrior2D]): the landmark priors.
@@ -118,6 +120,9 @@ class FactorGraphData:
     ambiguous_range_measurements: List[AmbiguousFGRangeMeasurement] = attr.ib(
         factory=list
     )
+
+    # bearing measurements
+    bearing_measurements: List[FGBearingMeasurement] = attr.ib(factory=list)
 
     # priors
     pose_priors: List[POSE_PRIOR_TYPES] = attr.ib(factory=list)
@@ -188,6 +193,12 @@ class FactorGraphData:
             line += f"{x}\n"
         line += "\n"
 
+        # add bearing measurements
+        line += f"Bearing Measurements: {len(self.bearing_measurements)}\n"
+        for x in self.bearing_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
         # add pose priors
         line += f"Pose Priors: {len(self.pose_priors)}\n"
         for x in self.pose_priors:
@@ -228,12 +239,14 @@ class FactorGraphData:
         num_odom_measurements = self.num_odom_measurements
         num_pose_landmark_measurements = self.num_pose_landmark_measurements
         num_range_measurements = self.num_range_measurements
+        num_bearing_measurements = self.num_bearing_measurements
         num_loop_closures = self.num_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
             f"{num_pose_landmark_measurements} pose to landmark, "
+            f"{num_bearing_measurements} bearing, "
             f"{num_range_measurements} range, {num_loop_closures} loop closures "
             f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
@@ -366,6 +379,15 @@ class FactorGraphData:
             int: the number of range measurements
         """
         return len(self.range_measurements)
+    
+    @property
+    def num_bearing_measurements(self) -> int:
+        """Returns the number of bearing measurements.
+
+        Returns:
+            int: the number of bearing measurements
+        """
+        return len(self.bearing_measurements)    
 
     @property
     def num_landmark_priors(self) -> int:
@@ -464,6 +486,11 @@ class FactorGraphData:
             factor_vars.add(range_assoc[0])
             factor_vars.add(range_assoc[1])
 
+        for bearing_measure in self.bearing_measurements:
+            bearing_assoc = bearing_measure.association
+            factor_vars.add(bearing_assoc[0])
+            factor_vars.add(bearing_assoc[1])
+
         return set(self.all_variable_names) - factor_vars
 
     @property
@@ -533,6 +560,25 @@ class FactorGraphData:
         """
         measures_dict: Dict[Tuple[str, str], List[FGRangeMeasurement]] = {}
         for measure in self.range_measurements:
+            association = measure.association
+            if association not in measures_dict:
+                measures_dict[association] = []
+            measures_dict[association].append(measure)
+        return measures_dict
+    
+    # [TODO]: check if pose_to_range_measures_dict for bearing is necessary
+
+    @property
+    def bearing_measures_association_dict(
+        self,
+    ) -> Dict[Tuple[str, str], List[FGBearingMeasurement]]:
+        """Returns a mapping from bearing measurement associations to their bearing measurements.
+
+        Returns:
+            Dict[Tuple[str, str], List[FGBearingMeasurement]]: the mapping from bearing measurement associations to their bearing measurements.
+        """
+        measures_dict: Dict[Tuple[str, str], List[FGBearingMeasurement]] = {}
+        for measure in self.bearing_measurements:
             association = measure.association
             if association not in measures_dict:
                 measures_dict[association] = []
@@ -703,6 +749,11 @@ class FactorGraphData:
         for range_measure in self.range_measurements:
             if range_measure.weight < 1:
                 logger.info(range_measure)
+                return False
+
+        for bearing_measure in self.bearing_measurements:
+            if bearing_measure.weight < 1:
+                logger.info(bearing_measure)
                 return False
 
         return True
@@ -965,6 +1016,32 @@ class FactorGraphData:
         """
         self.ambiguous_range_measurements.append(measure)
 
+    def add_bearing_measurement(self, bearing_meas: FGBearingMeasurement) -> None:
+        """Adds a bearing measurement to the list of bearing measurements.
+
+        Args:
+            bearing_meas (FGBearingMeasurement): the bearing measurement to add
+        """
+
+        # check that we are not adding a measurement between variables that exist
+        var1, var2 = bearing_meas.association
+        assert self.is_pose_or_landmark(var1)
+        assert self.is_pose_or_landmark(var2)
+        self.bearing_measurements.append(bearing_meas)
+
+        # update max and min measurement weights
+        if (
+            self.max_measure_weight is None
+            or self.max_measure_weight < bearing_meas.weight
+        ):
+            self.max_measure_weight = bearing_meas.weight
+
+        if (
+            self.min_measure_weight is None
+            or self.min_measure_weight > bearing_meas.weight
+        ):
+            self.min_measure_weight = bearing_meas.weight
+
     def add_pose_prior(self, pose_prior: POSE_PRIOR_TYPES) -> None:
         """Adds a pose prior to the list of pose priors.
 
@@ -1224,6 +1301,30 @@ class FactorGraphData:
             line += f"Observation {range_measure.dist:.15f} Sigma {range_measure.stddev:.15f}\n"
 
             return line
+        
+        def get_bearing_measurement_string(
+            bearing_measure: FGBearingMeasurement,
+        ) -> str:
+            """Returns the string representing a bearing factor based on the provided
+            bearing measurement and the association information.
+
+            Args:
+                bearing_measure (FGBearingMeasurement): the measurement info (value and
+                    stddev)
+
+            Returns:
+                str: the line representing the factor
+            """
+
+            robot_id, measure_id = bearing_measure.association
+
+            # [TODO]: Double check this
+            bearing_factor_type = "SE2BearingLikelihoodFactor"
+            line = f"Factor {bearing_factor_type} "
+            line += f"{robot_id} {measure_id} "
+            line += f"{bearing_measure.bearing_azimuth:.15f} {bearing_measure.bearing_elevation:.15f} {bearing_measure.azimuth_stddev:.15f} {bearing_measure.elevation_stddev:.15f}\n"
+
+            return line
 
         file_writer = open(data_file, "w")
 
@@ -1269,6 +1370,11 @@ class FactorGraphData:
         for amb_range_measure in self.ambiguous_range_measurements:
             assert isinstance(amb_range_measure, AmbiguousFGRangeMeasurement)
             line = get_ambiguous_range_measurement_string(amb_range_measure)
+            file_writer.write(line)
+
+        for bearing_measure in self.bearing_measurements:
+            assert isinstance(bearing_measure, FGBearingMeasurement)
+            line = get_bearing_measurement_string(bearing_measure)
             file_writer.write(line)
 
         file_writer.close()
@@ -1375,11 +1481,25 @@ class FactorGraphData:
 
             filewriter.close()
 
+        def save_TB_plaza() -> None:
+            """
+            Save Bearing Measurements plaza file
+            """
+            filename = data_folder + "/TD.plaza"
+            filewriter = open(filename, "w")
+
+            for bearing_measurement in self.bearing_measurements:
+                line = f"{bearing_measurement.timestamp} {bearing_measurement.first_key} {bearing_measurement.second_key} {bearing_measurement.bearing_azimuth} {bearing_measurement.bearing_elevation}"
+                filewriter.write(line)
+
+            filewriter.close()
+
         save_GT_plaza()
         save_DR_plaza()
         save_DRp_plaza()
         save_TL_plaza()
         save_TD_plaza()
+        save_TB_plaza()
         return
 
     # TODO: deprecate for pyfg_text.py. We should instead have an io parser that converts between pyfg_text and tum
