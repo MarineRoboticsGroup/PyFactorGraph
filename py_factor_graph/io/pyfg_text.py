@@ -261,14 +261,21 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
     def _get_bearing_measure_string(bearing_measure: FGBearingMeasurement):
         # make sure that the variance is non-zero after rounding to
         # the desired precision
-        rounded_variance = round(bearing_measure.variance, covariance_fprec)
-        if rounded_variance == 0.0:
+        rounded_azimuth_variance = round(bearing_measure.azimuth_variance, covariance_fprec)
+        rounded_elevation_variance = round(bearing_measure.elevation_variance, covariance_fprec)
+        if rounded_azimuth_variance == 0.0:
             raise ValueError(
                 f"Bearing measurement variance is zero after rounding to {covariance_fprec} decimal places. "
                 "This will likely cause numerical issues. We suggest increasing the variance."
-                f"Variance before rounding: {bearing_measure.variance} Variance after rounding: {rounded_variance}"
+                f"Variance before rounding: {bearing_measure.azimuth_variance} Variance after rounding: {rounded_azimuth_variance}"
             )
-        return f"{bearing_measure_type} {bearing_measure.timestamp:.{time_fprec}f} {bearing_measure.first_key} {bearing_measure.second_key} {bearing_measure.bearing_azimuth:.{translation_fprec}f} {bearing_measure.bearing_elevation:.{translation_fprec}f} {bearing_measure.variance:.{covariance_fprec}f} {bearing_measure.variance:.{covariance_fprec}f}"
+        if rounded_elevation_variance == 0.0:
+            raise ValueError(
+                f"Bearing measurement variance is zero after rounding to {covariance_fprec} decimal places. "
+                "This will likely cause numerical issues. We suggest increasing the variance."
+                f"Variance before rounding: {bearing_measure.elevation_variance} Variance after rounding: {rounded_elevation_variance}"
+            )
+        return f"{bearing_measure_type} {bearing_measure.timestamp:.{time_fprec}f} {bearing_measure.first_key} {bearing_measure.second_key} {bearing_measure.bearing_azimuth:.{translation_fprec}f} {bearing_measure.bearing_elevation:.{translation_fprec}f} {bearing_measure.azimuth_variance:.{covariance_fprec}f} {bearing_measure.elevation_variance:.{covariance_fprec}f}"
 
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:
@@ -658,14 +665,14 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
         association = (line_parts[2], line_parts[3])
         bearing_azimuth = float(line_parts[4])
         bearing_elevation = float(line_parts[5])
-        azimuth_stddev = float(line_parts[6])
-        elevation_stddev = float(line_parts[7])
+        azimuth_variance = float(line_parts[6])
+        elevation_variance = float(line_parts[7])
         return FGBearingMeasurement(
             association=association,
             bearing_azimuth=bearing_azimuth,
             bearing_elevation=bearing_elevation,
-            azimuth_stddev=azimuth_stddev,
-            elevation_stddev=elevation_stddev,
+            azimuth_stddev=math.sqrt(azimuth_variance),
+            elevation_stddev=math.sqrt(elevation_variance),
             timestamp=measure_timestamp,
         )
 
