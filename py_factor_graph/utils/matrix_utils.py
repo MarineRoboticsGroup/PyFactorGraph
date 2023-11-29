@@ -385,6 +385,9 @@ def get_random_rotation_matrix(dim: int = 2) -> np.ndarray:
     if dim == 2:
         theta = 2 * np.pi * np.random.rand()
         return get_rotation_matrix_from_theta(theta)
+    elif dim == 3: # [TODO] update with SO(3) random rotation with SVD
+        rpy = np.array([2 * np.pi * np.random.rand(), 2 * np.pi * np.random.rand(), 2 * np.pi * np.random.rand()])
+        return get_rotation_matrix_from_rpy(rpy)
     else:
         raise NotImplementedError("Only implemented for dim = 2")
 
@@ -394,6 +397,10 @@ def get_random_transformation_matrix(dim: int = 2) -> np.ndarray:
     if dim == 2:
         R = get_random_rotation_matrix(dim)
         t = get_random_vector(dim, [-10, 10, -10, 10])
+        return make_transformation_matrix(R, t)
+    elif dim == 3:
+        R = get_random_rotation_matrix(dim)
+        t = get_random_vector(dim, [-10, 10, -10, 10, -10, 10])
         return make_transformation_matrix(R, t)
     else:
         raise NotImplementedError("Only implemented for dim = 2")
