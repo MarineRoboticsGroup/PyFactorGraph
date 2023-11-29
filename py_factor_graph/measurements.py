@@ -520,7 +520,7 @@ class FGBearingMeasurement:
         """
         Get the weight of the measurement
         """
-        return 1 / (self.azimuth_stddev**2) # [TODO]
+        return 1 / (self.azimuth_stddev**2) # [TODO] we may need to separate weights for azimuth and elevation?
 
     @property
     def first_key(self) -> str:
@@ -537,19 +537,32 @@ class FGBearingMeasurement:
         return self.association[1]
 
     @property
-    def variance(self) -> float:
+    def azimuth_variance(self) -> float:
         """
         Get the variance of the measurement
         """
-        return self.azimuth_stddev**2 # [TODO]
-
+        return self.azimuth_stddev**2 # [TODO] separated variance for azimuth and elevation
+    
     @property
-    def precision(self) -> float:
+    def elevation_variance(self) -> float:
+        """
+        Get the variance of the measurement
+        """
+        return self.elevation_stddev**2 # [TODO]
+    
+    @property
+    def azimuth_precision(self) -> float:
         """
         Get the precision of the measurement
         """
-        return 1 / self.variance # [TODO]
-
+        return 1 / self.azimuth_variance # [TODO] doesn't seeme to be used anywhere but we changed from precision to azimuth_precision
+    
+    @property
+    def elevation_precision(self) -> float:
+        """
+        Get the precision of the measurement
+        """
+        return 1 / self.elevation_variance # [TODO]
 
 
 POSE_MEASUREMENT_TYPES = Union[PoseMeasurement2D, PoseMeasurement3D]
