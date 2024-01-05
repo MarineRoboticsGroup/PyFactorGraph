@@ -1277,7 +1277,6 @@ class FactorGraphData:
 
             return line
 
-
         def get_ambiguous_range_measurement_string(
             range_measure: AmbiguousFGRangeMeasurement,
         ) -> str:
@@ -1357,6 +1356,11 @@ class FactorGraphData:
         for amb_range_measure in self.ambiguous_range_measurements:
             assert isinstance(amb_range_measure, AmbiguousFGRangeMeasurement)
             line = get_ambiguous_range_measurement_string(amb_range_measure)
+            file_writer.write(line)
+
+        for bearing_measure in self.bearing_measurements:
+            assert isinstance(bearing_measure, FGBearingMeasurement)
+            line = get_bearing_measurement_string(bearing_measure)
             file_writer.write(line)
 
         file_writer.close()
