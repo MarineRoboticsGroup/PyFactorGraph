@@ -31,6 +31,7 @@ from py_factor_graph.measurements import (
     AmbiguousPoseMeasurement2D,
     PoseToLandmarkMeasurement2D,
     PoseToLandmarkMeasurement3D,
+    FGBearingMeasurement,
     FGRangeMeasurement,
     AmbiguousFGRangeMeasurement,
     POSE_MEASUREMENT_TYPES,
@@ -119,6 +120,9 @@ class FactorGraphData:
         factory=list
     )
 
+    # bearing measurements
+    bearing_measurements: List[FGBearingMeasurement] = attr.ib(factory=list)
+
     # priors
     pose_priors: List[POSE_PRIOR_TYPES] = attr.ib(factory=list)
     landmark_priors: List[LANDMARK_PRIOR_TYPES] = attr.ib(factory=list)
@@ -188,6 +192,12 @@ class FactorGraphData:
             line += f"{x}\n"
         line += "\n"
 
+        # add bearing measurements
+        line += f"Bearing Measurements: {len(self.bearing_measurements)}\n"
+        for x in self.bearing_measurements:
+            line += f"{x}\n"
+        line += "\n"
+
         # add pose priors
         line += f"Pose Priors: {len(self.pose_priors)}\n"
         for x in self.pose_priors:
@@ -228,13 +238,15 @@ class FactorGraphData:
         num_odom_measurements = self.num_odom_measurements
         num_pose_landmark_measurements = self.num_pose_landmark_measurements
         num_range_measurements = self.num_range_measurements
+        num_bearing_measurements = self.num_bearing_measurements
         num_loop_closures = self.num_loop_closures
         robots_line = f"Robots: {num_robots}"
         variables_line = f"Variables: {num_poses} poses, {num_landmarks} landmarks"
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
             f"{num_pose_landmark_measurements} pose to landmark, "
-            f"{num_range_measurements} range, {num_loop_closures} loop closures "
+            f"{num_range_measurements} range, {num_bearing_measurements} bearing, "
+            f"{num_loop_closures} loop closures "
             f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
@@ -366,6 +378,15 @@ class FactorGraphData:
             int: the number of range measurements
         """
         return len(self.range_measurements)
+
+    @property
+    def num_bearing_measurements(self) -> int:
+        """Returns the number of bearing measurements.
+
+        Returns:
+            int: the number of bearing measurements
+        """
+        return len(self.bearing_measurements)
 
     @property
     def num_landmark_priors(self) -> int:
@@ -954,6 +975,32 @@ class FactorGraphData:
         ):
             self.min_measure_weight = range_meas.weight
 
+    def add_bearing_measurement(self, bearing_meas: FGBearingMeasurement) -> None:
+        """Adds a range measurement to the list of range measurements.
+
+        Args:
+            range_meas (FGRangeMeasurement): the range measurement to add
+        """
+
+        # check that we are not adding a measurement between variables that exist
+        var1, var2 = bearing_meas.association
+        assert self.is_pose_or_landmark(var1)
+        assert self.is_pose_or_landmark(var2)
+        self.bearing_measurement.append(bearing_meas)
+
+        # update max and min measurement weights
+        if (
+            self.max_measure_weight is None
+            or self.max_measure_weight < bearing_meas.weight
+        ):
+            self.max_measure_weight = bearing_meas.weight
+
+        if (
+            self.min_measure_weight is None
+            or self.min_measure_weight > bearing_meas.weight
+        ):
+            self.min_measure_weight = bearing_meas.weight
+
     # TODO: implement similar checks to add_range_measurement
     def add_ambiguous_range_measurement(
         self, measure: AmbiguousFGRangeMeasurement
@@ -1189,6 +1236,36 @@ class FactorGraphData:
             line += f"{range_measure.dist:.15f} {range_measure.stddev:.15f}\n"
 
             return line
+
+        def get_bearing_measurement_string(
+            bearing_measure: FGBearingMeasurement,
+        ) -> str:
+            """Returns the string representing a bearing factor based on the provided
+            bearing measurement and the association information.
+
+            Args:
+                bearing_measure (FGBearingMeasurement): the measurement info (value and
+                    stddev)
+
+            Returns:
+                str: the line representing the factor
+            """
+
+            robot_id, measure_id = bearing_measure.association
+
+            # Factor SE2R2BearingGaussianLikelihoodFactor X0 L1 1.2 0.05
+            if "L" in measure_id:
+                # L is reserved for landmark names
+                range_factor_type = "SE2R2BearingGaussianLikelihoodFactor"
+            else:
+                # ID starts with other letters are robots
+                range_factor_type = "SE2SE2BearingGaussianLikelihoodFactor"
+            line = f"Factor {range_factor_type} "
+            line += f"{robot_id} {measure_id} "
+            line += f"{bearing_measure.bearing:.15f} {bearing_measure.stddev:.15f}\n"
+
+            return line
+
 
         def get_ambiguous_range_measurement_string(
             range_measure: AmbiguousFGRangeMeasurement,
