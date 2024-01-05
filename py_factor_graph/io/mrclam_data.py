@@ -21,6 +21,8 @@ from py_factor_graph.priors import LandmarkPrior2D
 from py_factor_graph.utils.name_utils import get_robot_char_from_number
 from py_factor_graph.variables import LandmarkVariable2D, PoseVariable2D
 
+np.set_printoptions(formatter={'all': lambda x: str(x)})
+
 logger = logging.getLogger(__name__)
 field_styles = {
     "filename": {"color": "green"},
@@ -66,7 +68,7 @@ class Trajectory:
 
         if timestamp > self.max_ts:
             logger.warning(
-                f"Timestamp {timestamp:.3f} is after the last timestamp {self.max_ts:.3f}, returning extrapolated pose"
+                f"Timestamp {timestamp:.3f} is after the last timestamp {self.max_ts:.3f}, returning last pose"
             )
 
         closest_timestamp_index = np.searchsorted(
@@ -74,6 +76,9 @@ class Trajectory:
         )
         if closest_timestamp_index == 0:
             return (np.zeros(3), 0)
+
+        if closest_timestamp_index == self.data.shape[0]:
+            return (self.data[-1, 1:], 0)
 
         closest_poses = self.data[
             closest_timestamp_index - 1 : closest_timestamp_index + 1, 1:
@@ -218,8 +223,7 @@ def get_all_odoms(data_dir: str):
             robot_name,
         )
         odom_df.sort_values(by="timestamp", inplace=True)
-        all_odoms[robot_name] = odom_df.to_numpy(np.float32)
-
+        all_odoms[robot_name] = odom_df.to_numpy(np.float64)
     return all_odoms
 
 
@@ -415,6 +419,7 @@ def parse_data(
 
                     # Reset the current transform since it is in the frame of the previous pose variable
                     cur_transform = np.zeros(4)
+                    cur_transform[0] = timestamp
 
     return fg
 
