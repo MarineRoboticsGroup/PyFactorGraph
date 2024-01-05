@@ -1,11 +1,14 @@
-import attr
 from typing import Optional, Tuple, Union
+
+import attr
 import numpy as np
+
 from py_factor_graph.utils.attrib_utils import (
-    positive_float_validator,
-    make_variable_name_validator,
+    float_validator,
     make_rot_matrix_validator,
+    make_variable_name_validator,
     optional_float_validator,
+    positive_float_validator,
 )
 from py_factor_graph.utils.matrix_utils import (
     get_covariance_matrix_from_measurement_precisions,
@@ -333,6 +336,93 @@ class FGRangeMeasurement:
 
     association: Tuple[str, str] = attr.ib()
     dist: float = attr.ib(validator=positive_float_validator)
+    stddev: float = attr.ib(validator=positive_float_validator)
+    timestamp: Optional[float] = attr.ib(default=None)
+
+    @association.validator
+    def check_association(self, attribute, value: Tuple[str, str]):
+        """Validates the association attribute
+
+        Args:
+            attribute ([type]): [description]
+            value (Tuple[str, str]): the true_association attribute
+
+        Raises:
+            ValueError: is not a 2-tuple
+            ValueError: the associations are identical
+            ValueError: the associations are not valid pose or landmark keys
+        """
+        assert all(isinstance(x, str) for x in value)
+        if len(value) != 2:
+            raise ValueError(
+                "Range measurements must have exactly two variables associated with."
+            )
+        if value[0] == value[1]:
+            raise ValueError(f"Range measurements must have unique variables: {value}")
+
+        association_1_is_uppercase_letter = value[0][0].isalpha() and value[0][0].isupper()
+        association_1_ends_in_number = value[0][1:].isnumeric()
+        if (
+            (not association_1_is_uppercase_letter) or (not association_1_ends_in_number)
+        ):
+            raise ValueError(f"First association is not a valid variable: {value[0]}")
+
+        association_2_is_uppercase_letter = value[1][0].isalpha() and value[1][0].isupper()
+        association_2_ends_in_number = value[1][1:].isnumeric()
+        if (
+            (not association_2_is_uppercase_letter) or (not association_2_ends_in_number)
+        ):
+            raise ValueError(f"Second association is not a valid variable: {value[1]}")
+
+    @property
+    def weight(self) -> float:
+        """
+        Get the weight of the measurement
+        """
+        return 1 / (self.stddev**2)
+
+    @property
+    def first_key(self) -> str:
+        """
+        Get the first key from the association
+        """
+        return self.association[0]
+
+    @property
+    def second_key(self) -> str:
+        """
+        Get the second key from the association
+        """
+        return self.association[1]
+
+    @property
+    def variance(self) -> float:
+        """
+        Get the variance of the measurement
+        """
+        return self.stddev**2
+
+    @property
+    def precision(self) -> float:
+        """
+        Get the precision of the measurement
+        """
+        return 1 / self.variance
+
+
+@attr.s(frozen=False)
+class FGBearingMeasurement:
+    """A 2D bearing measurement
+
+    Arguments:
+        association (Tuple[str, str]): the data associations of the measurement.
+        bearing (float): The measured bearing
+        stddev (float): The standard deviation
+        timestamp (float): seconds since epoch
+    """
+
+    association: Tuple[str, str] = attr.ib()
+    bearing: float = attr.ib(validator=float_validator)
     stddev: float = attr.ib(validator=positive_float_validator)
     timestamp: Optional[float] = attr.ib(default=None)
 
