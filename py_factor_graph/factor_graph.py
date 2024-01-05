@@ -84,6 +84,7 @@ class FactorGraphData:
         pose_landmark_measurements (List[POSE_LANDMARK_MEASUREMENT_TYPES]): the pose to landmark measurements.
         range_measurements (List[FGRangeMeasurement]): the range measurements.
         ambiguous_range_measurements (List[AmbiguousFGRangeMeasurement]): the ambiguous range measurements.
+        bearing_measurements (List[FGBearingMeasurement]): the bearing measurements.
         pose_priors (List[PosePrior2D]): the pose priors.
         landmark_priors (List[LandmarkPrior2D]): the landmark priors.
         dimension (int): the dimension of the factor graph (e.g. 3 for 3D).
@@ -485,6 +486,11 @@ class FactorGraphData:
             factor_vars.add(range_assoc[0])
             factor_vars.add(range_assoc[1])
 
+        for bearing_measure in self.bearing_measurements:
+            bearing_assoc = bearing_measure.association
+            factor_vars.add(bearing_assoc[0])
+            factor_vars.add(bearing_assoc[1])
+
         return set(self.all_variable_names) - factor_vars
 
     @property
@@ -724,6 +730,11 @@ class FactorGraphData:
         for range_measure in self.range_measurements:
             if range_measure.weight < 1:
                 logger.info(range_measure)
+                return False
+
+        for bearing_measure in self.bearing_measurements:
+            if bearing_measure.weight < 1:
+                logger.info(bearing_measure)
                 return False
 
         return True
@@ -986,7 +997,7 @@ class FactorGraphData:
         var1, var2 = bearing_meas.association
         assert self.is_pose_or_landmark(var1)
         assert self.is_pose_or_landmark(var2)
-        self.bearing_measurement.append(bearing_meas)
+        self.bearing_measurements.append(bearing_meas)
 
         # update max and min measurement weights
         if (

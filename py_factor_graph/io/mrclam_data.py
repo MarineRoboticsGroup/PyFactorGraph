@@ -16,7 +16,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from py_factor_graph.factor_graph import FactorGraphData
-from py_factor_graph.measurements import FGRangeMeasurement, PoseMeasurement2D
+from py_factor_graph.measurements import FGBearingMeasurement, FGRangeMeasurement, PoseMeasurement2D
 from py_factor_graph.priors import LandmarkPrior2D
 from py_factor_graph.utils.name_utils import get_robot_char_from_number
 from py_factor_graph.variables import LandmarkVariable2D, PoseVariable2D
@@ -363,7 +363,15 @@ def parse_data(
             range_stddev,
             timestamp,
         )
+        bearing_meas = FGBearingMeasurement(
+            association,
+            bearing_meas,
+            bearing_stddev,
+            timestamp,
+        )
+
         fg.add_range_measurement(range_meas)
+        fg.add_bearing_measurement(bearing_meas)
 
     # Integrate along the odometry chain and add odometry measurements between two pose variables
     # Since odometry comes in at a much faster rate than measurements, this integration
