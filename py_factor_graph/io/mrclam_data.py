@@ -16,12 +16,16 @@ import pandas as pd
 from tqdm import tqdm
 
 from py_factor_graph.factor_graph import FactorGraphData
-from py_factor_graph.measurements import FGRangeMeasurement, PoseMeasurement2D
+from py_factor_graph.measurements import (
+    FGRangeMeasurement,
+    PoseMeasurement2D,
+    PoseToLandmarkMeasurement2D,
+)
 from py_factor_graph.priors import LandmarkPrior2D
 from py_factor_graph.utils.name_utils import get_robot_char_from_number
 from py_factor_graph.variables import LandmarkVariable2D, PoseVariable2D
 
-np.set_printoptions(formatter={'all': lambda x: str(x)})
+np.set_printoptions(formatter={"all": lambda x: str(x)})
 
 logger = logging.getLogger(__name__)
 field_styles = {
@@ -60,25 +64,21 @@ class Trajectory:
           and the change in time from the closest timestamp
         """
         # Find the closest timestamp
-        if timestamp < self.min_ts:
-            logger.warning(
-                f"Timestamp {timestamp:.3f} is before the first timestamp {self.min_ts:.3f}, returning 0"
-            )
-            return (np.zeros(3), 0)
-
-        if timestamp > self.max_ts:
-            logger.warning(
-                f"Timestamp {timestamp:.3f} is after the last timestamp {self.max_ts:.3f}, returning last pose"
-            )
+        assert timestamp >= self.min_ts and timestamp <= self.max_ts, (
+            f"Timestamp {timestamp} is out of bounds, "
+            f"min: {self.min_ts}, max: {self.max_ts}"
+        )
 
         closest_timestamp_index = np.searchsorted(
             self.data[:, 0], timestamp, side="left"
         )
         if closest_timestamp_index == 0:
-            return (np.zeros(3), 0)
-
-        if closest_timestamp_index == self.data.shape[0]:
-            return (self.data[-1, 1:], 0)
+            return (self.data[0, 1:], np.abs(timestamp - self.data[0, 0]))
+        elif closest_timestamp_index == self.data.shape[0]:
+            return (
+                self.data[self.data.shape[0] - 1, 1:],
+                np.abs(timestamp - self.data[-1, 0]),
+            )
 
         closest_poses = self.data[
             closest_timestamp_index - 1 : closest_timestamp_index + 1, 1:
@@ -97,7 +97,7 @@ class Trajectory:
 
 def get_robot_name(robot_num: int):
     """
-    Convert robot number to A-E
+    Convert robot number 1-5 to A-E
     """
     assert robot_num >= 1 and robot_num <= 5, f"Invalid robot number {robot_num}"
     return get_robot_char_from_number(robot_num - 1)
@@ -125,7 +125,6 @@ def add_landmarks(
     if add_landmark_prior:
         logger.info("Adding landmark priors with stddev %f", landmark_stddev)
 
-    # Add all landmarks as vars, and add a prior if requested
     for _, row in landmark_gt_df.iterrows():
         landmark_name = f"L{int(row['landmark_id'])}"
         landmark_var = LandmarkVariable2D(landmark_name, (row["x"], row["y"]))
@@ -228,10 +227,18 @@ def get_all_odoms(data_dir: str):
 
 
 def inject_new_odoms(all_odoms, all_measurements):
-    # Inject an odometry measurement at every measurement so that the odoms and measurements are synchronized
+    """
+    Ensure there is a odometry measurement at the same time as all range and bearing measurements
+    This makes the odometry integration easier since we won't need to interpolate.
+    """
     new_odoms = dict([(name, []) for name in all_odoms.keys()])
 
-    logger.info("Synchronizing odometry and range-bearing measurements")
+    logger.info(
+        "Synchronizing odometry and range-bearing measurements, measurements made "
+        "before the first odometry measurement will be ignored"
+    )
+    # Stores rows that have measurements involving robots before their first odometry measurement
+    invalid_indices = []
     for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
         robot_var_names = [row["robot_var_name"]]
@@ -242,25 +249,35 @@ def inject_new_odoms(all_odoms, all_measurements):
         for robot_var_name in robot_var_names:
             # Find the closest odometry measurement that is before the timestamp
             robot_odoms = all_odoms[robot_var_name]
-            closes_odom_idx = np.searchsorted(robot_odoms[:, 0], timestamp, side="left")
+            closes_odom_idx = np.searchsorted(
+                robot_odoms[:, 0], timestamp, side="right"
+            )
             if closes_odom_idx == 0:
                 logging.warning(
-                    "No odometry measurement found before timestamp %f for robot %s",
+                    "No odometry measurement found before timestamp %f for robot %s, ignoring measurement",
                     timestamp,
                     robot_var_name,
                 )
-                new_odoms[robot_var_name].append([timestamp, 0, 0])
+                logging.debug(row)
+                invalid_indices.append(row.name)
             else:
                 closest_odom = robot_odoms[closes_odom_idx - 1]
+                if closest_odom[0] == timestamp:
+                    # No need to add a new odometry measurement
+                    continue
                 new_odoms[robot_var_name].append(
                     [timestamp, closest_odom[1], closest_odom[2]]
                 )
 
-    return new_odoms
+    return new_odoms, invalid_indices
 
 
 def parse_whitespace_file(filepath: str) -> pd.DataFrame:
-    # Load the file into a dataframe with whitespace separator
+    """
+    Load the file into a dataframe with whitespace separator
+    Ignores lines starting with #
+    Checks for NaNs
+    """
     df = pd.read_csv(
         filepath,
         sep=r"\s+",
@@ -274,8 +291,7 @@ def parse_whitespace_file(filepath: str) -> pd.DataFrame:
 
 def parse_data(
     dirpath: str,
-    range_stddev=0.3,
-    bearing_stddev=0.3,
+    range_translation_stddev=0.1,
     translation_stddev_rate=0.01,
     rotation_stddev_rate=0.01,
     landmark_stddev=0.1,
@@ -283,6 +299,8 @@ def parse_data(
 ) -> FactorGraphData:
     """
     translation_stddev_rate and rotation_stddev_rate: stddev = rate * time difference
+    The pose-landmark measurement uses range_translation_stddev
+    Range measurement also uses range_translation_stddev, perhaps it should be different
     """
     fg = FactorGraphData(dimension=2)
 
@@ -303,7 +321,21 @@ def parse_data(
         ]
     )
 
-    new_odoms = inject_new_odoms(all_odoms, all_measurements)
+    # Filter out all measurements made outside of the ground truth time period
+    for robot_name, gt in all_gts.items():
+        valid_measurements = (all_measurements["timestamp"] >= gt.min_ts) & (
+            all_measurements["timestamp"] <= gt.max_ts
+        )
+        all_measurements = all_measurements[valid_measurements]
+        odoms = all_odoms[robot_name]
+        valid_odoms = (odoms[:, 0] >= gt.min_ts) & (odoms[:, 0] <= gt.max_ts)
+        all_odoms[robot_name] = odoms[valid_odoms]
+        logger.info(
+            f"Filtered out {(~valid_measurements).sum()} range-bearing measurements,"
+            f" {np.sum(~valid_odoms)} for {robot_name}"
+        )
+
+    new_odoms, invalid_indices = inject_new_odoms(all_odoms, all_measurements)
     for robot_name, odoms in new_odoms.items():
         new_odoms[robot_name] = np.unique(np.array(odoms), axis=0)  # remove duplicates
         all_odoms[robot_name] = np.vstack(
@@ -320,9 +352,13 @@ def parse_data(
     pose_vars = dict()
     var_name_counter = dict([(name, 0) for name in all_odoms.keys()])
 
-    logger.info("Adding range-bearing measurements")
-    for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
-        timestamp = row["timestamp"]
+    valid_measurements = all_measurements.drop(invalid_indices)
+
+    logger.info("Adding range-bearing measurement as a pose to landmark measurement")
+    for _, row in tqdm(
+        valid_measurements.iterrows(), total=valid_measurements.shape[0]
+    ):
+        cur_timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
         measured_var_name = row["measured_var_name"]
         is_robot = row["is_robot"]
@@ -334,23 +370,23 @@ def parse_data(
             robot_names.append(measured_var_name)
 
         for robot_name in robot_names:
-            if (robot_name, timestamp) not in pose_vars:
+            if (robot_name, cur_timestamp) not in pose_vars:
                 # Add a new pose variable
                 pose_var_name = f"{robot_name}{var_name_counter[robot_name]}"
-                gt_pose, gt_dt = all_gts[robot_name].at_timestamp(timestamp)
-                if gt_dt > 0.1:
+                gt_pose, gt_dt = all_gts[robot_name].at_timestamp(cur_timestamp)
+                if gt_dt > 0.5:
                     logger.warning(
                         f"Large time difference of {gt_dt:.2f} between odometry and ground"
-                        f"truth at timestamp {timestamp:.2f} for robot {robot_name}",
+                        f"truth at timestamp {cur_timestamp:.2f} for robot {robot_name}",
                     )
                 pose_var = PoseVariable2D(
                     pose_var_name,
                     gt_pose[:2],
                     gt_pose[2],
-                    timestamp,
+                    cur_timestamp,
                 )
                 fg.add_pose_variable(pose_var)
-                pose_vars[(robot_name, timestamp)] = pose_var
+                pose_vars[(robot_name, cur_timestamp)] = pose_var
                 var_name_counter[robot_name] += 1
 
         # Variable pair, either pose-pose or pose-landmark
@@ -360,22 +396,35 @@ def parse_data(
             if is_robot
             else measured_var_name,
         )
-        # Add range and bearing measurements
-        range_meas = FGRangeMeasurement(
-            association,
-            range_meas,
-            range_stddev,
-            timestamp,
-        )
-        fg.add_range_measurement(range_meas)
+
+        # Add measurement for pose-landmark as a translation vector and pose-pose as range-only
+        # This is done because PyFg does not support pose-pose without rotation measurements
+        if is_robot:
+            measurement = FGRangeMeasurement(
+                association, range_meas, range_translation_stddev, cur_timestamp
+            )
+            fg.add_range_measurement(measurement)
+
+        else:
+            # Add range-bearing measurement as a Pose-landmark measurement
+            x, y = range_meas * np.cos(bearing_meas), range_meas * np.sin(bearing_meas)
+            measurement = PoseToLandmarkMeasurement2D(
+                association[0],
+                association[1],
+                x,
+                y,
+                range_translation_stddev,
+                cur_timestamp,
+            )
+            fg.add_pose_landmark_measurement(measurement)
 
     # Integrate along the odometry chain and add odometry measurements between two pose variables
     # Since odometry comes in at a much faster rate than measurements, this integration
     # reduces the number of variables by an order of magnitude
+    logger.info(f"Adding odometry for {len(pose_vars)} pose variables")
 
-    for robot_idx in range(1, 6):
+    for robot_idx in tqdm(range(1, 6)):
         robot_name = get_robot_name(robot_idx)
-        logger.info(f"Adding odometry measurements for Robot {robot_name}")
         odoms = all_odoms[robot_name]
 
         # Cur_transform is in the frame of the previous pose variable
@@ -383,24 +432,25 @@ def parse_data(
         # Prev_odom in the frame of the current_transform, this is the velocity at cur_transform's timestamp
         cur_odom = np.zeros(3)  # ts, v, w
 
-        for odom in tqdm(odoms):
-            timestamp, v, w = odom
-            # Perform integration
-            dt = timestamp - cur_transform[0]
+        for odom in odoms:
+            cur_timestamp, _, _ = odom
+            # Perform integration, cur_transform is outdated by one odometry measurement
+            dt = cur_timestamp - cur_transform[0]
+            assert dt != 0
             cur_transform[1] += dt * cur_odom[1] * np.cos(cur_transform[3])
             cur_transform[2] += dt * cur_odom[1] * np.sin(cur_transform[3])
             cur_transform[3] += dt * cur_odom[2]
             cur_odom = odom
 
-            if (robot_name, timestamp) in pose_vars:
-                pose_var = pose_vars[(robot_name, timestamp)].name
+            if (robot_name, cur_timestamp) in pose_vars:
+                pose_var = pose_vars[(robot_name, cur_timestamp)].name
                 pose_num = int(pose_var[1:])
                 if pose_num > 0:
                     # Add odom factor between X[i] and X[i-1]
                     prev_pose_var = f"{robot_name}{pose_num - 1}"
                     # time difference between the current and previous pose variable
                     # used to calculate the stddev of the odometry measurement
-                    transform_dt = timestamp - cur_transform[0]
+                    transform_dt = cur_timestamp - cur_transform[0]
                     # stddev = rate * time difference
                     translation_stddev = transform_dt * translation_stddev_rate
                     rotation_stddev = transform_dt * rotation_stddev_rate
@@ -413,13 +463,13 @@ def parse_data(
                         cur_transform[3],
                         translation_stddev,
                         rotation_stddev,
-                        timestamp,
+                        cur_timestamp,
                     )
                     fg.add_odom_measurement(robot_idx, odom_meas)
 
                     # Reset the current transform since it is in the frame of the previous pose variable
                     cur_transform = np.zeros(4)
-                    cur_transform[0] = timestamp
+                    cur_transform[0] = cur_timestamp
 
     return fg
 
@@ -444,12 +494,13 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
         logger.warning("Verbose mode on")
     logger.info("Parsing data from %s", dirpath)
+    logger.error(
+        "Storing robot to robot range bearing measurements as range-only measurements"
+    )
 
     pyfg = parse_data(dirpath)
     pyfg.print_summary()
 
     if args.plot:
-        pyfg.animate_groundtruth()
-        pyfg.animate_odometry(show_gt=True)
-
+        pyfg.animate_odometry(show_gt=True, draw_range_lines=True)
     pyfg.save_to_file(args.save_path)
