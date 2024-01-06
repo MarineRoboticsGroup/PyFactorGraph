@@ -209,8 +209,10 @@ def get_all_odoms(data_dir: str):
         all_odoms[robot_name] = odom_df.to_numpy(np.float64)
     return all_odoms
 
+
 def rot_matrix(theta):
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
 
 def integrate_odom(odoms: np.ndarray):
     """
@@ -258,6 +260,7 @@ def parse_data(
     dirpath: str,
     start_time: float,
     end_time: float,
+    hz: float,
     range_translation_stddev=0.1,
     translation_stddev_rate=0.01,
     rotation_stddev_rate=0.01,
@@ -293,26 +296,24 @@ def parse_data(
     for robot_name, odoms in all_odoms.items():
         all_odom_poses[robot_name] = Trajectory(integrate_odom(odoms))
 
-    # Filter measurements such that:
-    # 1. The measurement takes place between the first and last ground truth measurement
-    # 2. The measurement takes place between the first and last odom measurement
+    # Filter measurements such that all robots have odom and ground truth at the time of measurement
+    adjusted_start_time = start_time
+    adjusted_end_time = end_time
     for robot_name, gt in all_gts.items():
         odom_poses = all_odom_poses[robot_name]
-        adjusted_start_time = max(start_time, gt.min_ts, odom_poses.min_ts)
-        adjusted_end_time = min(end_time, gt.max_ts, odom_poses.max_ts)
+        adjusted_start_time = max(adjusted_start_time, gt.min_ts, odom_poses.min_ts)
+        adjusted_end_time = min(adjusted_end_time, gt.max_ts, odom_poses.max_ts)
 
-        # Valid measurements are either: not involving the robot, or within the time period of the ground truth
-        valid_measurements = (all_measurements["robot_var_name"] != robot_name) & (
-            all_measurements["measured_var_name"] != robot_name
-        ) | (
-            all_measurements["timestamp"].between(
-                adjusted_start_time, adjusted_end_time
-            )
-        )
-        all_measurements = all_measurements[valid_measurements]
-        logger.info(
-            f"Filtered out {(~valid_measurements).sum()} range-bearing measurements,"
-        )
+    valid_measurements = all_measurements["timestamp"].between(
+        adjusted_start_time, adjusted_end_time
+    )
+    all_measurements = all_measurements[valid_measurements]
+    logger.info(
+        f"Adjusted start and end times: {adjusted_start_time}, {adjusted_end_time}"
+    )
+    logger.info(
+        f"Filtered out {(~valid_measurements).sum()} range-bearing measurements,"
+    )
 
     # Maps robot name and timestamp to a pose number
     pose_ts_to_num: dict[str, dict[float, int]] = dict(
@@ -321,6 +322,10 @@ def parse_data(
     var_name_counter = dict([(name, 0) for name in all_odoms])
 
     logger.info("Adding range-bearing measurements")
+    # Every robot has a pose at every measurement timestamp, this ensures that A1, B1, C1, D1, E1
+    # are all pose variables at the same timestamp, even if the robot does not have a measurement at that time
+    all_robot_names = set([name for name in all_odoms])
+    prev_ts = None
     for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
@@ -329,28 +334,36 @@ def parse_data(
         range_meas = row["range"]
         bearing_meas = row["bearing"]
 
-        robot_names = [robot_var_name]
-        if is_robot:
-            robot_names.append(measured_var_name)
-        # Add a new pose variable if it does not exist
-        for robot_name in robot_names:
-            if timestamp not in pose_ts_to_num[robot_name]:
-                pose_var_name = f"{robot_name}{var_name_counter[robot_name]}"
-                gt_pose, gt_dt = all_gts[robot_name].at_timestamp(timestamp)
-                if gt_dt > 0.5:
-                    logger.warning(
-                        f"Large time difference of {gt_dt:.2f} between odometry and ground"
-                        f"truth at timestamp {timestamp:.2f} for robot {robot_name}",
+        # If there's a large gap between measurments, fill in at regular interval
+        timestamps_to_add = np.array([timestamp])
+        if prev_ts is not None and hz > 0 and (timestamp - prev_ts) > 1.0 / hz:
+            timestamps_to_add = np.arange(
+                prev_ts + 1.0 / hz, timestamp, 1.0 / hz, dtype=np.float64
+            )
+            # Ensure the last timestamp matches the measurement, last delta_t will be > 1/hz
+            timestamps_to_add[-1] = timestamp
+
+        for timestamp_to_add in timestamps_to_add:
+            for robot_name in all_robot_names:
+                if timestamp_to_add not in pose_ts_to_num[robot_name]:
+                    pose_var_name = f"{robot_name}{var_name_counter[robot_name]}"
+                    gt_pose, gt_dt = all_gts[robot_name].at_timestamp(timestamp_to_add)
+                    if gt_dt > 0.5:
+                        logger.warning(
+                            f"Large time difference of {gt_dt:.2f} between odometry and ground"
+                            f"truth at timestamp {timestamp_to_add:.2f} for robot {robot_name}",
+                        )
+                    pose_var = PoseVariable2D(
+                        pose_var_name,
+                        gt_pose[:2],
+                        gt_pose[2],
+                        timestamp_to_add,
                     )
-                pose_var = PoseVariable2D(
-                    pose_var_name,
-                    gt_pose[:2],
-                    gt_pose[2],
-                    timestamp,
-                )
-                fg.add_pose_variable(pose_var)
-                pose_ts_to_num[robot_name][timestamp] = var_name_counter[robot_name]
-                var_name_counter[robot_name] += 1
+                    fg.add_pose_variable(pose_var)
+                    pose_ts_to_num[robot_name][timestamp_to_add] = var_name_counter[
+                        robot_name
+                    ]
+                    var_name_counter[robot_name] += 1
 
         # Variable pair, either pose-pose or pose-landmark
         # var_name_counter at this point is always the number of variables + 1
@@ -388,7 +401,6 @@ def parse_data(
     logger.info(f"Adding odometry for {len(pose_ts_to_num)} pose variables")
     for robot_name, timestamp_to_num in pose_ts_to_num.items():
         robot_idx = int(ord(robot_name) - ord("A"))
-        print(robot_name, robot_idx)
         odom_poses = all_odom_poses[robot_name]
         # Convert to list of tuples for easy iteration
         timestamp_to_num = np.array(list(timestamp_to_num.items()))
@@ -456,6 +468,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--end_time", default=np.inf, type=float, help="end time in seconds"
     )
+    parser.add_argument(
+        "--hz", default=0, type=float, help="minimum frequency of pose updates"
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
     parser.add_argument("-p", "--plot", action="store_true", help="plot the data")
 
@@ -471,7 +486,7 @@ if __name__ == "__main__":
         "Storing robot to robot range bearing measurements as range-only measurements"
     )
 
-    pyfg = parse_data(dirpath, args.start_time, args.end_time)
+    pyfg = parse_data(dirpath, args.start_time, args.end_time, args.hz)
     pyfg.print_summary()
 
     if args.plot:
