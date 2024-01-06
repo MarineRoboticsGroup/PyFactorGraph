@@ -127,9 +127,11 @@ def add_landmarks(
 def get_all_measurements(
     barcode_fname: str,
     data_dir: str,
+    descretize_period: 0.05,
 ):
     """
     Returns a dataframe with all range-bearing measurements from all robots in ascending timestamp
+    Descretizes timestamps to align them
 
     Filters out measurements with unknown barcodes
     """
@@ -182,6 +184,11 @@ def get_all_measurements(
         measurement_df["robot_var_name"] = robot_name
 
         all_measurement_df = pd.concat([all_measurement_df, measurement_df])
+
+    # Round timestamp to 20Hz precision
+    all_measurement_df["timestamp"] = all_measurement_df["timestamp"].apply(
+        lambda x: round(x * descretize_period) / descretize_period
+    )
 
     # Sort by timestamp
     all_measurement_df.sort_values(by="timestamp", inplace=True)
@@ -263,9 +270,9 @@ def parse_data(
     end_time: float,
     hz: float,
     range_only: bool,
-    range_translation_stddev=0.1,
-    translation_stddev_rate=0.01,
-    rotation_stddev_rate=0.01,
+    range_translation_stddev=0.5,
+    translation_stddev_rate=0.1,
+    rotation_stddev_rate=0.05,
     landmark_stddev=0.1,
     add_landmark_prior: bool = False,
 ) -> FactorGraphData:
@@ -403,7 +410,7 @@ def parse_data(
                 association[1],
                 x,
                 y,
-                range_translation_stddev,
+                1 / (range_translation_stddev**2),
                 timestamp,
             )
             fg.add_pose_landmark_measurement(measurement)
@@ -439,8 +446,8 @@ def parse_data(
                 delta_pose[0],
                 delta_pose[1],
                 delta_pose[2],
-                translation_stddev_rate * dt,
-                rotation_stddev_rate * dt,
+                1 / ((translation_stddev_rate * dt) ** 2),
+                1 / ((rotation_stddev_rate * dt) ** 2),
                 curr_ts,
             )
             fg.add_odom_measurement(robot_idx, odom_factor)
