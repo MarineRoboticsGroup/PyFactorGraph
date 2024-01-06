@@ -261,6 +261,7 @@ def parse_data(
     start_time: float,
     end_time: float,
     hz: float,
+    range_only: bool,
     range_translation_stddev=0.1,
     translation_stddev_rate=0.01,
     rotation_stddev_rate=0.01,
@@ -340,8 +341,9 @@ def parse_data(
             timestamps_to_add = np.arange(
                 prev_ts + 1.0 / hz, timestamp, 1.0 / hz, dtype=np.float64
             )
-            # Ensure the last timestamp matches the measurement, last delta_t will be > 1/hz
-            timestamps_to_add[-1] = timestamp
+            # Ensure the last timestamp matches the measurement
+            timestamps_to_add = np.append(timestamps_to_add, timestamp)
+        prev_ts = timestamp
 
         for timestamp_to_add in timestamps_to_add:
             for robot_name in all_robot_names:
@@ -379,7 +381,7 @@ def parse_data(
 
         # Add measurement for pose-landmark as a translation vector and pose-pose as range-only
         # This is done because PyFg does not support pose-pose without rotation measurements
-        if is_robot:
+        if is_robot or range_only:
             measurement = FGRangeMeasurement(
                 association, range_meas, range_translation_stddev, timestamp
             )
@@ -469,8 +471,15 @@ if __name__ == "__main__":
         "--end_time", default=np.inf, type=float, help="end time in seconds"
     )
     parser.add_argument(
-        "--hz", default=0, type=float, help="minimum frequency of pose updates"
+        "--min_hz", default=0, type=float, help="minimum frequency of pose updates"
     )
+    parser.add_argument(
+        "--range_only",
+        default=False,
+        action="store_true",
+        help="Store all range-bearing measurements as range-only measurements",
+    )
+
     parser.add_argument("-v", "--verbose", action="store_true", help="verbose")
     parser.add_argument("-p", "--plot", action="store_true", help="plot the data")
 
@@ -486,9 +495,11 @@ if __name__ == "__main__":
         "Storing robot to robot range bearing measurements as range-only measurements"
     )
 
-    pyfg = parse_data(dirpath, args.start_time, args.end_time, args.hz)
+    pyfg = parse_data(
+        dirpath, args.start_time, args.end_time, args.min_hz, args.range_only
+    )
     pyfg.print_summary()
+    pyfg.save_to_file(args.save_path)
 
     if args.plot:
         pyfg.animate_odometry(show_gt=True, draw_range_lines=True)
-    pyfg.save_to_file(args.save_path)
