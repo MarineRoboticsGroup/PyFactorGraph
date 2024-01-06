@@ -63,10 +63,20 @@ class Trajectory:
         Returns the pose at the given timestamp by interpolating between the closest two poses
           and the change in time from the closest timestamp
         """
-        return (
-            np.interp(timestamp, self.data[:, 0], self.data[:, 1:], axis=0),
-            np.abs(self.data[:, 0] - timestamp).min(),
-        )
+        return self.multiInterp2(timestamp, self.data[:, 0], self.data[:, 1:])
+
+    @staticmethod
+    def multiInterp2(x, xp, fp):
+        """
+        Interpolates along the first axis of fp, given the x coordinates in xp
+
+        Returns interpolated values and the distance to the closest x coordinate
+        """
+        j = np.searchsorted(xp, x) - 1
+        d = (x - xp[j]) / (xp[j + 1] - xp[j])
+        res = (1 - d) * fp[j, :] + fp[j + 1, :] * d
+        assert -np.pi <= res[2] <= np.pi, f"Invalid theta {res[2]}"
+        return (res, min(abs(xp[j + 1] - x), abs(xp[j] - x)))
 
 
 def get_robot_name(robot_num: int):
@@ -199,6 +209,8 @@ def get_all_odoms(data_dir: str):
         all_odoms[robot_name] = odom_df.to_numpy(np.float64)
     return all_odoms
 
+def rot_matrix(theta):
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 def integrate_odom(odoms: np.ndarray):
     """
@@ -218,6 +230,10 @@ def integrate_odom(odoms: np.ndarray):
             i - 1, 1
         ] * np.sin(integrated_odom[i - 1, 3])
         integrated_odom[i, 3] = integrated_odom[i - 1, 3] + dt * odoms[i - 1, 2]
+        if integrated_odom[i, 3] > np.pi:
+            integrated_odom[i, 3] -= 2 * np.pi
+        elif integrated_odom[i, 3] < -np.pi:
+            integrated_odom[i, 3] += 2 * np.pi
     return integrated_odom
 
 
@@ -305,9 +321,7 @@ def parse_data(
     var_name_counter = dict([(name, 0) for name in all_odoms])
 
     logger.info("Adding range-bearing measurements")
-    for _, row in tqdm(
-        valid_measurements.iterrows(), total=valid_measurements.shape[0]
-    ):
+    for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
         measured_var_name = row["measured_var_name"]
@@ -373,6 +387,8 @@ def parse_data(
     # Use interpolated odometry poses to create odometry factors between pose variables
     logger.info(f"Adding odometry for {len(pose_ts_to_num)} pose variables")
     for robot_name, timestamp_to_num in pose_ts_to_num.items():
+        robot_idx = int(ord(robot_name) - ord("A"))
+        print(robot_name, robot_idx)
         odom_poses = all_odom_poses[robot_name]
         # Convert to list of tuples for easy iteration
         timestamp_to_num = np.array(list(timestamp_to_num.items()))
@@ -386,15 +402,16 @@ def parse_data(
             prev_ts, prev_num = timestamp_to_num[i - 1]
             curr_ts, curr_num = timestamp_to_num[i]
             # Interpolate between the two poses
-            prev_pose, _ = odom_poses.at_timestamp(prev_ts)
-            curr_pose, _ = odom_poses.at_timestamp(curr_ts)
+            prev_pose_w, _ = odom_poses.at_timestamp(prev_ts)
+            curr_pose_w, _ = odom_poses.at_timestamp(curr_ts)
             dt = curr_ts - prev_ts
-            delta_pose = curr_pose - prev_pose
-
+            delta_pose = curr_pose_w - prev_pose_w
+            # Convert to prev_pose frame
+            delta_pose[:2] = rot_matrix(-prev_pose_w[2]) @ delta_pose[:2]
             # Add odometry factor
             odom_factor = PoseMeasurement2D(
-                f"{robot_name}{prev_num}",
-                f"{robot_name}{curr_num}",
+                f"{robot_name}{int(prev_num)}",
+                f"{robot_name}{int(curr_num)}",
                 delta_pose[0],
                 delta_pose[1],
                 delta_pose[2],
@@ -402,7 +419,7 @@ def parse_data(
                 rotation_stddev_rate * dt,
                 curr_ts,
             )
-            fg.add_pose_measurement(odom_factor)
+            fg.add_odom_measurement(robot_idx, odom_factor)
 
     return fg
 
