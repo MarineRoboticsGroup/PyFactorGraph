@@ -16,6 +16,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from py_factor_graph.factor_graph import FactorGraphData
+from py_factor_graph.io.pyfg_text import save_to_pyfg_text
 from py_factor_graph.measurements import (
     FGRangeMeasurement,
     PoseMeasurement2D,
@@ -294,6 +295,7 @@ def parse_data(
     # Integrate odom and store it as odom_poses, we will use this to interpolate odom measurements
     # between any two timestamps
     all_odom_poses: dict[str, Trajectory] = dict()
+    logging.info("Integrating odometry")
     for robot_name, odoms in all_odoms.items():
         all_odom_poses[robot_name] = Trajectory(integrate_odom(odoms))
 
@@ -326,6 +328,9 @@ def parse_data(
     # Every robot has a pose at every measurement timestamp, this ensures that A1, B1, C1, D1, E1
     # are all pose variables at the same timestamp, even if the robot does not have a measurement at that time
     all_robot_names = set([name for name in all_odoms])
+    existing_ranges = (
+        set()
+    )  # Since CORA doesn't support A1->B1 and B1->A1, we only add one of them
     prev_ts = None
     for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
@@ -378,6 +383,10 @@ def parse_data(
             if is_robot
             else measured_var_name,
         )
+        if association in existing_ranges or association[::-1] in existing_ranges:
+            logging.info("Skipping duplicate measurement")
+            continue
+        existing_ranges.add(association)
 
         # Add measurement for pose-landmark as a translation vector and pose-pose as range-only
         # This is done because PyFg does not support pose-pose without rotation measurements
@@ -412,7 +421,8 @@ def parse_data(
         )
 
         # Interpolated odom
-        for i in range(1, timestamp_to_num.shape[0]):
+        logging.info(f"Adding interpolated odometry for robot {robot_name}")
+        for i in tqdm(range(1, timestamp_to_num.shape[0])):
             prev_ts, prev_num = timestamp_to_num[i - 1]
             curr_ts, curr_num = timestamp_to_num[i]
             # Interpolate between the two poses
@@ -499,7 +509,7 @@ if __name__ == "__main__":
         dirpath, args.start_time, args.end_time, args.min_hz, args.range_only
     )
     pyfg.print_summary()
-    pyfg.save_to_file(args.save_path)
+    save_to_pyfg_text(pyfg, args.save_path)
 
     if args.plot:
         pyfg.animate_odometry(show_gt=True, draw_range_lines=True)
