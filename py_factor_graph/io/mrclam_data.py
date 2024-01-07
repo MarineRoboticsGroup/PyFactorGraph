@@ -270,6 +270,7 @@ def parse_data(
     end_time: float,
     hz: float,
     range_only: bool,
+    align_pose_vars: bool,
     range_translation_stddev=0.5,
     translation_stddev_rate=0.1,
     rotation_stddev_rate=0.05,
@@ -357,8 +358,14 @@ def parse_data(
             timestamps_to_add = np.append(timestamps_to_add, timestamp)
         prev_ts = timestamp
 
+        robot_names_to_add = [robot_var_name]
+        if is_robot:
+            robot_names_to_add.append(measured_var_name)
+        if align_pose_vars:
+            robot_names_to_add = all_robot_names
+
         for timestamp_to_add in timestamps_to_add:
-            for robot_name in all_robot_names:
+            for robot_name in robot_names_to_add:
                 if timestamp_to_add not in pose_ts_to_num[robot_name]:
                     pose_var_name = f"{robot_name}{var_name_counter[robot_name]}"
                     gt_pose, gt_dt = all_gts[robot_name].at_timestamp(timestamp_to_add)
@@ -493,6 +500,14 @@ if __name__ == "__main__":
         "--min_hz", default=0, type=float, help="minimum frequency of pose updates"
     )
     parser.add_argument(
+        "--align_pose_vars",
+        default=False,
+        action="store_true",
+        help="Create a pose var for every robot at every measurement timestamp. This drastically"
+        " incrases the number of variables. This is useful for visualization so that all trajs"
+        " are aligned in time",
+    )
+    parser.add_argument(
         "--range_only",
         default=False,
         action="store_true",
@@ -515,7 +530,12 @@ if __name__ == "__main__":
     )
 
     pyfg = parse_data(
-        dirpath, args.start_time, args.end_time, args.min_hz, args.range_only
+        dirpath,
+        args.start_time,
+        args.end_time,
+        args.min_hz,
+        args.range_only,
+        args.align_pose_vars,
     )
     pyfg.print_summary()
     save_to_pyfg_text(pyfg, args.save_path)
