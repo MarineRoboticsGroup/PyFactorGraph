@@ -400,14 +400,14 @@ def parse_data(
         # Add measurement for pose-landmark as a translation vector and pose-pose as range-only
         # This is done because PyFg does not support pose-pose without rotation measurements
         if is_robot or range_only:
-            measurement = FGRangeMeasurement(
+            range_measurement = FGRangeMeasurement(
                 association, range_meas, range_translation_stddev, timestamp
             )
-            fg.add_range_measurement(measurement)
+            fg.add_range_measurement(range_measurement)
         else:
             # Add range-bearing measurement as a Pose-landmark measurement
             x, y = range_meas * np.cos(bearing_meas), range_meas * np.sin(bearing_meas)
-            measurement = PoseToLandmarkMeasurement2D(
+            pose_landmark_measurement = PoseToLandmarkMeasurement2D(
                 association[0],
                 association[1],
                 x,
@@ -415,7 +415,7 @@ def parse_data(
                 1 / (range_translation_stddev**2),
                 timestamp,
             )
-            fg.add_pose_landmark_measurement(measurement)
+            fg.add_pose_landmark_measurement(pose_landmark_measurement)
 
     # Use interpolated odometry poses to create odometry factors between pose variables
     logger.info(f"Adding odometry for {len(pose_ts_to_num)} pose variables")
@@ -423,17 +423,17 @@ def parse_data(
         robot_idx = int(ord(robot_name) - ord("A"))
         odom_poses = all_odom_poses[robot_name]
         # Convert to list of tuples for easy iteration
-        timestamp_to_num = np.array(list(timestamp_to_num.items()))
-        assert (timestamp_to_num[1:, 0] - timestamp_to_num[:-1, 0] > 0).all(), (
+        timestamp_to_num_arr = np.array(list(timestamp_to_num.items()))
+        assert (timestamp_to_num_arr[1:, 0] - timestamp_to_num_arr[:-1, 0] > 0).all(), (
             f"Timestamps are not in ascending order for robot {robot_name}: "
-            f"{timestamp_to_num[:, 0]}"
+            f"{timestamp_to_num_arr[:, 0]}"
         )
 
         # Interpolated odom
         logging.info(f"Adding interpolated odometry for robot {robot_name}")
-        for i in tqdm(range(1, timestamp_to_num.shape[0])):
-            prev_ts, prev_num = timestamp_to_num[i - 1]
-            curr_ts, curr_num = timestamp_to_num[i]
+        for i in tqdm(range(1, timestamp_to_num_arr.shape[0])):
+            prev_ts, prev_num = timestamp_to_num_arr[i - 1]
+            curr_ts, curr_num = timestamp_to_num_arr[i]
             # Interpolate between the two poses
             prev_pose_w, _ = odom_poses.at_timestamp(prev_ts)
             curr_pose_w, _ = odom_poses.at_timestamp(curr_ts)
