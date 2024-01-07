@@ -127,11 +127,11 @@ def add_landmarks(
 def get_all_measurements(
     barcode_fname: str,
     data_dir: str,
-    descretize_period: 0.05,
+    discretize_period: float = 0.05,
 ):
     """
     Returns a dataframe with all range-bearing measurements from all robots in ascending timestamp
-    Descretizes timestamps to align them
+    discretizes timestamps to align them
 
     Filters out measurements with unknown barcodes
     """
@@ -185,10 +185,10 @@ def get_all_measurements(
 
         all_measurement_df = pd.concat([all_measurement_df, measurement_df])
 
-    # Round timestamp to 20Hz precision
-    all_measurement_df["timestamp"] = all_measurement_df["timestamp"].apply(
-        lambda x: round(x * descretize_period) / descretize_period
-    )
+    # round timestamp to nearest multiple of discretize_period
+    all_measurement_df["timestamp"] = (
+        all_measurement_df["timestamp"] // discretize_period
+    ) * discretize_period
 
     # Sort by timestamp
     all_measurement_df.sort_values(by="timestamp", inplace=True)
@@ -391,7 +391,9 @@ def parse_data(
             else measured_var_name,
         )
         if association in existing_ranges or association[::-1] in existing_ranges:
-            logging.info("Skipping duplicate measurement")
+            logging.info(
+                f"Skipping duplicate measurement between {association} and {association[::-1]}"
+            )
             continue
         existing_ranges.add(association)
 
