@@ -10,7 +10,7 @@ import logging
 import os
 from typing import Tuple
 
-import coloredlogs
+import coloredlogs  # type: ignore
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -127,7 +127,7 @@ def add_landmarks(
 def get_all_measurements(
     barcode_fname: str,
     data_dir: str,
-    discretize_period: float = 0.05,
+    discretize_period: float = 0.10,
 ):
     """
     Returns a dataframe with all range-bearing measurements from all robots in ascending timestamp
@@ -264,6 +264,11 @@ def parse_whitespace_file(filepath: str) -> pd.DataFrame:
     return df
 
 
+from py_factor_graph.calibrations.range_measurement_calibration import (
+    calibrate_range_measures,
+)
+
+
 def parse_data(
     dirpath: str,
     start_time: float,
@@ -340,6 +345,7 @@ def parse_data(
         set()
     )  # Since CORA doesn't support A1->B1 and B1->A1, we only add one of them
     prev_ts = None
+
     for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
@@ -348,7 +354,7 @@ def parse_data(
         range_meas = row["range"]
         bearing_meas = row["bearing"]
 
-        # If there's a large gap between measurments, fill in at regular interval
+        # If there's a large gap between measurements, fill in at regular interval
         timestamps_to_add = np.array([timestamp])
         if prev_ts is not None and hz > 0 and (timestamp - prev_ts) > 1.0 / hz:
             timestamps_to_add = np.arange(
@@ -362,7 +368,7 @@ def parse_data(
         if is_robot:
             robot_names_to_add.append(measured_var_name)
         if align_pose_vars:
-            robot_names_to_add = all_robot_names
+            robot_names_to_add = list(all_robot_names)
 
         for timestamp_to_add in timestamps_to_add:
             for robot_name in robot_names_to_add:
@@ -504,7 +510,7 @@ if __name__ == "__main__":
         default=False,
         action="store_true",
         help="Create a pose var for every robot at every measurement timestamp. This drastically"
-        " incrases the number of variables. This is useful for visualization so that all trajs"
+        " increases the number of variables. This is useful for visualization so that all trajs"
         " are aligned in time",
     )
     parser.add_argument(
@@ -537,6 +543,7 @@ if __name__ == "__main__":
         args.range_only,
         args.align_pose_vars,
     )
+    pyfg = calibrate_range_measures(pyfg)
     pyfg.print_summary()
     save_to_pyfg_text(pyfg, args.save_path)
 
