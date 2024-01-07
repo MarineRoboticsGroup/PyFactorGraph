@@ -159,10 +159,10 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
 
     # enforce formatting precisions
     time_fprec = 9
-    translation_fprec = 6
+    translation_fprec = 9
     theta_fprec = 7
     quaternion_fprec = 7
-    covariance_fprec = 6
+    covariance_fprec = 9
 
     def _get_pose_var_string(pose_var: POSE_VARIABLE_TYPES):
         if isinstance(pose_var, PoseVariable2D):
@@ -220,7 +220,11 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         measurement_noise = _get_measurement_noise_str_from_covariance_matrix(
             rel_pose_pose_measure.covariance, covariance_fprec
         )
-        return f"{rel_pose_pose_measure_type} {rel_pose_pose_measure.timestamp:.{time_fprec}f} {measurement_connectivity} {measurement_values} {measurement_noise}"
+        if rel_pose_pose_measure.timestamp is None:
+            timestamp = 0.0
+        else:
+            timestamp = rel_pose_pose_measure.timestamp
+        return f"{rel_pose_pose_measure_type} {timestamp:.{time_fprec}f} {measurement_connectivity} {measurement_values} {measurement_noise}"
 
     def _get_pose_landmark_measure_string(
         rel_pose_landmark_measure: POSE_LANDMARK_MEASUREMENT_TYPES,
@@ -249,7 +253,11 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
                 "This will likely cause numerical issues. We suggest increasing the variance."
                 f"Variance before rounding: {range_measure.variance} Variance after rounding: {rounded_variance}"
             )
-        return f"{range_measure_type} {range_measure.timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
+        if range_measure.timestamp is None:
+            timestamp = 0.0
+        else:
+            timestamp = range_measure.timestamp
+        return f"{range_measure_type} {timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
 
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:

@@ -316,7 +316,7 @@ def load_custom_init_file(file_path: str) -> VariableValues:
         ".pkl"
     ), f"File {file_path} must end with '.pickle' or '.pkl'"
 
-    logger.info(f"Loading custom init file: {file_path}")
+    logger.debug(f"Loading custom init file: {file_path}")
     with open(file_path, "rb") as f:
         init_dict = pickle.load(f)
         if isinstance(init_dict, SolverResults):
