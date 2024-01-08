@@ -25,6 +25,9 @@ from py_factor_graph.measurements import (
 from py_factor_graph.priors import LandmarkPrior2D
 from py_factor_graph.utils.name_utils import get_robot_char_from_number
 from py_factor_graph.variables import LandmarkVariable2D, PoseVariable2D
+from py_factor_graph.calibrations.odom_measurement_calibration import (
+    calibrate_odom_measures,
+)
 
 np.set_printoptions(formatter={"all": lambda x: str(x)})
 
@@ -262,11 +265,6 @@ def parse_whitespace_file(filepath: str) -> pd.DataFrame:
 
     assert df.notna().all().all(), f"NaNs found in {filepath}"
     return df
-
-
-from py_factor_graph.calibrations.range_measurement_calibration import (
-    calibrate_range_measures,
-)
 
 
 def parse_data(
@@ -543,7 +541,8 @@ if __name__ == "__main__":
         args.range_only,
         args.align_pose_vars,
     )
-    pyfg = calibrate_range_measures(pyfg)
+    # pyfg = calibrate_range_measures(pyfg)
+    pyfg = calibrate_odom_measures(pyfg)
     pyfg.print_summary()
     save_to_pyfg_text(pyfg, args.save_path)
 
