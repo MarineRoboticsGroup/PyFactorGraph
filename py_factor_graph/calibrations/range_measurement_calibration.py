@@ -22,7 +22,7 @@ class UncalibratedRangeMeasurement:
 
 
 @define
-class LinearCalibrationModel:
+class LinearRangeCalibrationModel:
     slope: float = field()
     intercept: float = field()
 
@@ -87,14 +87,14 @@ class LinearCalibrationModel:
 
 def fit_linear_calibration_model(
     uncalibrated_measurements: List[UncalibratedRangeMeasurement],
-) -> LinearCalibrationModel:
+) -> LinearRangeCalibrationModel:
     """
     We will fit a linear model to the range measurements and remove outliers.
     """
     measured_dists = np.array([x.dist for x in uncalibrated_measurements])
     true_dists = np.array([x.true_dist for x in uncalibrated_measurements])
     slope, intercept, r_value, p_value, std_err = linregress(measured_dists, true_dists)
-    return LinearCalibrationModel(slope=slope, intercept=intercept)
+    return LinearRangeCalibrationModel(slope=slope, intercept=intercept)
 
 
 def get_inlier_set_of_range_measurements(
