@@ -10,7 +10,7 @@ import logging
 import os
 from typing import Tuple
 
-import coloredlogs
+import coloredlogs  # type: ignore
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -127,11 +127,11 @@ def add_landmarks(
 def get_all_measurements(
     barcode_fname: str,
     data_dir: str,
-    descretize_period: 0.05,
+    discretize_period: float = 0.10,
 ):
     """
     Returns a dataframe with all range-bearing measurements from all robots in ascending timestamp
-    Descretizes timestamps to align them
+    discretizes timestamps to align them
 
     Filters out measurements with unknown barcodes
     """
@@ -185,10 +185,10 @@ def get_all_measurements(
 
         all_measurement_df = pd.concat([all_measurement_df, measurement_df])
 
-    # Round timestamp to 20Hz precision
-    all_measurement_df["timestamp"] = all_measurement_df["timestamp"].apply(
-        lambda x: round(x * descretize_period) / descretize_period
-    )
+    # round timestamp to nearest multiple of discretize_period
+    all_measurement_df["timestamp"] = (
+        all_measurement_df["timestamp"] // discretize_period
+    ) * discretize_period
 
     # Sort by timestamp
     all_measurement_df.sort_values(by="timestamp", inplace=True)
@@ -264,12 +264,18 @@ def parse_whitespace_file(filepath: str) -> pd.DataFrame:
     return df
 
 
+from py_factor_graph.calibrations.range_measurement_calibration import (
+    calibrate_range_measures,
+)
+
+
 def parse_data(
     dirpath: str,
     start_time: float,
     end_time: float,
     hz: float,
     range_only: bool,
+    align_pose_vars: bool,
     range_translation_stddev=0.5,
     translation_stddev_rate=0.1,
     rotation_stddev_rate=0.05,
@@ -339,6 +345,7 @@ def parse_data(
         set()
     )  # Since CORA doesn't support A1->B1 and B1->A1, we only add one of them
     prev_ts = None
+
     for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
         timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
@@ -347,7 +354,7 @@ def parse_data(
         range_meas = row["range"]
         bearing_meas = row["bearing"]
 
-        # If there's a large gap between measurments, fill in at regular interval
+        # If there's a large gap between measurements, fill in at regular interval
         timestamps_to_add = np.array([timestamp])
         if prev_ts is not None and hz > 0 and (timestamp - prev_ts) > 1.0 / hz:
             timestamps_to_add = np.arange(
@@ -357,8 +364,14 @@ def parse_data(
             timestamps_to_add = np.append(timestamps_to_add, timestamp)
         prev_ts = timestamp
 
+        robot_names_to_add = [robot_var_name]
+        if is_robot:
+            robot_names_to_add.append(measured_var_name)
+        if align_pose_vars:
+            robot_names_to_add = list(all_robot_names)
+
         for timestamp_to_add in timestamps_to_add:
-            for robot_name in all_robot_names:
+            for robot_name in robot_names_to_add:
                 if timestamp_to_add not in pose_ts_to_num[robot_name]:
                     pose_var_name = f"{robot_name}{var_name_counter[robot_name]}"
                     gt_pose, gt_dt = all_gts[robot_name].at_timestamp(timestamp_to_add)
@@ -391,21 +404,23 @@ def parse_data(
             else measured_var_name,
         )
         if association in existing_ranges or association[::-1] in existing_ranges:
-            logging.info("Skipping duplicate measurement")
+            logging.info(
+                f"Skipping duplicate measurement between {association} and {association[::-1]}"
+            )
             continue
         existing_ranges.add(association)
 
         # Add measurement for pose-landmark as a translation vector and pose-pose as range-only
         # This is done because PyFg does not support pose-pose without rotation measurements
         if is_robot or range_only:
-            measurement = FGRangeMeasurement(
+            range_measurement = FGRangeMeasurement(
                 association, range_meas, range_translation_stddev, timestamp
             )
-            fg.add_range_measurement(measurement)
+            fg.add_range_measurement(range_measurement)
         else:
             # Add range-bearing measurement as a Pose-landmark measurement
             x, y = range_meas * np.cos(bearing_meas), range_meas * np.sin(bearing_meas)
-            measurement = PoseToLandmarkMeasurement2D(
+            pose_landmark_measurement = PoseToLandmarkMeasurement2D(
                 association[0],
                 association[1],
                 x,
@@ -413,7 +428,7 @@ def parse_data(
                 1 / (range_translation_stddev**2),
                 timestamp,
             )
-            fg.add_pose_landmark_measurement(measurement)
+            fg.add_pose_landmark_measurement(pose_landmark_measurement)
 
     # Use interpolated odometry poses to create odometry factors between pose variables
     logger.info(f"Adding odometry for {len(pose_ts_to_num)} pose variables")
@@ -421,17 +436,17 @@ def parse_data(
         robot_idx = int(ord(robot_name) - ord("A"))
         odom_poses = all_odom_poses[robot_name]
         # Convert to list of tuples for easy iteration
-        timestamp_to_num = np.array(list(timestamp_to_num.items()))
-        assert (timestamp_to_num[1:, 0] - timestamp_to_num[:-1, 0] > 0).all(), (
+        timestamp_to_num_arr = np.array(list(timestamp_to_num.items()))
+        assert (timestamp_to_num_arr[1:, 0] - timestamp_to_num_arr[:-1, 0] > 0).all(), (
             f"Timestamps are not in ascending order for robot {robot_name}: "
-            f"{timestamp_to_num[:, 0]}"
+            f"{timestamp_to_num_arr[:, 0]}"
         )
 
         # Interpolated odom
         logging.info(f"Adding interpolated odometry for robot {robot_name}")
-        for i in tqdm(range(1, timestamp_to_num.shape[0])):
-            prev_ts, prev_num = timestamp_to_num[i - 1]
-            curr_ts, curr_num = timestamp_to_num[i]
+        for i in tqdm(range(1, timestamp_to_num_arr.shape[0])):
+            prev_ts, prev_num = timestamp_to_num_arr[i - 1]
+            curr_ts, curr_num = timestamp_to_num_arr[i]
             # Interpolate between the two poses
             prev_pose_w, _ = odom_poses.at_timestamp(prev_ts)
             curr_pose_w, _ = odom_poses.at_timestamp(curr_ts)
@@ -491,6 +506,14 @@ if __name__ == "__main__":
         "--min_hz", default=0, type=float, help="minimum frequency of pose updates"
     )
     parser.add_argument(
+        "--align_pose_vars",
+        default=False,
+        action="store_true",
+        help="Create a pose var for every robot at every measurement timestamp. This drastically"
+        " increases the number of variables. This is useful for visualization so that all trajs"
+        " are aligned in time",
+    )
+    parser.add_argument(
         "--range_only",
         default=False,
         action="store_true",
@@ -513,8 +536,14 @@ if __name__ == "__main__":
     )
 
     pyfg = parse_data(
-        dirpath, args.start_time, args.end_time, args.min_hz, args.range_only
+        dirpath,
+        args.start_time,
+        args.end_time,
+        args.min_hz,
+        args.range_only,
+        args.align_pose_vars,
     )
+    pyfg = calibrate_range_measures(pyfg)
     pyfg.print_summary()
     save_to_pyfg_text(pyfg, args.save_path)
 

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional, Union, overload
+from typing import List, Tuple, Optional, Union, overload, Dict
 from attrs import define, field
 import numpy as np
 from scipy.stats import linregress
@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import copy
 
 from py_factor_graph.measurements import FGRangeMeasurement
+from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.logging_utils import logger
 
 
@@ -37,8 +38,8 @@ class LinearCalibrationModel:
 
     @overload
     def __call__(
-        self, x: np.ndarray[np.dtype[np.float64]]
-    ) -> np.ndarray[np.dtype[np.float64]]:
+        self, x: np.ndarray[np.dtype[np.float64]]  # type: ignore
+    ) -> np.ndarray[np.dtype[np.float64]]:  # type: ignore
         ...
 
     def __call__(
@@ -108,6 +109,8 @@ def get_inlier_set_of_range_measurements(
     def _plot_inliers_and_outliers(
         measurements: List[UncalibratedRangeMeasurement],
         outlier_mask: np.ndarray,
+        slope: float,
+        intercept: float,
     ):
         inliers = [x for idx, x in enumerate(measurements) if idx not in outlier_mask]
         outliers = [x for idx, x in enumerate(measurements) if idx in outlier_mask]
@@ -122,7 +125,19 @@ def get_inlier_set_of_range_measurements(
         plt.scatter(
             outlier_measured_dists, outlier_true_dists, color="red", label="outliers"
         )
+        plt.title(f"{measurements[0].association}")
         plt.legend()
+        plt.xlabel("Measured distance (m)")
+        plt.ylabel("True distance (m)")
+
+        # draw the linear model up to the largest measured distance
+        x = np.linspace(0, np.max(inlier_measured_dists), 100)
+        y = slope * x + intercept
+        plt.plot(x, y, color="black", label="linear model")
+
+        # make sure axis is square
+        plt.gca().set_aspect("equal", adjustable="box")
+
         plt.show(block=True)
 
     inliers_have_converged = False
@@ -140,7 +155,12 @@ def get_inlier_set_of_range_measurements(
 
         # visualize the inliers and outliers
         if show_outlier_rejection:
-            _plot_inliers_and_outliers(inlier_measurements, outlier_mask)
+            _plot_inliers_and_outliers(
+                inlier_measurements,
+                outlier_mask,
+                linear_calibration.slope,
+                linear_calibration.intercept,
+            )
 
         # check if we have converged
         inliers_have_converged = len(outlier_mask) == 0
@@ -171,3 +191,102 @@ def get_linearly_calibrated_measurements(
     linear_calibration = fit_linear_calibration_model(uncalibrated_measurements)
     calibrated_measurements = linear_calibration(uncalibrated_measurements)
     return calibrated_measurements
+
+
+def calibrate_range_measures(
+    pyfg: FactorGraphData,
+) -> FactorGraphData:
+    """
+    We will fit a linear model to the range measurements and remove outliers. W
+    """
+    uncalibrated_measurements = pyfg.range_measurements
+    true_variable_positions = pyfg.variable_true_positions_dict
+
+    # group the range measurements by association
+    # e.g.,
+    # - (A1, L1) and (A15, L1) will be grouped together as (A, L1)
+    # - (B23, L10) and (B138, L10) will be grouped together as (B, L10)
+    # - (A5, L1) and (B23, L10) will not be grouped together
+
+    # get valid variables
+    valid_variable_groups = set()
+    for variable_name in true_variable_positions.keys():
+        if "L" in variable_name:
+            valid_variable_groups.add(variable_name)
+        else:
+            valid_variable_groups.add(variable_name[0])
+
+    # get valid associations as the cross product of valid variables
+    valid_associations = set()
+    for var1 in valid_variable_groups:
+        for var2 in valid_variable_groups:
+            # pair should be alphabetically sorted, except "L" should always be second
+            if var1 == var2 or "L" in var1 and "L" in var2:
+                continue
+            elif "L" in var1:
+                valid_associations.add((var2, var1))
+            elif "L" in var2:
+                valid_associations.add((var1, var2))
+            elif var1 < var2:
+                valid_associations.add((var1, var2))
+            else:
+                valid_associations.add((var2, var1))
+
+    def get_association_grouping(association: Tuple[str, str]) -> Tuple[str, str]:
+        # assert at most one "L" in the association and must be second
+        a1, a2 = association
+        if "L" in a1 and "L" in a2:
+            raise ValueError(f"Invalid association: {association}")
+        elif "L" in a1:
+            raise ValueError(f"Invalid association: {association}")
+
+        if "L" in association[1]:
+            return a1[0], a2
+
+        a1_group = a1[0]
+        a2_group = a2[0]
+        if a1_group == a2_group:
+            raise ValueError(f"Invalid measurement association: {association}")
+        elif a1_group < a2_group:
+            return a1_group, a2_group
+        else:
+            return a2_group, a1_group
+
+    # group the range measurements by association
+    association_to_measurements: Dict[
+        Tuple[str, str], List[UncalibratedRangeMeasurement]
+    ] = {pair: [] for pair in valid_associations}
+    for measurement in uncalibrated_measurements:
+        association = measurement.association
+        association_group = get_association_grouping(association)
+        if association_group not in valid_associations:
+            raise ValueError(f"Invalid association: {association}")
+
+        true_pos1 = np.array(true_variable_positions[association[0]])
+        true_pos2 = np.array(true_variable_positions[association[1]])
+        true_dist = float(np.linalg.norm(true_pos1 - true_pos2))
+
+        assert measurement.timestamp is not None, "Timestamp must be set."
+
+        uncalibrated_measure = UncalibratedRangeMeasurement(
+            association=association,
+            dist=measurement.dist,
+            timestamp=measurement.timestamp,
+            true_dist=true_dist,
+        )
+        association_to_measurements[association_group].append(uncalibrated_measure)
+
+    # for each measurement group, get the inlier set
+    inlier_measurements = []
+    for association, measurements in association_to_measurements.items():
+        inlier_measurements += get_inlier_set_of_range_measurements(
+            measurements, show_outlier_rejection=False
+        )
+
+    # get the calibrated measurements
+    calibrated_measurements = get_linearly_calibrated_measurements(inlier_measurements)
+
+    # update the factor graph data
+    pyfg.range_measurements = calibrated_measurements
+
+    return pyfg
