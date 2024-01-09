@@ -156,7 +156,7 @@ def _add_odometry_measurements(fg: FactorGraphData, data_files: PlazaDataFiles):
     translation_cov = (0.1) ** 2
     rot_cov = (0.01) ** 2
     trans_precision, rot_precision = get_measurement_precisions_from_covariances(
-        translation_cov, rot_cov, mat_dim=2
+        translation_cov, rot_cov, mat_dim=3
     )
 
     for idx, row in odom_df.iterrows():
