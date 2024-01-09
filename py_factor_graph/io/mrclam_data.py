@@ -13,7 +13,6 @@ from typing import Tuple
 import coloredlogs  # type: ignore
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.io.pyfg_text import save_to_pyfg_text
@@ -175,10 +174,9 @@ def get_all_measurements(
         measurement_df["measured_var_name"] = measurement_df["barcode"].apply(
             lambda x: barcode_to_var_name[x]
         )
-        if (~valid_meas).any():
+        if (np.logical_not(valid_meas)).any():
             logger.warning(
-                "Found %d measurements with unknown barcodes",
-                (~valid_meas).sum(),
+                f"Found {np.logical_not(valid_meas).sum()} measurements with unknown barcodes for robot {robot_name}"
             )
 
         measurement_df["is_robot"] = measurement_df["measured_var_name"].apply(
@@ -326,13 +324,16 @@ def parse_data(
     valid_measurements = all_measurements["timestamp"].between(
         adjusted_start_time, adjusted_end_time
     )
+    num_valid_measurements = valid_measurements.sum()
+    num_ignored_measurements = all_measurements.shape[0] - num_valid_measurements
     all_measurements = all_measurements[valid_measurements]
     logger.info(
         f"Adjusted start and end times: {adjusted_start_time}, {adjusted_end_time}"
     )
     logger.info(
-        f"Filtered out {(~valid_measurements).sum()} range-bearing measurements,"
+        f"Ignoring {num_ignored_measurements} range-bearing measurements based on start and end times"
     )
+    logger.info(f"Adding {num_valid_measurements} range-bearing measurements")
 
     # Maps robot name and timestamp to a pose number
     pose_ts_to_num: dict[str, dict[float, int]] = dict(
@@ -340,7 +341,6 @@ def parse_data(
     )
     var_name_counter = dict([(name, 0) for name in all_odoms])
 
-    logger.info("Adding range-bearing measurements")
     # Every robot has a pose at every measurement timestamp, this ensures that A1, B1, C1, D1, E1
     # are all pose variables at the same timestamp, even if the robot does not have a measurement at that time
     all_robot_names = set([name for name in all_odoms])
@@ -349,7 +349,7 @@ def parse_data(
     )  # Since CORA doesn't support A1->B1 and B1->A1, we only add one of them
     prev_ts = None
 
-    for _, row in tqdm(all_measurements.iterrows(), total=all_measurements.shape[0]):
+    for _, row in all_measurements.iterrows():
         timestamp = row["timestamp"]
         robot_var_name = row["robot_var_name"]
         measured_var_name = row["measured_var_name"]
@@ -407,7 +407,7 @@ def parse_data(
             else measured_var_name,
         )
         if association in existing_ranges or association[::-1] in existing_ranges:
-            logging.info(
+            logging.debug(
                 f"Skipping duplicate measurement between {association} and {association[::-1]}"
             )
             continue
@@ -446,8 +446,11 @@ def parse_data(
         )
 
         # Interpolated odom
-        logging.info(f"Adding interpolated odometry for robot {robot_name}")
-        for i in tqdm(range(1, timestamp_to_num_arr.shape[0])):
+        num_odom_measures = timestamp_to_num_arr.shape[0] - 1
+        logging.info(
+            f"Adding {num_odom_measures} odometry measurements for robot {robot_name}"
+        )
+        for i in range(1, timestamp_to_num_arr.shape[0]):
             prev_ts, prev_num = timestamp_to_num_arr[i - 1]
             curr_ts, curr_num = timestamp_to_num_arr[i]
             # Interpolate between the two poses
@@ -534,7 +537,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
         logger.warning("Verbose mode on")
     logger.info("Parsing data from %s", dirpath)
-    logger.error(
+    logger.warning(
         "Storing robot to robot range bearing measurements as range-only measurements"
     )
 
