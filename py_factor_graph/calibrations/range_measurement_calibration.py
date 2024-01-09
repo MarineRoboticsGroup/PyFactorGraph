@@ -2,6 +2,8 @@ from typing import List, Tuple, Optional, Union, overload, Dict
 from attrs import define, field
 import numpy as np
 from scipy.stats import linregress
+
+# from sklearn import linear_model
 import matplotlib.pyplot as plt
 import copy
 
@@ -107,13 +109,11 @@ def get_inlier_set_of_range_measurements(
     """
 
     def _plot_inliers_and_outliers(
-        measurements: List[UncalibratedRangeMeasurement],
-        outlier_mask: np.ndarray,
+        inliers: List[UncalibratedRangeMeasurement],
+        outliers: List[UncalibratedRangeMeasurement],
         slope: float,
         intercept: float,
     ):
-        inliers = [x for idx, x in enumerate(measurements) if idx not in outlier_mask]
-        outliers = [x for idx, x in enumerate(measurements) if idx in outlier_mask]
         inlier_measured_dists = np.array([x.dist for x in inliers])
         inlier_true_dists = np.array([x.true_dist for x in inliers])
         outlier_measured_dists = np.array([x.dist for x in outliers])
@@ -125,7 +125,7 @@ def get_inlier_set_of_range_measurements(
         plt.scatter(
             outlier_measured_dists, outlier_true_dists, color="red", label="outliers"
         )
-        plt.title(f"{measurements[0].association}")
+        plt.title(f"{inliers[0].association}")
         plt.legend()
         plt.xlabel("Measured distance (m)")
         plt.ylabel("True distance (m)")
@@ -142,6 +142,7 @@ def get_inlier_set_of_range_measurements(
 
     inliers_have_converged = False
     inlier_measurements = copy.deepcopy(uncalibrated_measurements)
+    outlier_measurements = []
     while not inliers_have_converged:
         # fit a linear model to the range measurements
         linear_calibration = fit_linear_calibration_model(inlier_measurements)
@@ -153,14 +154,12 @@ def get_inlier_set_of_range_measurements(
             np.abs(residuals) > inlier_stddev_threshold * res_stddev
         )[0]
 
-        # visualize the inliers and outliers
-        if show_outlier_rejection:
-            _plot_inliers_and_outliers(
-                inlier_measurements,
-                outlier_mask,
-                linear_calibration.slope,
-                linear_calibration.intercept,
-            )
+        inlier_measurements = [
+            x for idx, x in enumerate(inlier_measurements) if idx not in outlier_mask
+        ]
+        outlier_measurements += [
+            x for idx, x in enumerate(inlier_measurements) if idx in outlier_mask
+        ]
 
         # check if we have converged
         inliers_have_converged = len(outlier_mask) == 0
@@ -175,9 +174,25 @@ def get_inlier_set_of_range_measurements(
             return []
 
         # remove any measurements that are outliers
-        inlier_measurements = [
-            x for idx, x in enumerate(inlier_measurements) if idx not in outlier_mask
-        ]
+
+    # visualize the inliers and outliers
+    if show_outlier_rejection:
+        if (
+            "L11" in inlier_measurements[0].association
+            or "L17" in inlier_measurements[0].association
+        ):
+            _plot_inliers_and_outliers(
+                inlier_measurements,
+                outlier_measurements,
+                linear_calibration.slope,
+                linear_calibration.intercept,
+            )
+        # _plot_inliers_and_outliers(
+        #     inlier_measurements,
+        #     outlier_measurements,
+        #     linear_calibration.slope,
+        #     linear_calibration.intercept,
+        # )
 
     return inlier_measurements
 
@@ -280,7 +295,7 @@ def calibrate_range_measures(
     inlier_measurements = []
     for association, measurements in association_to_measurements.items():
         inlier_measurements += get_inlier_set_of_range_measurements(
-            measurements, show_outlier_rejection=False
+            measurements, show_outlier_rejection=True
         )
 
     # get the calibrated measurements

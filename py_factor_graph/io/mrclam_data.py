@@ -25,6 +25,9 @@ from py_factor_graph.measurements import (
 from py_factor_graph.priors import LandmarkPrior2D
 from py_factor_graph.utils.name_utils import get_robot_char_from_number
 from py_factor_graph.variables import LandmarkVariable2D, PoseVariable2D
+from py_factor_graph.calibrations.range_measurement_calibration import (
+    calibrate_range_measures,
+)
 
 np.set_printoptions(formatter={"all": lambda x: str(x)})
 
