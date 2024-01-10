@@ -111,7 +111,6 @@ class FactorGraphData:
     pose_landmark_measurements: List[POSE_LANDMARK_MEASUREMENT_TYPES] = attr.ib(
         factory=list
     )
-    # TODO: add ambiguous pose_landmark_measurements
 
     # range measurements
     range_measurements: List[FGRangeMeasurement] = attr.ib(factory=list)
@@ -234,7 +233,7 @@ class FactorGraphData:
         measurements_line = (
             f"Measurements: {num_odom_measurements} odom, "
             f"{num_pose_landmark_measurements} pose to landmark, "
-            f"{num_range_measurements} range, {num_loop_closures} loop closures "
+            f"{num_range_measurements} range, {num_loop_closures} loop closures, "
             f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
