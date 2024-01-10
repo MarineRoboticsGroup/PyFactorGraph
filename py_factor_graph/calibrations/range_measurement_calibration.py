@@ -1,8 +1,8 @@
 from typing import List, Tuple, Optional, Union, overload, Dict
 from attrs import define, field
 import numpy as np
-from scipy.stats import linregress
-from sklearn import linear_model
+from scipy.stats import linregress  # type: ignore
+from sklearn import linear_model  # type: ignore
 import matplotlib.pyplot as plt
 
 from py_factor_graph.measurements import FGRangeMeasurement
