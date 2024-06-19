@@ -1,9 +1,9 @@
 from typing import List, Tuple, Optional, Union, overload, Dict
 from attrs import define, field
 import numpy as np
-from scipy.stats import linregress
+from scipy.stats import linregress  # type: ignore
+from sklearn import linear_model  # type: ignore
 import matplotlib.pyplot as plt
-import copy
 
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.factor_graph import FactorGraphData
@@ -99,85 +99,179 @@ def fit_linear_calibration_model(
 
 def get_inlier_set_of_range_measurements(
     uncalibrated_measurements: List[UncalibratedRangeMeasurement],
-    inlier_stddev_threshold: float = 3.0,
     show_outlier_rejection: bool = False,
 ) -> List[UncalibratedRangeMeasurement]:
     """
     We will fit a linear model to the range measurements and remove outliers. W
     """
+    if len(uncalibrated_measurements) == 0:
+        return []
+
+    if len(uncalibrated_measurements) < 5:
+        logger.warning(
+            f"Only {len(uncalibrated_measurements)} range measurements. Discarding"
+        )
+        return []
+
+    association = uncalibrated_measurements[0].association
+    if "L" in association[1]:
+        data_set_name = f"{association[0][0]} - {association[1]}"
+    else:
+        data_set_name = f"{association[0][0]} - {association[1][0]}"
 
     def _plot_inliers_and_outliers(
-        measurements: List[UncalibratedRangeMeasurement],
-        outlier_mask: np.ndarray,
-        slope: float,
-        intercept: float,
+        inliers: List[UncalibratedRangeMeasurement],
+        outliers: List[UncalibratedRangeMeasurement],
+        ransac: linear_model.RANSACRegressor,
     ):
-        inliers = [x for idx, x in enumerate(measurements) if idx not in outlier_mask]
-        outliers = [x for idx, x in enumerate(measurements) if idx in outlier_mask]
         inlier_measured_dists = np.array([x.dist for x in inliers])
         inlier_true_dists = np.array([x.true_dist for x in inliers])
         outlier_measured_dists = np.array([x.dist for x in outliers])
         outlier_true_dists = np.array([x.true_dist for x in outliers])
 
-        plt.scatter(
-            inlier_measured_dists, inlier_true_dists, color="blue", label="inliers"
+        inlier_calibrated_dists = (
+            ransac.predict(inlier_measured_dists.reshape(-1, 1))
+            if len(inlier_measured_dists) > 0
+            else np.array([[]]).reshape(-1, 1)
         )
-        plt.scatter(
-            outlier_measured_dists, outlier_true_dists, color="red", label="outliers"
+        outlier_calibrated_dists = (
+            ransac.predict(outlier_measured_dists.reshape(-1, 1))
+            if len(outlier_measured_dists) > 0
+            else np.array([[]]).reshape(-1, 1)
         )
-        plt.title(f"{measurements[0].association}")
-        plt.legend()
-        plt.xlabel("Measured distance (m)")
-        plt.ylabel("True distance (m)")
+
+        # two subplots, on left and one on the right
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+        # title over both subplots
+        slope = ransac.estimator_.coef_[0][0]
+        intercept = ransac.estimator_.intercept_[0]
+        fig.suptitle(f"{data_set_name}: slope={slope:.2f}, intercept={intercept:.2f}")
+
+        # on the left plot show the measured vs true distances
+        ax1.scatter(
+            inlier_measured_dists,
+            inlier_true_dists,
+            color="blue",
+            label="inliers",
+        )
+        ax1.scatter(
+            outlier_measured_dists,
+            outlier_true_dists,
+            color="red",
+            label="outliers",
+        )
+        all_measured_dists = np.concatenate(
+            [inlier_measured_dists, outlier_measured_dists]
+        )
+        xmin = min(np.min(all_measured_dists), 0.0)
+        xmax = np.max(all_measured_dists)
+        x = np.linspace(xmin, xmax, 5)
+        y = ransac.predict(x.reshape(-1, 1))
+        ax1.plot(x, y, color="black", label="linear model")
+        ax1.set_xlabel("Measured distance (m)")
+        ax1.set_ylabel("True distance (m)")
+        ax1.legend()
+
+        # on the right plot show the calibrated vs true distances
+        ax2.scatter(
+            inlier_calibrated_dists,
+            inlier_true_dists,
+            color="blue",
+            label="inliers",
+        )
+        ax2.scatter(
+            outlier_calibrated_dists,
+            outlier_true_dists,
+            color="red",
+            label="outliers",
+        )
+        ax2.set_xlabel("Calibrated distance (m)")
+        ax2.set_ylabel("True distance (m)")
 
         # draw the linear model up to the largest measured distance
-        x = np.linspace(0, np.max(inlier_measured_dists), 100)
-        y = slope * x + intercept
-        plt.plot(x, y, color="black", label="linear model")
+        all_calibrated_dists = np.concatenate(
+            [inlier_calibrated_dists, outlier_calibrated_dists]
+        )
+        xmin = min(np.min(all_calibrated_dists), 0.0)
+        xmax = np.max(all_calibrated_dists)
+        x = np.linspace(xmin, xmax, 5)
+        y = ransac.predict(x.reshape(-1, 1))
+        # plt.plot(x, y, color="black", label="linear model")
+
+        # draw a line along the y-axis to indicate the left-half plane
+        all_true_dists = np.concatenate([inlier_true_dists, outlier_true_dists])
+        ymin = 0.0
+        ymax = np.max(all_true_dists)
+        ax2.vlines(0.0, ymin, ymax, color="black", linestyle="--")
+
+        # draw a 1-1 line
+        ax2.plot(x, x, color="green", label="1-1 line")
 
         # make sure axis is square
-        plt.gca().set_aspect("equal", adjustable="box")
+        # plt.gca().set_aspect("equal", adjustable="box")
+        ax1.set_aspect("equal", adjustable="box")
+        ax2.set_aspect("equal", adjustable="box")
+
+        # show labels
+        plt.legend()
 
         plt.show(block=True)
 
-    inliers_have_converged = False
-    inlier_measurements = copy.deepcopy(uncalibrated_measurements)
-    while not inliers_have_converged:
-        # fit a linear model to the range measurements
-        linear_calibration = fit_linear_calibration_model(inlier_measurements)
+    measured_dists = np.array([x.dist for x in uncalibrated_measurements])
+    true_dists = np.array([x.true_dist for x in uncalibrated_measurements])
 
-        # compute the residuals and use them to find outliers
-        residuals = linear_calibration.get_calibrated_residuals(inlier_measurements)
-        res_stddev = np.std(residuals)
-        outlier_mask = np.where(
-            np.abs(residuals) > inlier_stddev_threshold * res_stddev
-        )[0]
+    # get a quick linear fit
+    slope, intercept, _, _, _ = linregress(measured_dists, true_dists)
+    residuals = true_dists - (slope * measured_dists + intercept)
+    residuals_stddev = np.std(residuals)
+    assert not np.isnan(residuals_stddev), "Residuals stddev is NaN"
 
-        # visualize the inliers and outliers
-        if show_outlier_rejection:
-            _plot_inliers_and_outliers(
-                inlier_measurements,
-                outlier_mask,
-                linear_calibration.slope,
-                linear_calibration.intercept,
-            )
+    # ransac model is invalid if slope is too far from 1
+    def is_model_valid(model: linear_model.LinearRegression, x, y):
+        slope = model.coef_[0][0]
+        return abs(slope - 1) < 0.3
 
-        # check if we have converged
-        inliers_have_converged = len(outlier_mask) == 0
-        if inliers_have_converged:
-            break
+    min_sample_ratio = 0.35
+    ransac = linear_model.RANSACRegressor(
+        residual_threshold=2 * residuals_stddev,
+        min_samples=min_sample_ratio,
+        is_model_valid=is_model_valid,
+        max_trials=1000,
+    )
 
-        # if everything is an outlier, then some nonsense is going on
-        if len(outlier_mask) == len(inlier_measurements):
-            logger.warning(
-                f"Everything is an outlier. This is probably a bug. Returning empty list."
-            )
-            return []
+    try:
+        ransac.fit(measured_dists.reshape(-1, 1), true_dists.reshape(-1, 1))
+    except ValueError as e:
+        logger.error(
+            f"{data_set_name}: Discarding all {len(uncalibrated_measurements)} measurements.\n{e}"
+        )
+        return []
 
-        # remove any measurements that are outliers
-        inlier_measurements = [
-            x for idx, x in enumerate(inlier_measurements) if idx not in outlier_mask
-        ]
+    slope = ransac.estimator_.coef_[0][0]
+    if abs(slope - 1) > 0.1:
+        logger.warning(
+            f"{data_set_name}: {len(uncalibrated_measurements)} measurements. Calibration slope of {slope:.2f} detected. This may be due to errors in the data."
+        )
+
+    inlier_mask = ransac.inlier_mask_
+    inlier_measurements = []
+    outlier_measurements = []
+    for measurement, is_inlier in zip(uncalibrated_measurements, inlier_mask):
+        if is_inlier:
+            inlier_measurements.append(measurement)
+        else:
+            outlier_measurements.append(measurement)
+
+    if show_outlier_rejection:
+        _plot_inliers_and_outliers(inlier_measurements, outlier_measurements, ransac)
+
+    logger.debug(
+        f"{data_set_name}: {len(inlier_measurements)} inliers, {len(outlier_measurements)} outliers"
+    )
+
+    # if len(inlier_measurements) < len(outlier_measurements) or abs(slope - 1) > 0.1:
+    #     _plot_inliers_and_outliers(inlier_measurements, outlier_measurements, ransac)
 
     return inlier_measurements
 
