@@ -115,9 +115,17 @@ def get_inlier_set_of_range_measurements(
 
     association = uncalibrated_measurements[0].association
     if "L" in association[1]:
-        data_set_name = f"{association[0][0]} - {association[1]}"
+        data_set_name = f"Robot {association[0][0]} - Landmark {association[1]}"
     else:
-        data_set_name = f"{association[0][0]} - {association[1][0]}"
+        first_char = association[0][0]
+        second_char = association[1][0]
+        assert first_char != second_char, f"Invalid association: {association}"
+        assert (
+            first_char != "L" and second_char != "L"
+        ), f"Invalid association: {association}"
+        if first_char > second_char:
+            first_char, second_char = second_char, first_char
+        data_set_name = f"Range calibration: Robot {first_char} - Robot {second_char}"
 
     def _plot_inliers_and_outliers(
         inliers: List[UncalibratedRangeMeasurement],
@@ -246,6 +254,7 @@ def get_inlier_set_of_range_measurements(
         logger.error(
             f"{data_set_name}: Discarding all {len(uncalibrated_measurements)} measurements.\n{e}"
         )
+        _plot_inliers_and_outliers([], [], ransac)
         return []
 
     slope = ransac.estimator_.coef_[0][0]
@@ -289,6 +298,7 @@ def get_linearly_calibrated_measurements(
 
 def calibrate_range_measures(
     pyfg: FactorGraphData,
+    show_outlier_rejection: bool = False,
 ) -> FactorGraphData:
     """
     We will fit a linear model to the range measurements and remove outliers. W
@@ -374,7 +384,7 @@ def calibrate_range_measures(
     inlier_measurements = []
     for association, measurements in association_to_measurements.items():
         inlier_measurements += get_inlier_set_of_range_measurements(
-            measurements, show_outlier_rejection=False
+            measurements, show_outlier_rejection=show_outlier_rejection
         )
 
     # get the calibrated measurements
