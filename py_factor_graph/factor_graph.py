@@ -1653,21 +1653,33 @@ class FactorGraphData:
         range_timesteps_added: List[int] = []  # keep track of when we added the range
 
         def _update_range_lines(timestep: int) -> None:
-            def _has_range_measures_to_remove():
-                return (
-                    len(range_timesteps_added) > 0
-                    and timestep - range_timesteps_added[0] > num_timesteps_keep_ranges
-                )
+            def _find_range_measures_to_remove() -> Optional[List[int]]:
+                if len(range_timesteps_added) == 0:
+                    return None
 
-            while _has_range_measures_to_remove():
-                drawn_line = range_line_drawings.pop(0)
-                drawn_circle = range_circle_drawings.pop(0)
-                range_timesteps_added.pop(0)
+                # find all indices where the timestep age is greater than the number of timesteps to keep
+                indices_to_remove = [
+                    idx
+                    for idx, added_timestep in enumerate(range_timesteps_added)
+                    if timestep - added_timestep > num_timesteps_keep_ranges
+                ]
 
-                if drawn_line is not None:
-                    drawn_line.remove()
-                if drawn_circle is not None:
-                    drawn_circle.remove()
+                # sort in reverse order so we can pop from the end
+                indices_to_remove.sort(reverse=True)
+
+                return indices_to_remove
+
+            range_measures_to_remove = _find_range_measures_to_remove()
+            if range_measures_to_remove is not None:
+                for idx in range_measures_to_remove:
+                    drawn_line = range_line_drawings.pop(idx)
+                    drawn_circle = range_circle_drawings.pop(idx)
+                    range_timesteps_added.pop(idx)
+
+                    if drawn_line is not None:
+                        drawn_line.remove()
+                    if drawn_circle is not None:
+                        drawn_circle.remove()
 
             for robot_idx in range(self.num_robots):
                 pose = self.pose_variables[robot_idx][timestep]
