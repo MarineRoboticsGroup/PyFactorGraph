@@ -829,5 +829,91 @@ def add_error_to_all_odom_measures(
     return new_fg
 
 
+def convert_poses_into_landmarks(fg: FactorGraphData) -> FactorGraphData:
+    """Converts the poses in a factor graph into landmarks.
+
+    Args:
+        fg (FactorGraphData): the factor graph to modify
+
+    Returns:
+        FactorGraphData: a new factor graph with the modified trajectory
+    """
+    new_fg = FactorGraphData(dimension=fg.dimension)
+
+    # copy all of the landmarks and their priors
+    for landmark in fg.landmark_variables:
+        new_landmark = copy.deepcopy(landmark)
+        new_fg.add_landmark_variable(new_landmark)
+
+    for landmark_prior in fg.landmark_priors:
+        new_landmark_prior = copy.deepcopy(landmark_prior)
+        new_fg.add_landmark_prior(new_landmark_prior)
+
+    raise NotImplementedError("Need to implement pose priors")
+    raise NotImplementedError("Need to implement pose to landmark measures")
+
+    def _get_new_landmark_name() -> str:
+        return f"L{new_fg.num_landmarks}"
+
+    var_to_landmark_name_mapping = {
+        landmark.name: landmark.name for landmark in fg.landmark_variables
+    }
+
+    # add all of the poses as landmarks
+    for pose_chain in fg.pose_variables:
+        for pose in pose_chain:
+            new_landmark_name = _get_new_landmark_name()
+            var_to_landmark_name_mapping[pose.name] = new_landmark_name
+
+            if isinstance(pose, PoseVariable2D):
+                new_landmark = LandmarkVariable2D(
+                    new_landmark_name, tuple(pose.position_vector)
+                )
+            elif isinstance(pose, PoseVariable3D):
+                new_landmark = LandmarkVariable3D(
+                    new_landmark_name, tuple(pose.position_vector)
+                )
+            else:
+                raise ValueError(f"Invalid pose type: {type(pose)}")
+
+    # add all of the range measurements as range measurements
+    for range_meas in fg.range_measurements:
+        base_landmark, to_landmark = range_meas.association
+        base_landmark = var_to_landmark_name_mapping[base_landmark]
+        to_landmark = var_to_landmark_name_mapping[to_landmark]
+
+        new_range_meas = FGRangeMeasurement(
+            (base_landmark, to_landmark), range_meas.dist, range_meas.stddev
+        )
+        new_fg.add_range_measurement(new_range_meas)
+
+    # add all of the odometry measurements as range measurements
+    for odom_chain in fg.odom_measurements:
+        for odom_measure in odom_chain:
+            base_landmark = var_to_landmark_name_mapping[odom_measure.base_pose]
+            to_landmark = var_to_landmark_name_mapping[odom_measure.to_pose]
+            dist = np.linalg.norm(odom_measure.translation_vector).astype(float)
+
+            # this measure of stddev is approximately right, but doesn't account
+            # for "wrap around" when the translation is close to 0 (as distance
+            # is non-negative)
+            stddev = np.sqrt(1.0 / odom_measure.translation_precision)
+            range_measure = FGRangeMeasurement(
+                (base_landmark, to_landmark), dist, stddev
+            )
+            new_fg.add_range_measurement(range_measure)
+
+    # add all of the loop closures as range measurements
+    for loop_closure in fg.loop_closure_measurements:
+        base_landmark = var_to_landmark_name_mapping[loop_closure.base_pose]
+        to_landmark = var_to_landmark_name_mapping[loop_closure.to_pose]
+        dist = np.linalg.norm(loop_closure.translation_vector).astype(float)
+        stddev = np.sqrt(1.0 / loop_closure.translation_precision)
+        range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
+        new_fg.add_range_measurement(range_measure)
+
+    return new_fg
+
+
 if __name__ == "__main__":
     pass
