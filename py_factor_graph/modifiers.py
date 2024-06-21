@@ -27,6 +27,14 @@ from py_factor_graph.measurements import (
     POSE_MEASUREMENT_TYPES,
     FGRangeMeasurement,
 )
+from py_factor_graph.priors import (
+    LandmarkPrior2D,
+    LandmarkPrior3D,
+    LANDMARK_PRIOR_TYPES,
+    PosePrior2D,
+    PosePrior3D,
+    POSE_PRIOR_TYPES,
+)
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.name_utils import (
     get_robot_char_from_number,
@@ -829,14 +837,15 @@ def add_error_to_all_odom_measures(
     return new_fg
 
 
-def convert_poses_into_landmarks(fg: FactorGraphData) -> FactorGraphData:
-    """Converts the poses in a factor graph into landmarks.
+def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphData:
+    """Generates an SNL problem by converting all poses into landmarks and
+    converting all measurements into range measurements.
 
     Args:
         fg (FactorGraphData): the factor graph to modify
 
     Returns:
-        FactorGraphData: a new factor graph with the modified trajectory
+        FactorGraphData: the new factor graph
     """
     new_fg = FactorGraphData(dimension=fg.dimension)
 
@@ -848,9 +857,6 @@ def convert_poses_into_landmarks(fg: FactorGraphData) -> FactorGraphData:
     for landmark_prior in fg.landmark_priors:
         new_landmark_prior = copy.deepcopy(landmark_prior)
         new_fg.add_landmark_prior(new_landmark_prior)
-
-    raise NotImplementedError("Need to implement pose priors")
-    raise NotImplementedError("Need to implement pose to landmark measures")
 
     def _get_new_landmark_name() -> str:
         return f"L{new_fg.num_landmarks}"
@@ -875,6 +881,29 @@ def convert_poses_into_landmarks(fg: FactorGraphData) -> FactorGraphData:
                 )
             else:
                 raise ValueError(f"Invalid pose type: {type(pose)}")
+
+            new_fg.add_landmark_variable(new_landmark)
+
+    # copy pose priors as landmark priors
+    for pose_prior in fg.pose_priors:
+        landmark_name = var_to_landmark_name_mapping[pose_prior.name]
+        if isinstance(pose_prior, PosePrior2D):
+            new_landmark_prior = LandmarkPrior2D(
+                landmark_name,
+                tuple(pose_prior.translation_vector),
+                pose_prior.translation_precision,
+                pose_prior.timestamp,
+            )
+        elif isinstance(pose_prior, PosePrior3D):
+            new_landmark_prior = LandmarkPrior3D(
+                landmark_name,
+                tuple(pose_prior.translation_vector),
+                pose_prior.translation_precision,
+                pose_prior.timestamp,
+            )
+        else:
+            raise ValueError(f"Invalid pose prior type: {type(pose_prior)}")
+        fg.add_landmark_prior(new_landmark_prior)
 
     # add all of the range measurements as range measurements
     for range_meas in fg.range_measurements:
@@ -909,6 +938,14 @@ def convert_poses_into_landmarks(fg: FactorGraphData) -> FactorGraphData:
         to_landmark = var_to_landmark_name_mapping[loop_closure.to_pose]
         dist = np.linalg.norm(loop_closure.translation_vector).astype(float)
         stddev = np.sqrt(1.0 / loop_closure.translation_precision)
+        range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
+        new_fg.add_range_measurement(range_measure)
+
+    for measure in fg.pose_landmark_measurements:
+        base_landmark = var_to_landmark_name_mapping[measure.base_pose]
+        to_landmark = var_to_landmark_name_mapping[measure.to_pose]
+        dist = np.linalg.norm(measure.translation_vector).astype(float)
+        stddev = np.sqrt(1.0 / measure.translation_precision)
         range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
         new_fg.add_range_measurement(range_measure)
 

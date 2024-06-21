@@ -199,3 +199,43 @@ def parse_3d_g2o_file(filepath: str):
 
 if __name__ == "__main__":
     pass
+    from py_factor_graph.modifiers import convert_to_sensor_network_localization
+    dirpath = "/home/alan/cora/build/bin/data"
+    dirpath = "/home/alan/Downloads"
+    # /home/alan/Downloads/grid3D.g2o  /home/alan/Downloads/sphere_bignoise_vertex3.g2o  /home/alan/Downloads/torus3D.g2o
+    fname = "sphere_bignoise_vertex3.g2o"
+    # fname = "torus3D.g2o"
+    # fname = "grid3D.g2o"
+
+    fpath = f"{dirpath}/{fname}"
+
+    fg = parse_3d_g2o_file(fpath)
+    new_fg = convert_to_sensor_network_localization(fg)
+
+    # plot all of the landmarks and their ranges
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    num_vars_skip = 10
+    for idx, landmark in enumerate(new_fg.landmark_variables):
+        if idx % num_vars_skip != 0:
+            continue
+        continue
+        position = landmark.true_position
+        ax.scatter(position[0], position[1], position[2], color="r")
+
+    name_to_var_map = new_fg.landmark_variables_dict
+    num_measures_skip = 10
+    for idx, range_measurement in enumerate(new_fg.range_measurements):
+        # if idx % num_measures_skip != 0:
+        #     continue
+        var1, var2 = range_measurement.association
+        loc1 = name_to_var_map[var1].true_position
+        loc2 = name_to_var_map[var2].true_position
+        ax.plot([loc1[0], loc2[0]], [loc1[1], loc2[1]], [loc1[2], loc2[2]], color="b")
+
+    plt.show()
+
