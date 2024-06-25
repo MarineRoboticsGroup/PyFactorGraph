@@ -56,6 +56,8 @@ from py_factor_graph.utils.plot_utils import (
     draw_traj_3d,
     draw_landmark_variable,
     draw_landmark_variable_3d,
+    draw_line,
+    draw_line_3d,
     draw_range_measurement,
     draw_range_measurement_3d,
 )
@@ -1708,9 +1710,54 @@ class FactorGraphData:
                     range_circle_drawings.append(drawn_circle)
                     range_timesteps_added.append(timestep)
 
+        loop_closure_lines: List[mlines.Line2D] = []
+        loop_closure_times: List[int] = []
+
+        def _update_loop_closure_lines(timestep: int) -> None:
+            def _find_loop_closures_to_remove() -> Optional[List[int]]:
+                if len(loop_closure_times) == 0:
+                    return None
+
+                # find all indices where the timestep age is greater than the number of timesteps to keep
+                indices_to_remove = [
+                    idx
+                    for idx, added_timestep in enumerate(loop_closure_times)
+                    if timestep - added_timestep > num_timesteps_keep_ranges
+                ]
+
+                # sort in reverse order so we can pop from the end
+                indices_to_remove.sort(reverse=True)
+
+                return indices_to_remove
+
+            loop_closures_to_remove = _find_loop_closures_to_remove()
+            # if loop_closures_to_remove is not None:
+            #     for idx in loop_closures_to_remove:
+            #         drawn_line = loop_closure_lines.pop(idx)
+            #         loop_closure_times.pop(idx)
+            #         if drawn_line is not None:
+            #             drawn_line.remove()
+
+            for loop_closure in self.loop_closure_measurements:
+                if loop_closure.timestamp == timestep:
+                    pose1 = self.pose_variables_dict[loop_closure.base_pose]
+                    pose2 = self.pose_variables_dict[loop_closure.to_pose]
+                    assert pose1 is not None and pose2 is not None
+                    line = draw_line(
+                        ax,
+                        pose1.true_x,
+                        pose1.true_y,
+                        pose2.true_x,
+                        pose2.true_y,
+                        "grey",
+                    )
+                    loop_closure_lines.append(line)
+                    loop_closure_times.append(timestep)
+
         def _update_animation(timestep: int) -> None:
             _update_traj_lines(timestep)
             _update_pose_arrows(timestep)
+            _update_loop_closure_lines(timestep)
             if draw_range_circles or draw_range_lines:
                 _update_range_lines(timestep)
 
@@ -1921,9 +1968,56 @@ class FactorGraphData:
                     range_line_drawings.append(drawn_line)
                     range_timesteps_added.append(timestep)
 
+        loop_closure_lines: List[art3d.Line3D] = []
+        loop_closure_times: List[int] = []
+
+        def _update_loop_closure_lines(timestep: int) -> None:
+            def _find_loop_closures_to_remove() -> Optional[List[int]]:
+                if len(loop_closure_times) == 0:
+                    return None
+
+                # find all indices where the timestep age is greater than the number of timesteps to keep
+                indices_to_remove = [
+                    idx
+                    for idx, added_timestep in enumerate(loop_closure_times)
+                    if timestep - added_timestep > num_timesteps_keep_ranges
+                ]
+
+                # sort in reverse order so we can pop from the end
+                indices_to_remove.sort(reverse=True)
+
+                return indices_to_remove
+
+            loop_closures_to_remove = _find_loop_closures_to_remove()
+            # if loop_closures_to_remove is not None:
+            #     for idx in loop_closures_to_remove:
+            #         drawn_line = loop_closure_lines.pop(idx)
+            #         loop_closure_times.pop(idx)
+            #         if drawn_line is not None:
+            #             drawn_line.remove()
+
+            for loop_closure in self.loop_closure_measurements:
+                if loop_closure.timestamp == timestep:
+                    pose1 = self.pose_variables_dict[loop_closure.base_pose]
+                    pose2 = self.pose_variables_dict[loop_closure.to_pose]
+                    assert pose1 is not None and pose2 is not None
+                    line = draw_line_3d(
+                        ax,
+                        pose1.true_x,
+                        pose1.true_y,
+                        pose1.true_z,
+                        pose2.true_x,
+                        pose2.true_y,
+                        pose2.true_z,
+                        "grey",
+                    )
+                    loop_closure_lines.append(line)
+                    loop_closure_times.append(timestep)
+
         def _update_animation(timestep: int) -> None:
             _update_traj_lines(timestep)
             _update_pose_arrows(timestep)
+            _update_loop_closure_lines(timestep)
             if draw_range_lines:
                 _update_range_lines(timestep)
 
