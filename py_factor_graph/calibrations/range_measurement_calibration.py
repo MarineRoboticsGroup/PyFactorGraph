@@ -127,6 +127,9 @@ def get_inlier_set_of_range_measurements(
             first_char, second_char = second_char, first_char
         data_set_name = f"Range calibration: Robot {first_char} - Robot {second_char}"
 
+    if len(uncalibrated_measurements) == 0:
+        return []
+
     def _plot_inliers_and_outliers(
         inliers: List[UncalibratedRangeMeasurement],
         outliers: List[UncalibratedRangeMeasurement],
