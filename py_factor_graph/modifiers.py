@@ -30,10 +30,8 @@ from py_factor_graph.measurements import (
 from py_factor_graph.priors import (
     LandmarkPrior2D,
     LandmarkPrior3D,
-    LANDMARK_PRIOR_TYPES,
     PosePrior2D,
     PosePrior3D,
-    POSE_PRIOR_TYPES,
 )
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.name_utils import (
@@ -873,11 +871,17 @@ def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphDa
 
             if isinstance(pose, PoseVariable2D):
                 new_landmark = LandmarkVariable2D(
-                    new_landmark_name, tuple(pose.position_vector)
+                    new_landmark_name,
+                    (pose.position_vector[0], pose.position_vector[1]),
                 )
             elif isinstance(pose, PoseVariable3D):
                 new_landmark = LandmarkVariable3D(
-                    new_landmark_name, tuple(pose.position_vector)
+                    new_landmark_name,
+                    (
+                        pose.position_vector[0],
+                        pose.position_vector[1],
+                        pose.position_vector[2],
+                    ),
                 )
             else:
                 raise ValueError(f"Invalid pose type: {type(pose)}")
@@ -890,14 +894,18 @@ def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphDa
         if isinstance(pose_prior, PosePrior2D):
             new_landmark_prior = LandmarkPrior2D(
                 landmark_name,
-                tuple(pose_prior.translation_vector),
+                (pose_prior.translation_vector[0], pose_prior.translation_vector[1]),
                 pose_prior.translation_precision,
                 pose_prior.timestamp,
             )
         elif isinstance(pose_prior, PosePrior3D):
             new_landmark_prior = LandmarkPrior3D(
                 landmark_name,
-                tuple(pose_prior.translation_vector),
+                (
+                    pose_prior.translation_vector[0],
+                    pose_prior.translation_vector[1],
+                    pose_prior.translation_vector[2],
+                ),
                 pose_prior.translation_precision,
                 pose_prior.timestamp,
             )
@@ -942,8 +950,8 @@ def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphDa
         new_fg.add_range_measurement(range_measure)
 
     for measure in fg.pose_landmark_measurements:
-        base_landmark = var_to_landmark_name_mapping[measure.base_pose]
-        to_landmark = var_to_landmark_name_mapping[measure.to_pose]
+        base_landmark = var_to_landmark_name_mapping[measure.pose_name]
+        to_landmark = var_to_landmark_name_mapping[measure.landmark_name]
         dist = np.linalg.norm(measure.translation_vector).astype(float)
         stddev = np.sqrt(1.0 / measure.translation_precision)
         range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
