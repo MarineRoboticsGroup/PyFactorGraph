@@ -960,5 +960,95 @@ def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphDa
     return new_fg
 
 
+def add_random_range_measurements(
+    fg: FactorGraphData,
+    num_measures: int,
+    stddev: float,
+    prob_from_pose_variable: float,
+    prob_to_pose_variable: float,
+) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+    # get a list of all the landmarks and poses
+    pose_variables = new_fg.pose_variables_dict
+    landmark_variables = new_fg.landmark_variables_dict
+
+    # make sure that if we're expecting poses that there are pose variables
+    if prob_from_pose_variable > 0.0 or prob_to_pose_variable > 0.0:
+        assert len(pose_variables) > 0, "No pose variables in the factor graph"
+    if prob_from_pose_variable < 1.0 or prob_to_pose_variable < 1.0:
+        assert len(landmark_variables) > 0, "No landmark variables in the factor graph"
+
+    start_num_measures = new_fg.num_range_measurements
+    num_skips = 0
+    existing_measures = set(new_fg.range_measures_association_dict.keys())
+    while (
+        new_fg.num_range_measurements < start_num_measures + num_measures
+        and num_skips < 1000
+    ):
+        # flip a coin to decide if the measurement is between two landmarks or a pose and a landmark
+        from_pose = np.random.rand() < prob_from_pose_variable
+        if from_pose:
+            from_name = random.choice(list(pose_variables.keys()))
+        else:
+            from_name = random.choice(list(landmark_variables.keys()))
+
+        to_pose = np.random.rand() < prob_to_pose_variable
+        to_name = from_name
+        while to_name == from_name:
+            if to_pose:
+                to_name = random.choice(list(pose_variables.keys()))
+            else:
+                to_name = random.choice(list(landmark_variables.keys()))
+
+        from_var = (
+            pose_variables[from_name] if from_pose else landmark_variables[from_name]
+        )
+        to_var = pose_variables[to_name] if to_pose else landmark_variables[to_name]
+        dist = _dist_between_variables(from_var, to_var)
+        noisy_dist = np.random.normal(dist, stddev)
+        var_association = (from_name, to_name)
+        flip_association = (to_name, from_name)
+
+        if (
+            var_association in existing_measures
+            or flip_association in existing_measures
+        ):
+            num_skips += 1
+            continue
+
+        new_fg.add_range_measurement(
+            FGRangeMeasurement((from_name, to_name), noisy_dist, stddev)
+        )
+        existing_measures.add(var_association)
+
+    assert (
+        len(existing_measures)
+        == new_fg.num_range_measurements
+        == start_num_measures + num_measures
+    )
+    return new_fg
+
+
+def make_all_ranges_perfect(fg: FactorGraphData) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+    new_fg.range_measurements = []
+
+    # make the measured distances noiseless but keep the same stddev
+    pose_vars = new_fg.pose_variables_dict
+    landmark_vars = new_fg.landmark_variables_dict
+    for measure in fg.range_measurements:
+        from_name, to_name = measure.association
+        from_var = pose_vars.get(from_name, landmark_vars.get(from_name))
+        to_var = pose_vars.get(to_name, landmark_vars.get(to_name))
+        assert from_var is not None, f"Variable {from_name} not found"
+        assert to_var is not None, f"Variable {to_name} not found"
+        dist = _dist_between_variables(from_var, to_var)
+        new_fg.add_range_measurement(
+            FGRangeMeasurement((from_name, to_name), dist, measure.stddev)
+        )
+
+    return new_fg
+
+
 if __name__ == "__main__":
     pass
