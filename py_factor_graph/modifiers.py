@@ -1042,10 +1042,35 @@ def make_all_ranges_perfect(fg: FactorGraphData) -> FactorGraphData:
         to_var = pose_vars.get(to_name, landmark_vars.get(to_name))
         assert from_var is not None, f"Variable {from_name} not found"
         assert to_var is not None, f"Variable {to_name} not found"
-        dist = _dist_between_variables(from_var, to_var)
+        dist = _dist_between_variables(from_var, to_var)  # type: ignore
         new_fg.add_range_measurement(
             FGRangeMeasurement((from_name, to_name), dist, measure.stddev)
         )
+
+    return new_fg
+
+
+def make_fully_connected_ranges_between_all_landmarks(
+    fg: FactorGraphData,
+) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+
+    # make the measured distances noiseless but keep the same stddev
+    landmark_vars = new_fg.landmark_variables_dict
+    for from_name, from_var in landmark_vars.items():
+        for to_name, to_var in landmark_vars.items():
+            if from_name == to_name:
+                continue
+            dist = _dist_between_variables(from_var, to_var)
+
+            # if the measurement already exists then skip
+            association = (from_name, to_name)
+            if association in new_fg.range_measures_association_dict:
+                continue
+
+            new_fg.add_range_measurement(
+                FGRangeMeasurement((from_name, to_name), dist, 1.0)
+            )
 
     return new_fg
 
