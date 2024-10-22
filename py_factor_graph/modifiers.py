@@ -43,6 +43,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_theta_from_transformation_matrix,
     get_rotation_matrix_from_transformation_matrix,
     get_translation_from_transformation_matrix,
+    get_measurement_precisions_from_covariance_matrix,
 )
 from py_factor_graph.utils.attrib_utils import (
     probability_validator,
@@ -1070,6 +1071,278 @@ def make_fully_connected_ranges_between_all_landmarks(
 
             new_fg.add_range_measurement(
                 FGRangeMeasurement((from_name, to_name), dist, 1.0)
+            )
+
+    return new_fg
+
+
+def compose_odom_between_ranges_or_loop_closures(
+    fg: FactorGraphData,
+) -> FactorGraphData:
+    """Join together all pose measurements that just represent odometry chains.
+    I.e., if there are a sequence of odometry measurements between poses, then compose
+    the odometry until a range measurement or loop closure is encountered.
+
+    Args:
+        fg (FactorGraphData): the factor graph to modify
+
+    Returns:
+        FactorGraphData: the modified factor graph
+    """
+    new_fg = copy.deepcopy(fg)
+
+    # erase all of the pose variables and odometry measurements
+    new_fg.pose_variables = [[] for _ in range(fg.num_robots)]
+    new_fg.odom_measurements = [[] for _ in range(fg.num_robots)]
+
+    # iterate over the pose chains and select the variables that we want to keep
+    range_measures_set = set(fg.pose_to_range_measures_dict.keys())
+    loop_closures_set = set(fg.loop_closure_dict.keys())
+    pose_priors_set = set([prior.name for prior in fg.pose_priors])
+    poses_to_keep = pose_priors_set | range_measures_set | loop_closures_set
+
+    # also keep the first and last pose in each chain
+    pose_indices_to_keep: List[List[int]] = [[] for _ in range(fg.num_robots)]
+    for pose_chain_idx, pose_chain in enumerate(fg.pose_variables):
+        poses_to_keep.add(pose_chain[0].name)
+        poses_to_keep.add(pose_chain[-1].name)
+        for pose_idx, pose in enumerate(pose_chain):
+            if pose.name in poses_to_keep:
+                pose_indices_to_keep[pose_chain_idx].append(pose_idx)
+                new_fg.add_pose_variable(copy.deepcopy(pose))
+
+    # compose the odometry
+    def _get_composed_odom(
+        robot_idx: int, start_pose_idx: int, end_pose_idx: int
+    ) -> POSE_MEASUREMENT_TYPES:
+        start_odom_idx = start_pose_idx
+        end_odom_idx = end_pose_idx - 1
+        composed_odom_mat = np.eye(fg.dimension + 1)
+        odom_covar = np.zeros_like(fg.odom_measurements[robot_idx][0].covariance)
+        for odom in fg.odom_measurements[robot_idx][start_odom_idx : end_odom_idx + 1]:
+            odom_mat = odom.transformation_matrix
+            odom_covar += odom.covariance
+            composed_odom_mat = composed_odom_mat @ odom_mat
+
+        (
+            trans_precision,
+            rot_precision,
+        ) = get_measurement_precisions_from_covariance_matrix(odom_covar)
+
+        start_odom_measure = fg.odom_measurements[robot_idx][start_odom_idx]
+        end_odom_measure = fg.odom_measurements[robot_idx][end_odom_idx]
+
+        base_pose_name = start_odom_measure.base_pose
+        to_pose_name = end_odom_measure.to_pose
+        if start_odom_measure.timestamp is None or end_odom_measure.timestamp is None:
+            timestamp = None
+        else:
+            timestamp = (start_odom_measure.timestamp + end_odom_measure.timestamp) / 2
+
+        if fg.dimension == 2:
+            composed_odom_2d = PoseMeasurement2D(
+                base_pose_name,
+                to_pose_name,
+                x=composed_odom_mat[0, 2],
+                y=composed_odom_mat[1, 2],
+                theta=get_theta_from_transformation_matrix(composed_odom_mat),
+                translation_precision=trans_precision,
+                rotation_precision=rot_precision,
+                timestamp=timestamp,
+            )
+            return composed_odom_2d
+        else:
+            composed_odom_3d = PoseMeasurement3D(
+                base_pose_name,
+                to_pose_name,
+                translation=get_translation_from_transformation_matrix(
+                    composed_odom_mat
+                ),
+                rotation=get_rotation_matrix_from_transformation_matrix(
+                    composed_odom_mat
+                ),
+                translation_precision=trans_precision,
+                rotation_precision=rot_precision,
+                timestamp=timestamp,
+            )
+            return composed_odom_3d
+
+    for robot_idx, pose_indices in enumerate(pose_indices_to_keep):
+        for pose_idx in range(len(pose_indices) - 1):
+            start_pose_idx = pose_indices[pose_idx]
+            end_pose_idx = pose_indices[pose_idx + 1]
+            odom_measure = _get_composed_odom(robot_idx, start_pose_idx, end_pose_idx)
+            new_fg.add_odom_measurement(robot_idx, odom_measure)
+
+    return new_fg
+
+
+def rename_variables_to_be_sequential(
+    pyfg: FactorGraphData, rename_poses=True, rename_landmarks=True
+) -> FactorGraphData:
+    name_mapping = {}
+    for pose_chain in pyfg.pose_variables:
+        for pose_idx, pose in enumerate(pose_chain):
+            if rename_poses:
+                name_mapping[pose.name] = pose.name[0] + str(pose_idx)
+            else:
+                name_mapping[pose.name] = pose.name
+
+    for landmark_idx, landmark in enumerate(pyfg.landmark_variables):
+        if rename_landmarks:
+            name_mapping[landmark.name] = landmark.name[0] + str(landmark_idx)
+        else:
+            name_mapping[landmark.name] = landmark.name
+
+    new_fg = FactorGraphData(dimension=pyfg.dimension)
+
+    # add the pose variables
+    for pose_chain in pyfg.pose_variables:
+        for pose in pose_chain:
+            if isinstance(pose, PoseVariable2D):
+                new_fg.add_pose_variable(
+                    PoseVariable2D(
+                        name_mapping[pose.name],
+                        pose.true_position,
+                        pose.true_theta,
+                        pose.timestamp,
+                    )
+                )
+            elif isinstance(pose, PoseVariable3D):
+                new_fg.add_pose_variable(
+                    PoseVariable3D(
+                        name_mapping[pose.name],
+                        pose.true_position,
+                        pose.true_rotation,
+                        pose.timestamp,
+                    )
+                )
+
+    # add the landmark variables
+    for landmark in pyfg.landmark_variables:
+        if isinstance(landmark, LandmarkVariable2D):
+            new_fg.add_landmark_variable(
+                LandmarkVariable2D(name_mapping[landmark.name], landmark.true_position)
+            )
+        elif isinstance(landmark, LandmarkVariable3D):
+            new_fg.add_landmark_variable(
+                LandmarkVariable3D(name_mapping[landmark.name], landmark.true_position)
+            )
+
+    # add odometry measurements
+    for robot_idx, odom_chain in enumerate(pyfg.odom_measurements):
+        for odom in odom_chain:
+            if isinstance(odom, PoseMeasurement2D):
+                new_fg.add_odom_measurement(
+                    robot_idx,
+                    PoseMeasurement2D(
+                        name_mapping[odom.base_pose],
+                        name_mapping[odom.to_pose],
+                        odom.x,
+                        odom.y,
+                        odom.theta,
+                        odom.translation_precision,
+                        odom.rotation_precision,
+                        odom.timestamp,
+                    ),
+                )
+            elif isinstance(odom, PoseMeasurement3D):
+                new_fg.add_odom_measurement(
+                    robot_idx,
+                    PoseMeasurement3D(
+                        name_mapping[odom.base_pose],
+                        name_mapping[odom.to_pose],
+                        odom.translation,
+                        odom.rotation,
+                        odom.translation_precision,
+                        odom.rotation_precision,
+                        odom.timestamp,
+                    ),
+                )
+
+    # add range measurements
+    for range_meas in pyfg.range_measurements:
+        name1, name2 = range_meas.association
+        new_fg.add_range_measurement(
+            FGRangeMeasurement(
+                (name_mapping[name1], name_mapping[name2]),
+                range_meas.dist,
+                range_meas.stddev,
+            )
+        )
+
+    # add loop closures
+    for loop_closure in pyfg.loop_closure_measurements:
+        if isinstance(loop_closure, PoseMeasurement2D):
+            new_fg.add_loop_closure(
+                PoseMeasurement2D(
+                    name_mapping[loop_closure.base_pose],
+                    name_mapping[loop_closure.to_pose],
+                    loop_closure.x,
+                    loop_closure.y,
+                    loop_closure.theta,
+                    loop_closure.translation_precision,
+                    loop_closure.rotation_precision,
+                    loop_closure.timestamp,
+                )
+            )
+        elif isinstance(loop_closure, PoseMeasurement3D):
+            new_fg.add_loop_closure(
+                PoseMeasurement3D(
+                    name_mapping[loop_closure.base_pose],
+                    name_mapping[loop_closure.to_pose],
+                    loop_closure.translation,
+                    loop_closure.rotation,
+                    loop_closure.translation_precision,
+                    loop_closure.rotation_precision,
+                    loop_closure.timestamp,
+                )
+            )
+
+    # add pose priors
+    for pose_prior in pyfg.pose_priors:
+        if isinstance(pose_prior, PosePrior2D):
+            new_fg.add_pose_prior(
+                PosePrior2D(
+                    name_mapping[pose_prior.name],
+                    pose_prior.position,
+                    pose_prior.theta,
+                    pose_prior.translation_precision,
+                    pose_prior.rotation_precision,
+                    pose_prior.timestamp,
+                )
+            )
+        elif isinstance(pose_prior, PosePrior3D):
+            new_fg.add_pose_prior(
+                PosePrior3D(
+                    name_mapping[pose_prior.name],
+                    pose_prior.position,
+                    pose_prior.rotation,
+                    pose_prior.translation_precision,
+                    pose_prior.rotation_precision,
+                    pose_prior.timestamp,
+                )
+            )
+
+    # add landmark priors
+    for landmark_prior in pyfg.landmark_priors:
+        if isinstance(landmark_prior, LandmarkPrior2D):
+            new_fg.add_landmark_prior(
+                LandmarkPrior2D(
+                    name_mapping[landmark_prior.name],
+                    landmark_prior.position,
+                    landmark_prior.translation_precision,
+                    landmark_prior.timestamp,
+                )
+            )
+        elif isinstance(landmark_prior, LandmarkPrior3D):
+            new_fg.add_landmark_prior(
+                LandmarkPrior3D(
+                    name_mapping[landmark_prior.name],
+                    landmark_prior.position,
+                    landmark_prior.translation_precision,
+                    landmark_prior.timestamp,
+                )
             )
 
     return new_fg
