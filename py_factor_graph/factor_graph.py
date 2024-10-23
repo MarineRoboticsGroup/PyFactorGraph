@@ -410,6 +410,19 @@ class FactorGraphData:
         return landmark_var_dict
 
     @property
+    def pose_and_landmark_variables_dict(
+        self,
+    ) -> Dict[str, Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]]:
+        """Returns the pose and landmark variables as a dict.
+
+        Returns:
+            Dict[str, Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES]]: a dict of the pose and landmark variables
+        """
+        pose_var_dict = self.pose_variables_dict
+        landmark_var_dict = self.landmark_variables_dict
+        return {**pose_var_dict, **landmark_var_dict}
+
+    @property
     def variable_true_positions_dict(self) -> Dict[str, Tuple]:
         """Returns the pose and landmark variable true positions as a dict.
 
