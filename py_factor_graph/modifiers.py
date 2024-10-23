@@ -6,7 +6,7 @@ Examples:
     2) a modifier that splits a single-robot factor graph into a multi-robot one
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 import copy
 import itertools
@@ -20,6 +20,7 @@ from py_factor_graph.variables import (
     LandmarkVariable2D,
     LandmarkVariable3D,
     LANDMARK_VARIABLE_TYPES,
+    dist_between_variables,
 )
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
@@ -90,29 +91,6 @@ class RangeMeasurementModel:
         )
 
 
-def _dist_between_variables(
-    var1: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
-    var2: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
-) -> float:
-    """Returns the distance between two variables"""
-    if isinstance(var1, PoseVariable2D) or isinstance(var1, PoseVariable3D):
-        pos1 = var1.position_vector
-    elif isinstance(var1, LandmarkVariable2D) or isinstance(var1, LandmarkVariable3D):
-        pos1 = np.array(var1.true_position)
-    else:
-        raise ValueError(f"Variable {var1} not supported")
-
-    if isinstance(var2, PoseVariable2D) or isinstance(var2, PoseVariable3D):
-        pos2 = var2.position_vector
-    elif isinstance(var2, LandmarkVariable2D) or isinstance(var2, LandmarkVariable3D):
-        pos2 = np.array(var2.true_position)
-    else:
-        raise ValueError(f"Variable {var2} not supported")
-
-    dist = np.linalg.norm(pos1 - pos2).astype(float)
-    return dist
-
-
 def add_landmark_at_position(
     fg: FactorGraphData,
     landmark_position: np.ndarray,
@@ -150,7 +128,7 @@ def add_landmark_at_position(
 
     for pose_chain in new_fg.pose_variables:
         for pose in pose_chain:
-            pose_landmark_dist = _dist_between_variables(pose, new_landmark)
+            pose_landmark_dist = dist_between_variables(pose, new_landmark)
             if (
                 pose_landmark_dist <= range_measurement_model.sensing_horizon
                 and np.random.rand() < range_measurement_model.measurement_prob
@@ -453,7 +431,7 @@ def add_inter_robot_range_measurements(
                 )
                 raise ValueError(err)
 
-            dist = _dist_between_variables(pose1, pose2)
+            dist = dist_between_variables(pose1, pose2)
 
             if dist <= sensing_horizon and np.random.rand() < measurement_prob:
                 association = (pose1.name, pose2.name)
@@ -1005,7 +983,7 @@ def add_random_range_measurements(
             pose_variables[from_name] if from_pose else landmark_variables[from_name]
         )
         to_var = pose_variables[to_name] if to_pose else landmark_variables[to_name]
-        dist = _dist_between_variables(from_var, to_var)
+        dist = dist_between_variables(from_var, to_var)
         noisy_dist = np.random.normal(dist, stddev)
         var_association = (from_name, to_name)
         flip_association = (to_name, from_name)
@@ -1043,7 +1021,7 @@ def make_all_ranges_perfect(fg: FactorGraphData) -> FactorGraphData:
         to_var = pose_vars.get(to_name, landmark_vars.get(to_name))
         assert from_var is not None, f"Variable {from_name} not found"
         assert to_var is not None, f"Variable {to_name} not found"
-        dist = _dist_between_variables(from_var, to_var)  # type: ignore
+        dist = dist_between_variables(from_var, to_var)  # type: ignore
         new_fg.add_range_measurement(
             FGRangeMeasurement((from_name, to_name), dist, measure.stddev)
         )
@@ -1062,7 +1040,7 @@ def make_fully_connected_ranges_between_all_landmarks(
         for to_name, to_var in landmark_vars.items():
             if from_name == to_name:
                 continue
-            dist = _dist_between_variables(from_var, to_var)
+            dist = dist_between_variables(from_var, to_var)
 
             # if the measurement already exists then skip
             association = (from_name, to_name)

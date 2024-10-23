@@ -259,3 +259,26 @@ class LandmarkVariable3D:
 
 POSE_VARIABLE_TYPES = Union[PoseVariable2D, PoseVariable3D]
 LANDMARK_VARIABLE_TYPES = Union[LandmarkVariable2D, LandmarkVariable3D]
+
+
+def dist_between_variables(
+    var1: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
+    var2: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
+) -> float:
+    """Returns the distance between two variables"""
+    if isinstance(var1, PoseVariable2D) or isinstance(var1, PoseVariable3D):
+        pos1 = var1.position_vector
+    elif isinstance(var1, LandmarkVariable2D) or isinstance(var1, LandmarkVariable3D):
+        pos1 = np.array(var1.true_position)
+    else:
+        raise ValueError(f"Variable {var1} not supported")
+
+    if isinstance(var2, PoseVariable2D) or isinstance(var2, PoseVariable3D):
+        pos2 = var2.position_vector
+    elif isinstance(var2, LandmarkVariable2D) or isinstance(var2, LandmarkVariable3D):
+        pos2 = np.array(var2.true_position)
+    else:
+        raise ValueError(f"Variable {var2} not supported")
+
+    dist = np.linalg.norm(pos1 - pos2).astype(float)
+    return dist
