@@ -2,12 +2,14 @@ from typing import List, Tuple, Optional, Union, overload, Dict
 from attrs import define, field
 import numpy as np
 from scipy.stats import linregress  # type: ignore
+from scipy.signal import savgol_filter  # type: ignore
 from sklearn import linear_model  # type: ignore
 import matplotlib.pyplot as plt
 
 from py_factor_graph.measurements import FGRangeMeasurement
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.logging_utils import logger
+from py_factor_graph.variables import dist_between_variables
 
 
 @define
@@ -282,9 +284,6 @@ def get_inlier_set_of_range_measurements(
         f"{data_set_name}: {len(inlier_measurements)} inliers, {len(outlier_measurements)} outliers"
     )
 
-    # if len(inlier_measurements) < len(outlier_measurements) or abs(slope - 1) > 0.1:
-    #     _plot_inliers_and_outliers(inlier_measurements, outlier_measurements, ransac)
-
     return inlier_measurements
 
 
@@ -299,13 +298,9 @@ def get_linearly_calibrated_measurements(
     return calibrated_measurements
 
 
-def calibrate_range_measures(
+def get_range_measurements_by_association(
     pyfg: FactorGraphData,
-    show_outlier_rejection: bool = False,
-) -> FactorGraphData:
-    """
-    We will fit a linear model to the range measurements and remove outliers. W
-    """
+) -> Dict[Tuple[str, str], List[FGRangeMeasurement]]:
     uncalibrated_measurements = pyfg.range_measurements
     true_variable_positions = pyfg.variable_true_positions_dict
 
@@ -360,34 +355,58 @@ def calibrate_range_measures(
             return a2_group, a1_group
 
     # group the range measurements by association
-    association_to_measurements: Dict[
-        Tuple[str, str], List[UncalibratedRangeMeasurement]
-    ] = {pair: [] for pair in valid_associations}
+    association_to_measurements: Dict[Tuple[str, str], List[FGRangeMeasurement]] = {
+        pair: [] for pair in valid_associations
+    }
     for measurement in uncalibrated_measurements:
         association = measurement.association
         association_group = get_association_grouping(association)
         if association_group not in valid_associations:
             raise ValueError(f"Invalid association: {association}")
 
-        true_pos1 = np.array(true_variable_positions[association[0]])
-        true_pos2 = np.array(true_variable_positions[association[1]])
-        true_dist = float(np.linalg.norm(true_pos1 - true_pos2))
+        association_to_measurements[association_group].append(measurement)
 
-        assert measurement.timestamp is not None, "Timestamp must be set."
+    return association_to_measurements
 
-        uncalibrated_measure = UncalibratedRangeMeasurement(
-            association=association,
-            dist=measurement.dist,
-            timestamp=measurement.timestamp,
-            true_dist=true_dist,
-        )
-        association_to_measurements[association_group].append(uncalibrated_measure)
+
+def calibrate_range_measures(
+    pyfg: FactorGraphData,
+    show_outlier_rejection: bool = False,
+) -> FactorGraphData:
+    """
+    We will fit a linear model to the range measurements and remove outliers. W
+    """
+
+    measurements_by_association = get_range_measurements_by_association(pyfg)
+    variables_by_name = pyfg.pose_and_landmark_variables_dict
+    uncalibrated_measures_by_association: Dict[
+        Tuple[str, str], List[UncalibratedRangeMeasurement]
+    ] = {association: [] for association in measurements_by_association.keys()}
+    for radio_association, measurements in measurements_by_association.items():
+        for measure in measurements:
+            assert measure.timestamp is not None, "Timestamp must be set."
+
+            var1, var2 = (
+                variables_by_name[measure.association[0]],
+                variables_by_name[measure.association[1]],
+            )
+            assert var1 is not None, f"Variable {measure.association[0]} not found"
+            assert var2 is not None, f"Variable {measure.association[1]} not found"
+
+            uncalibrated_measures_by_association[radio_association].append(
+                UncalibratedRangeMeasurement(
+                    association=measure.association,
+                    dist=measure.dist,
+                    timestamp=measure.timestamp,
+                    true_dist=dist_between_variables(var1, var2),
+                )
+            )
 
     # for each measurement group, get the inlier set
     inlier_measurements = []
-    for association, measurements in association_to_measurements.items():
+    for _, uncalibrated_measurements in uncalibrated_measures_by_association.items():
         inlier_measurements += get_inlier_set_of_range_measurements(
-            measurements, show_outlier_rejection=show_outlier_rejection
+            uncalibrated_measurements, show_outlier_rejection=show_outlier_rejection
         )
 
     # get the calibrated measurements
@@ -397,3 +416,101 @@ def calibrate_range_measures(
     pyfg.range_measurements = calibrated_measurements
 
     return pyfg
+
+
+def reject_measurements_based_on_temporal_consistency(
+    pyfg: FactorGraphData, show_outlier_rejection: bool = False
+) -> FactorGraphData:
+    """The idea here is that range measurements that are close to each other in
+    time should have similar distances. If they don't, then we should discard
+    them.
+
+    Args:
+        pyfg (FactorGraphData): the original data
+
+    Returns:
+        FactorGraphData: the updated data
+    """
+    measures_by_association = get_range_measurements_by_association(pyfg)
+    inlier_measures = []
+    for association, measures in measures_by_association.items():
+        filtered_measures = apply_savgol_outlier_rejection(
+            measures,
+            plot_title=str(association),
+            show_outlier_rejection=show_outlier_rejection,
+        )
+        inlier_measures += filtered_measures
+
+    pyfg.range_measurements = inlier_measures
+    return pyfg
+
+
+def apply_savgol_outlier_rejection(
+    original_measurements: List[FGRangeMeasurement],
+    plot_title: Optional[str] = None,
+    show_outlier_rejection: bool = False,
+) -> List[FGRangeMeasurement]:
+    """Use the Savitzky-Golay filter to smooth the data and remove outliers.
+
+    Args:
+        List[FGRangeMeasurement]: the range measurements
+
+    Returns:
+        List[FGRangeMeasurements]: the filtered range measurements
+    """
+    distances = np.array([x.dist for x in original_measurements])
+    timestamps_ns = np.array([x.timestamp for x in original_measurements])
+
+    # convert timestamps to seconds and subtract the first timestamp
+    timestamps = (timestamps_ns - timestamps_ns[0]) / 1e9
+
+    # get the update frequency on the data
+    update_freq_hz = np.median(np.diff(timestamps))
+    window_size_seconds = 2.0
+    window_size_samples = int(window_size_seconds / update_freq_hz)
+
+    poly_degree = 3
+    smoothed_distances = savgol_filter(distances, window_size_samples, poly_degree)
+
+    # Calculate residuals (difference between original and smoothed values)
+    residuals = np.abs(distances - smoothed_distances)
+
+    # Compute the threshold based on the median and MAD of residuals
+    mad_residuals = np.median(np.abs(residuals - np.median(residuals)))
+    median_abs_deviation_threshold = 5.0
+    threshold_value = median_abs_deviation_threshold * mad_residuals
+
+    # Detect outliers
+    outliers = residuals > threshold_value
+    inliers = ~outliers
+
+    # plot the data, with outliers in red. Size of the point is 1
+    if show_outlier_rejection:
+        plt.scatter(timestamps[inliers], distances[inliers], label="Inliers", s=1)
+        plt.scatter(
+            timestamps[outliers],
+            distances[outliers],
+            label="Outliers",
+            s=1,
+            color="red",
+        )
+
+        # draw the smoothed data
+        plt.plot(
+            timestamps,
+            smoothed_distances,
+            label="Smoothed Distances",
+            color="orange",
+            linewidth=1.0,
+            linestyle="--",
+        )
+
+        plt.xlabel("Timestamp")
+        plt.ylabel("Distance")
+        if plot_title is not None:
+            plt.title(plot_title)
+        plt.legend()
+        plt.show()
+
+    # return the inliers
+    return [x for x, is_inlier in zip(original_measurements, inliers) if is_inlier]
