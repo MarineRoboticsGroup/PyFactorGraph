@@ -469,7 +469,7 @@ def apply_savgol_outlier_rejection(
     window_size_seconds = 2.0
     window_size_samples = int(window_size_seconds / update_freq_hz)
 
-    poly_degree = 3
+    poly_degree = 2
     smoothed_distances = savgol_filter(distances, window_size_samples, poly_degree)
 
     # Calculate residuals (difference between original and smoothed values)
@@ -512,5 +512,19 @@ def apply_savgol_outlier_rejection(
         plt.legend()
         plt.show()
 
-    # return the inliers
-    return [x for x, is_inlier in zip(original_measurements, inliers) if is_inlier]
+    # return the inliers, with the smoothed distances in place of the original
+    smoothed_inlier_ranges = [
+        FGRangeMeasurement(
+            x.association,
+            dist=smoothed_dist,
+            stddev=x.stddev,
+            timestamp=x.timestamp,
+        )
+        for x, smoothed_dist, is_inlier in zip(
+            original_measurements, smoothed_distances, inliers
+        )
+        if is_inlier
+    ]
+    return smoothed_inlier_ranges
+
+    # return [x for x, is_inlier in zip(original_measurements, inliers) if is_inlier]
