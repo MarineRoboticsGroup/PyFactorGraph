@@ -1326,5 +1326,70 @@ def rename_variables_to_be_sequential(
     return new_fg
 
 
+def keep_data_between_time_relative_to_first_pose(
+    pyfg: FactorGraphData, start_time_sec: float, end_time_sec: float
+) -> FactorGraphData:
+    logger.warning("Assuming that timestamps are in nanoseconds")
+    new_fg = FactorGraphData(dimension=pyfg.dimension)
+    pose_variables = pyfg.pose_variables_dict
+    landmark_variables = pyfg.landmark_variables_dict
+
+    # get the first pose's timestamp
+    first_pose = list(pose_variables.values())[0]
+    first_pose_timestamp = first_pose.timestamp
+
+    assert first_pose_timestamp is not None, "First pose has no timestamp"
+
+    # get the start and end times relative to the first pose
+    start_time = first_pose_timestamp + start_time_sec * 1e9
+    end_time = first_pose_timestamp + end_time_sec * 1e9
+
+    # add the poses and odometry measurements
+    for robot_idx, pose_chain in enumerate(pyfg.pose_variables):
+        for pose in pose_chain:
+            if pose.timestamp >= start_time and pose.timestamp <= end_time:  # type: ignore
+                new_fg.add_pose_variable(copy.deepcopy(pose))
+
+        # for n poses there are (n-1) odometry measurements
+        for odom in pyfg.odom_measurements[robot_idx]:
+            if odom.timestamp >= start_time and odom.timestamp <= end_time:  # type: ignore
+                new_fg.add_odom_measurement(robot_idx, copy.deepcopy(odom))
+
+    # add the loop closures
+    for loop_closure in pyfg.loop_closure_measurements:
+        if loop_closure.timestamp >= start_time and loop_closure.timestamp <= end_time:  # type: ignore
+            new_fg.add_loop_closure(copy.deepcopy(loop_closure))
+
+    # add the range measurements and landmarks
+    for range_meas in pyfg.range_measurements:
+        if range_meas.timestamp >= start_time and range_meas.timestamp <= end_time:  # type: ignore
+            new_fg.add_range_measurement(copy.deepcopy(range_meas))
+
+    # add the priors
+    for pose_prior in pyfg.pose_priors:
+        if pose_prior.timestamp >= start_time and pose_prior.timestamp <= end_time:  # type: ignore
+            new_fg.add_pose_prior(copy.deepcopy(pose_prior))
+
+    for landmark_prior in pyfg.landmark_priors:
+        if (
+            landmark_prior.timestamp >= start_time  # type: ignore
+            and landmark_prior.timestamp <= end_time  # type: ignore
+        ):
+            new_fg.add_landmark_prior(copy.deepcopy(landmark_prior))
+
+    # add all landmarks that have measurements to them
+    for landmark in landmark_variables.values():
+        new_fg.add_landmark_variable(copy.deepcopy(landmark))
+
+    unconnected_variables = new_fg.unconnected_variable_names
+    new_fg.landmark_variables = [
+        landmark
+        for landmark in new_fg.landmark_variables
+        if landmark.name in unconnected_variables
+    ]
+
+    return new_fg
+
+
 if __name__ == "__main__":
     pass
