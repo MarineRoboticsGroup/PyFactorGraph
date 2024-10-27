@@ -1326,9 +1326,35 @@ def rename_variables_to_be_sequential(
     return new_fg
 
 
-def keep_data_between_time_relative_to_first_pose(
-    pyfg: FactorGraphData, start_time_sec: float, end_time_sec: float
+def trim_pyfg_by_percentage(
+    pyfg: FactorGraphData, start_percent: float, end_percent: float
 ) -> FactorGraphData:
+    assert start_percent >= 0.0 and start_percent <= 1.0, "Invalid start percentage"
+    assert end_percent >= 0.0 and end_percent <= 1.0, "Invalid end percentage"
+    assert (
+        start_percent < end_percent
+    ), "Start percentage must be less than end percentage"
+
+    earliest_time = pyfg.pose_variables[0][0].timestamp
+    latest_time = pyfg.pose_variables[0][-1].timestamp
+    assert earliest_time is not None, "First pose has no timestamp"
+    assert latest_time is not None, "Last pose has no timestamp"
+    duration_sec = (latest_time - earliest_time) / 1e9
+
+    start_time_sec = start_percent * duration_sec
+    end_time_sec = end_percent * duration_sec
+
+    return keep_data_between_time_relative_to_first_pose(
+        pyfg, start_time_sec, end_time_sec
+    )
+
+
+def keep_data_between_time_relative_to_first_pose(
+    pyfg: FactorGraphData,
+    start_time_sec: float,
+    end_time_sec: float,
+) -> FactorGraphData:
+    assert not (start_time_sec is None and end_time_sec is None), "No time bounds given"
     logger.warning("Assuming that timestamps are in nanoseconds")
     new_fg = FactorGraphData(dimension=pyfg.dimension)
     pose_variables = pyfg.pose_variables_dict
@@ -1341,51 +1367,62 @@ def keep_data_between_time_relative_to_first_pose(
     assert first_pose_timestamp is not None, "First pose has no timestamp"
 
     # get the start and end times relative to the first pose
-    start_time = first_pose_timestamp + start_time_sec * 1e9
-    end_time = first_pose_timestamp + end_time_sec * 1e9
+    if start_time_sec < 0.0:
+        start_time_sec = 0.0
+    else:
+        start_time = first_pose_timestamp + start_time_sec * 1e9
 
-    # add the poses and odometry measurements
-    for robot_idx, pose_chain in enumerate(pyfg.pose_variables):
+    if end_time_sec < 0.0:
+        end_time = np.inf
+    else:
+        end_time = first_pose_timestamp + end_time_sec * 1e9
+
+    # add the poses
+    for pose_chain in pyfg.pose_variables:
         for pose in pose_chain:
             if pose.timestamp >= start_time and pose.timestamp <= end_time:  # type: ignore
                 new_fg.add_pose_variable(copy.deepcopy(pose))
-
-        # for n poses there are (n-1) odometry measurements
-        for odom in pyfg.odom_measurements[robot_idx]:
-            if odom.timestamp >= start_time and odom.timestamp <= end_time:  # type: ignore
-                new_fg.add_odom_measurement(robot_idx, copy.deepcopy(odom))
-
-    # add the loop closures
-    for loop_closure in pyfg.loop_closure_measurements:
-        if loop_closure.timestamp >= start_time and loop_closure.timestamp <= end_time:  # type: ignore
-            new_fg.add_loop_closure(copy.deepcopy(loop_closure))
-
-    # add the range measurements and landmarks
-    for range_meas in pyfg.range_measurements:
-        if range_meas.timestamp >= start_time and range_meas.timestamp <= end_time:  # type: ignore
-            new_fg.add_range_measurement(copy.deepcopy(range_meas))
-
-    # add the priors
-    for pose_prior in pyfg.pose_priors:
-        if pose_prior.timestamp >= start_time and pose_prior.timestamp <= end_time:  # type: ignore
-            new_fg.add_pose_prior(copy.deepcopy(pose_prior))
-
-    for landmark_prior in pyfg.landmark_priors:
-        if (
-            landmark_prior.timestamp >= start_time  # type: ignore
-            and landmark_prior.timestamp <= end_time  # type: ignore
-        ):
-            new_fg.add_landmark_prior(copy.deepcopy(landmark_prior))
 
     # add all landmarks that have measurements to them
     for landmark in landmark_variables.values():
         new_fg.add_landmark_variable(copy.deepcopy(landmark))
 
+    existing_variables = new_fg.variable_true_positions_dict
+
+    # add the odometry measurements
+    for robot_idx, odom_chain in enumerate(pyfg.odom_measurements):
+        for odom in odom_chain:
+            var1, var2 = odom.base_pose, odom.to_pose
+            if var1 in existing_variables and var2 in existing_variables:
+                new_fg.add_odom_measurement(robot_idx, copy.deepcopy(odom))
+
+    # add the loop closures
+    for loop_closure in pyfg.loop_closure_measurements:
+        var1, var2 = loop_closure.base_pose, loop_closure.to_pose
+        if var1 in existing_variables and var2 in existing_variables:
+            new_fg.add_loop_closure(copy.deepcopy(loop_closure))
+
+    # add the range measurements and landmarks
+    for range_meas in pyfg.range_measurements:
+        var1, var2 = range_meas.association
+        if var1 in existing_variables and var2 in existing_variables:
+            new_fg.add_range_measurement(copy.deepcopy(range_meas))
+
+    # add the priors
+    for pose_prior in pyfg.pose_priors:
+        if pose_prior.name in existing_variables:
+            new_fg.add_pose_prior(copy.deepcopy(pose_prior))
+
+    for landmark_prior in pyfg.landmark_priors:
+        if landmark_prior.name in existing_variables:
+            new_fg.add_landmark_prior(copy.deepcopy(landmark_prior))
+
     unconnected_variables = new_fg.unconnected_variable_names
+    print(f"Unconnected variables: {unconnected_variables}")
     new_fg.landmark_variables = [
         landmark
         for landmark in new_fg.landmark_variables
-        if landmark.name in unconnected_variables
+        if landmark.name not in unconnected_variables
     ]
 
     return new_fg
