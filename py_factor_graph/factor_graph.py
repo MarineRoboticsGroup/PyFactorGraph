@@ -236,7 +236,7 @@ class FactorGraphData:
             f"Measurements: {num_odom_measurements} odom, "
             f"{num_pose_landmark_measurements} pose to landmark, "
             f"{num_range_measurements} range, {num_loop_closures} loop closures, "
-            f"Interrobot loop closures: {self.interrobot_loop_closure_info}"
+            f"Interrobot loop closures: {self.interrobot_loop_closure_info}, "
         )
         msg = f"{robots_line} || {variables_line} || {measurements_line}"
         logger.info(msg)
@@ -347,6 +347,30 @@ class FactorGraphData:
         info = ""
         for assoc, cnt in loop_closure_counts.items():
             info += f"{assoc}: {cnt} loop closures"
+
+        return info
+
+    @property
+    def interrobot_range_info(self) -> str:
+        """Returns a string containing information about the inter-robot range measurements.
+
+        Returns:
+            str: a string containing information about the inter-robot range measurements
+        """
+        range_counts: Dict[Tuple[str, str], int] = {}
+        for association, range_meas in self.range_measures_association_dict.items():
+            if "L" in association[0] or "L" in association[1]:
+                continue
+
+            if association[0] > association[1]:
+                association = (association[1], association[0])
+            range_counts[association] = range_counts.get(association, 0) + len(
+                range_meas
+            )
+
+        info = ""
+        for assoc, cnt in range_counts.items():
+            info += f"{assoc}: {cnt} range measurements"
 
         return info
 

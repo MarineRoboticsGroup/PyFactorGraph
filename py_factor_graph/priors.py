@@ -2,6 +2,7 @@ import attr
 from typing import Optional, Tuple, Union
 import numpy as np
 from attrs import define, field
+import scipy.spatial as spatial
 from py_factor_graph.utils.attrib_utils import (
     make_variable_name_validator,
     float_tuple_validator,
@@ -15,7 +16,7 @@ from py_factor_graph.utils.matrix_utils import (
 )
 
 
-@define(frozen=True)
+@define(frozen=False)
 class PosePrior2D:
     """A prior on the robot pose
 
@@ -57,7 +58,7 @@ class PosePrior2D:
         )
 
 
-@define(frozen=True)
+@define(frozen=False)
 class PosePrior3D:
     name: str = attr.ib()
     position: Tuple[float, float, float] = attr.ib()
@@ -87,6 +88,10 @@ class PosePrior3D:
         return self.rotation
 
     @property
+    def yaw(self) -> float:
+        return spatial.transform.Rotation.from_matrix(self.rotation).as_euler("zyx")[0]
+
+    @property
     def covariance(self) -> np.ndarray:
         return get_covariance_matrix_from_measurement_precisions(
             self.translation_precision, self.rotation_precision, mat_dim=6
@@ -97,7 +102,7 @@ class PosePrior3D:
         return get_quat_from_rotation_matrix(self.rotation)
 
 
-@define(frozen=True)
+@define(frozen=False)
 class LandmarkPrior2D:
     """A prior on the landmark
 
@@ -133,7 +138,7 @@ class LandmarkPrior2D:
         return self.covariance_matrix
 
 
-@define(frozen=True)
+@define(frozen=False)
 class LandmarkPrior3D:
     name: str = field(validator=make_variable_name_validator("landmark"))
     position: Tuple[float, float, float] = field(validator=float_tuple_validator)

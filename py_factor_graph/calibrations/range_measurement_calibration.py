@@ -366,6 +366,19 @@ def get_range_measurements_by_association(
 
         association_to_measurements[association_group].append(measurement)
 
+    # if any association has no measurements, remove it
+    association_to_measurements = {
+        association: measurements
+        for association, measurements in association_to_measurements.items()
+        if len(measurements) > 0
+    }
+
+    # sort the measurements by timestamp
+    for association, measurements in association_to_measurements.items():
+        association_to_measurements[association] = sorted(
+            measurements, key=lambda x: x.timestamp
+        )
+
     return association_to_measurements
 
 
@@ -434,6 +447,9 @@ def reject_measurements_based_on_temporal_consistency(
     measures_by_association = get_range_measurements_by_association(pyfg)
     inlier_measures = []
     for association, measures in measures_by_association.items():
+        if len(measures) == 0:
+            raise ValueError(f"No measurements for association: {association}")
+
         filtered_measures = apply_savgol_outlier_rejection(
             measures,
             plot_title=str(association),
@@ -458,6 +474,15 @@ def apply_savgol_outlier_rejection(
     Returns:
         List[FGRangeMeasurements]: the filtered range measurements
     """
+    if plot_title is None:
+        logger.debug(
+            f"Applying Savitzky-Golay outlier rejection to {len(original_measurements)} measurements"
+        )
+    else:
+        logger.debug(
+            f"Applying Savitzky-Golay outlier rejection to {len(original_measurements)} measurements: {plot_title}"
+        )
+
     distances = np.array([x.dist for x in original_measurements])
     timestamps_ns = np.array([x.timestamp for x in original_measurements])
 
@@ -470,6 +495,12 @@ def apply_savgol_outlier_rejection(
     window_size_samples = int(window_size_seconds / update_freq_hz)
 
     poly_degree = 2
+    if window_size_samples <= poly_degree:
+        logger.warning(
+            f"Window size of {window_size_samples} samples is too small for polynomial degree of {poly_degree}. Rejecting all measurements."
+        )
+        return []
+
     smoothed_distances = savgol_filter(distances, window_size_samples, poly_degree)
 
     # Calculate residuals (difference between original and smoothed values)
