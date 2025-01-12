@@ -13,9 +13,10 @@ from py_factor_graph.utils.attrib_utils import (
     make_rot_matrix_validator,
     make_variable_name_validator,
 )
+import scipy.spatial as spatial
 
 
-@attr.s(frozen=True)
+@attr.s()
 class PoseVariable2D:
     """A variable which is a robot pose
 
@@ -106,7 +107,7 @@ class PoseVariable2D:
         return PoseVariable2D(self.name, pos2d, new_theta, self.timestamp)
 
 
-@attr.s(frozen=True)
+@attr.s()
 class PoseVariable3D:
     """A variable which is a robot pose
 
@@ -161,6 +162,12 @@ class PoseVariable3D:
         return self.true_position[2]
 
     @property
+    def yaw(self) -> float:
+        rot_mat = self.rotation_matrix
+        yaw = spatial.transform.Rotation.from_matrix(rot_mat).as_euler("zyx")[0]
+        return yaw
+
+    @property
     def true_quat(self) -> np.ndarray:
         rot = self.rotation_matrix
         quat = get_quat_from_rotation_matrix(rot)
@@ -199,7 +206,7 @@ class PoseVariable3D:
         return PoseVariable3D(self.name, pos3d, new_rotation, self.timestamp)
 
 
-@attr.s(frozen=True)
+@attr.s()
 class LandmarkVariable2D:
     """A variable which is a landmark
 
@@ -226,7 +233,7 @@ class LandmarkVariable2D:
         return self.true_position[1]
 
 
-@attr.s(frozen=True)
+@attr.s()
 class LandmarkVariable3D:
     """A variable which is a landmark
 
@@ -259,3 +266,26 @@ class LandmarkVariable3D:
 
 POSE_VARIABLE_TYPES = Union[PoseVariable2D, PoseVariable3D]
 LANDMARK_VARIABLE_TYPES = Union[LandmarkVariable2D, LandmarkVariable3D]
+
+
+def dist_between_variables(
+    var1: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
+    var2: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
+) -> float:
+    """Returns the distance between two variables"""
+    if isinstance(var1, PoseVariable2D) or isinstance(var1, PoseVariable3D):
+        pos1 = var1.position_vector
+    elif isinstance(var1, LandmarkVariable2D) or isinstance(var1, LandmarkVariable3D):
+        pos1 = np.array(var1.true_position)
+    else:
+        raise ValueError(f"Variable {var1} not supported")
+
+    if isinstance(var2, PoseVariable2D) or isinstance(var2, PoseVariable3D):
+        pos2 = var2.position_vector
+    elif isinstance(var2, LandmarkVariable2D) or isinstance(var2, LandmarkVariable3D):
+        pos2 = np.array(var2.true_position)
+    else:
+        raise ValueError(f"Variable {var2} not supported")
+
+    dist = np.linalg.norm(pos1 - pos2).astype(float)
+    return dist

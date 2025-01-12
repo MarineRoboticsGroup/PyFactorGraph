@@ -6,12 +6,13 @@ Examples:
     2) a modifier that splits a single-robot factor graph into a multi-robot one
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 import copy
 import itertools
 import random
 from attrs import define, field
+
 
 from py_factor_graph.variables import (
     PoseVariable2D,
@@ -20,12 +21,19 @@ from py_factor_graph.variables import (
     LandmarkVariable2D,
     LandmarkVariable3D,
     LANDMARK_VARIABLE_TYPES,
+    dist_between_variables,
 )
 from py_factor_graph.measurements import (
     PoseMeasurement2D,
     PoseMeasurement3D,
     POSE_MEASUREMENT_TYPES,
     FGRangeMeasurement,
+)
+from py_factor_graph.priors import (
+    LandmarkPrior2D,
+    LandmarkPrior3D,
+    PosePrior2D,
+    PosePrior3D,
 )
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.name_utils import (
@@ -37,6 +45,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_theta_from_transformation_matrix,
     get_rotation_matrix_from_transformation_matrix,
     get_translation_from_transformation_matrix,
+    get_measurement_precisions_from_covariance_matrix,
 )
 from py_factor_graph.utils.attrib_utils import (
     probability_validator,
@@ -83,29 +92,6 @@ class RangeMeasurementModel:
         )
 
 
-def _dist_between_variables(
-    var1: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
-    var2: Union[POSE_VARIABLE_TYPES, LANDMARK_VARIABLE_TYPES],
-) -> float:
-    """Returns the distance between two variables"""
-    if isinstance(var1, PoseVariable2D) or isinstance(var1, PoseVariable3D):
-        pos1 = var1.position_vector
-    elif isinstance(var1, LandmarkVariable2D) or isinstance(var1, LandmarkVariable3D):
-        pos1 = np.array(var1.true_position)
-    else:
-        raise ValueError(f"Variable {var1} not supported")
-
-    if isinstance(var2, PoseVariable2D) or isinstance(var2, PoseVariable3D):
-        pos2 = var2.position_vector
-    elif isinstance(var2, LandmarkVariable2D) or isinstance(var2, LandmarkVariable3D):
-        pos2 = np.array(var2.true_position)
-    else:
-        raise ValueError(f"Variable {var2} not supported")
-
-    dist = np.linalg.norm(pos1 - pos2).astype(float)
-    return dist
-
-
 def add_landmark_at_position(
     fg: FactorGraphData,
     landmark_position: np.ndarray,
@@ -143,7 +129,7 @@ def add_landmark_at_position(
 
     for pose_chain in new_fg.pose_variables:
         for pose in pose_chain:
-            pose_landmark_dist = _dist_between_variables(pose, new_landmark)
+            pose_landmark_dist = dist_between_variables(pose, new_landmark)
             if (
                 pose_landmark_dist <= range_measurement_model.sensing_horizon
                 and np.random.rand() < range_measurement_model.measurement_prob
@@ -446,7 +432,7 @@ def add_inter_robot_range_measurements(
                 )
                 raise ValueError(err)
 
-            dist = _dist_between_variables(pose1, pose2)
+            dist = dist_between_variables(pose1, pose2)
 
             if dist <= sensing_horizon and np.random.rand() < measurement_prob:
                 association = (pose1.name, pose2.name)
@@ -825,6 +811,948 @@ def add_error_to_all_odom_measures(
                 raise NotImplementedError("3D odometry not implemented")
             else:
                 raise ValueError(f"Invalid odom type: {type(odom)}")
+
+    return new_fg
+
+
+def convert_to_sensor_network_localization(fg: FactorGraphData) -> FactorGraphData:
+    """Generates an SNL problem by converting all poses into landmarks and
+    converting all measurements into range measurements.
+
+    Args:
+        fg (FactorGraphData): the factor graph to modify
+
+    Returns:
+        FactorGraphData: the new factor graph
+    """
+    new_fg = FactorGraphData(dimension=fg.dimension)
+
+    # copy all of the landmarks and their priors
+    for landmark in fg.landmark_variables:
+        new_landmark = copy.deepcopy(landmark)
+        new_fg.add_landmark_variable(new_landmark)
+
+    for landmark_prior in fg.landmark_priors:
+        new_landmark_prior = copy.deepcopy(landmark_prior)
+        new_fg.add_landmark_prior(new_landmark_prior)
+
+    def _get_new_landmark_name() -> str:
+        return f"L{new_fg.num_landmarks}"
+
+    var_to_landmark_name_mapping = {
+        landmark.name: landmark.name for landmark in fg.landmark_variables
+    }
+
+    # add all of the poses as landmarks
+    for pose_chain in fg.pose_variables:
+        for pose in pose_chain:
+            new_landmark_name = _get_new_landmark_name()
+            var_to_landmark_name_mapping[pose.name] = new_landmark_name
+
+            if isinstance(pose, PoseVariable2D):
+                new_landmark = LandmarkVariable2D(
+                    new_landmark_name,
+                    (pose.position_vector[0], pose.position_vector[1]),
+                )
+            elif isinstance(pose, PoseVariable3D):
+                new_landmark = LandmarkVariable3D(
+                    new_landmark_name,
+                    (
+                        pose.position_vector[0],
+                        pose.position_vector[1],
+                        pose.position_vector[2],
+                    ),
+                )
+            else:
+                raise ValueError(f"Invalid pose type: {type(pose)}")
+
+            new_fg.add_landmark_variable(new_landmark)
+
+    # copy pose priors as landmark priors
+    for pose_prior in fg.pose_priors:
+        landmark_name = var_to_landmark_name_mapping[pose_prior.name]
+        if isinstance(pose_prior, PosePrior2D):
+            new_landmark_prior = LandmarkPrior2D(
+                landmark_name,
+                (pose_prior.translation_vector[0], pose_prior.translation_vector[1]),
+                pose_prior.translation_precision,
+                pose_prior.timestamp,
+            )
+        elif isinstance(pose_prior, PosePrior3D):
+            new_landmark_prior = LandmarkPrior3D(
+                landmark_name,
+                (
+                    pose_prior.translation_vector[0],
+                    pose_prior.translation_vector[1],
+                    pose_prior.translation_vector[2],
+                ),
+                pose_prior.translation_precision,
+                pose_prior.timestamp,
+            )
+        else:
+            raise ValueError(f"Invalid pose prior type: {type(pose_prior)}")
+        fg.add_landmark_prior(new_landmark_prior)
+
+    # add all of the range measurements as range measurements
+    for range_meas in fg.range_measurements:
+        base_landmark, to_landmark = range_meas.association
+        base_landmark = var_to_landmark_name_mapping[base_landmark]
+        to_landmark = var_to_landmark_name_mapping[to_landmark]
+
+        new_range_meas = FGRangeMeasurement(
+            (base_landmark, to_landmark), range_meas.dist, range_meas.stddev
+        )
+        new_fg.add_range_measurement(new_range_meas)
+
+    # add all of the odometry measurements as range measurements
+    for odom_chain in fg.odom_measurements:
+        for odom_measure in odom_chain:
+            base_landmark = var_to_landmark_name_mapping[odom_measure.base_pose]
+            to_landmark = var_to_landmark_name_mapping[odom_measure.to_pose]
+            dist = np.linalg.norm(odom_measure.translation_vector).astype(float)
+
+            # this measure of stddev is approximately right, but doesn't account
+            # for "wrap around" when the translation is close to 0 (as distance
+            # is non-negative)
+            stddev = np.sqrt(1.0 / odom_measure.translation_precision)
+            range_measure = FGRangeMeasurement(
+                (base_landmark, to_landmark), dist, stddev
+            )
+            new_fg.add_range_measurement(range_measure)
+
+    # add all of the loop closures as range measurements
+    for loop_closure in fg.loop_closure_measurements:
+        base_landmark = var_to_landmark_name_mapping[loop_closure.base_pose]
+        to_landmark = var_to_landmark_name_mapping[loop_closure.to_pose]
+        dist = np.linalg.norm(loop_closure.translation_vector).astype(float)
+        stddev = np.sqrt(1.0 / loop_closure.translation_precision)
+        range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
+        new_fg.add_range_measurement(range_measure)
+
+    for measure in fg.pose_landmark_measurements:
+        base_landmark = var_to_landmark_name_mapping[measure.pose_name]
+        to_landmark = var_to_landmark_name_mapping[measure.landmark_name]
+        dist = np.linalg.norm(measure.translation_vector).astype(float)
+        stddev = np.sqrt(1.0 / measure.translation_precision)
+        range_measure = FGRangeMeasurement((base_landmark, to_landmark), dist, stddev)
+        new_fg.add_range_measurement(range_measure)
+
+    return new_fg
+
+
+def add_random_range_measurements(
+    fg: FactorGraphData,
+    num_measures: int,
+    stddev: float,
+    prob_from_pose_variable: float,
+    prob_to_pose_variable: float,
+) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+    # get a list of all the landmarks and poses
+    pose_variables = new_fg.pose_variables_dict
+    landmark_variables = new_fg.landmark_variables_dict
+
+    # make sure that if we're expecting poses that there are pose variables
+    if prob_from_pose_variable > 0.0 or prob_to_pose_variable > 0.0:
+        assert len(pose_variables) > 0, "No pose variables in the factor graph"
+    if prob_from_pose_variable < 1.0 or prob_to_pose_variable < 1.0:
+        assert len(landmark_variables) > 0, "No landmark variables in the factor graph"
+
+    start_num_measures = new_fg.num_range_measurements
+    num_skips = 0
+    existing_measures = set(new_fg.range_measures_association_dict.keys())
+    while (
+        new_fg.num_range_measurements < start_num_measures + num_measures
+        and num_skips < 1000
+    ):
+        # flip a coin to decide if the measurement is between two landmarks or a pose and a landmark
+        from_pose = np.random.rand() < prob_from_pose_variable
+        if from_pose:
+            from_name = random.choice(list(pose_variables.keys()))
+        else:
+            from_name = random.choice(list(landmark_variables.keys()))
+
+        to_pose = np.random.rand() < prob_to_pose_variable
+        to_name = from_name
+        while to_name == from_name:
+            if to_pose:
+                to_name = random.choice(list(pose_variables.keys()))
+            else:
+                to_name = random.choice(list(landmark_variables.keys()))
+
+        from_var = (
+            pose_variables[from_name] if from_pose else landmark_variables[from_name]
+        )
+        to_var = pose_variables[to_name] if to_pose else landmark_variables[to_name]
+        dist = dist_between_variables(from_var, to_var)
+        noisy_dist = np.random.normal(dist, stddev)
+        var_association = (from_name, to_name)
+        flip_association = (to_name, from_name)
+
+        if (
+            var_association in existing_measures
+            or flip_association in existing_measures
+        ):
+            num_skips += 1
+            continue
+
+        new_fg.add_range_measurement(
+            FGRangeMeasurement((from_name, to_name), noisy_dist, stddev)
+        )
+        existing_measures.add(var_association)
+
+    assert (
+        len(existing_measures)
+        == new_fg.num_range_measurements
+        == start_num_measures + num_measures
+    )
+    return new_fg
+
+
+def make_all_ranges_perfect(fg: FactorGraphData) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+    new_fg.range_measurements = []
+
+    # make the measured distances noiseless but keep the same stddev
+    pose_vars = new_fg.pose_variables_dict
+    landmark_vars = new_fg.landmark_variables_dict
+    for measure in fg.range_measurements:
+        from_name, to_name = measure.association
+        from_var = pose_vars.get(from_name, landmark_vars.get(from_name))
+        to_var = pose_vars.get(to_name, landmark_vars.get(to_name))
+        assert from_var is not None, f"Variable {from_name} not found"
+        assert to_var is not None, f"Variable {to_name} not found"
+        dist = dist_between_variables(from_var, to_var)  # type: ignore
+        new_fg.add_range_measurement(
+            FGRangeMeasurement((from_name, to_name), dist, measure.stddev)
+        )
+
+    return new_fg
+
+
+def make_fully_connected_ranges_between_all_landmarks(
+    fg: FactorGraphData,
+) -> FactorGraphData:
+    new_fg = copy.deepcopy(fg)
+
+    # make the measured distances noiseless but keep the same stddev
+    landmark_vars = new_fg.landmark_variables_dict
+    for from_name, from_var in landmark_vars.items():
+        for to_name, to_var in landmark_vars.items():
+            if from_name == to_name:
+                continue
+            dist = dist_between_variables(from_var, to_var)
+
+            # if the measurement already exists then skip
+            association = (from_name, to_name)
+            if association in new_fg.range_measures_association_dict:
+                continue
+
+            new_fg.add_range_measurement(
+                FGRangeMeasurement((from_name, to_name), dist, 1.0)
+            )
+
+    return new_fg
+
+
+def _get_composed_odom(
+    fg: FactorGraphData, robot_idx: int, start_pose_idx: int, end_pose_idx: int
+) -> POSE_MEASUREMENT_TYPES:
+    start_odom_idx = start_pose_idx
+    end_odom_idx = end_pose_idx - 1
+    composed_odom_mat = np.eye(fg.dimension + 1)
+    odom_covar = np.zeros_like(fg.odom_measurements[robot_idx][0].covariance)
+    for odom in fg.odom_measurements[robot_idx][start_odom_idx : end_odom_idx + 1]:
+        odom_mat = odom.transformation_matrix
+        odom_covar += odom.covariance
+        composed_odom_mat = composed_odom_mat @ odom_mat
+
+    (
+        trans_precision,
+        rot_precision,
+    ) = get_measurement_precisions_from_covariance_matrix(odom_covar)
+
+    start_odom_measure = fg.odom_measurements[robot_idx][start_odom_idx]
+    end_odom_measure = fg.odom_measurements[robot_idx][end_odom_idx]
+
+    base_pose_name = start_odom_measure.base_pose
+    to_pose_name = end_odom_measure.to_pose
+    if start_odom_measure.timestamp is None or end_odom_measure.timestamp is None:
+        timestamp = None
+    else:
+        timestamp = (start_odom_measure.timestamp + end_odom_measure.timestamp) / 2
+
+    if fg.dimension == 2:
+        composed_odom_2d = PoseMeasurement2D(
+            base_pose_name,
+            to_pose_name,
+            x=composed_odom_mat[0, 2],
+            y=composed_odom_mat[1, 2],
+            theta=get_theta_from_transformation_matrix(composed_odom_mat),
+            translation_precision=trans_precision,
+            rotation_precision=rot_precision,
+            timestamp=timestamp,
+        )
+        return composed_odom_2d
+    else:
+        composed_odom_3d = PoseMeasurement3D(
+            base_pose_name,
+            to_pose_name,
+            translation=get_translation_from_transformation_matrix(composed_odom_mat),
+            rotation=get_rotation_matrix_from_transformation_matrix(composed_odom_mat),
+            translation_precision=trans_precision,
+            rotation_precision=rot_precision,
+            timestamp=timestamp,
+        )
+        return composed_odom_3d
+
+
+def compose_odom_between_ranges_or_loop_closures(
+    fg: FactorGraphData,
+) -> FactorGraphData:
+    """Join together all pose measurements that just represent odometry chains.
+    I.e., if there are a sequence of odometry measurements between poses, then compose
+    the odometry until a range measurement or loop closure is encountered.
+
+    Args:
+        fg (FactorGraphData): the factor graph to modify
+
+    Returns:
+        FactorGraphData: the modified factor graph
+    """
+    new_fg = copy.deepcopy(fg)
+
+    # erase all of the pose variables and odometry measurements
+    new_fg.pose_variables = [[] for _ in range(fg.num_robots)]
+    new_fg.odom_measurements = [[] for _ in range(fg.num_robots)]
+
+    # iterate over the pose chains and select the variables that we want to keep
+    range_measures_set = set(fg.both_poses_to_range_measures_dict.keys())
+    loop_closures_set = set(fg.loop_closure_dict.keys())
+    pose_priors_set = set([prior.name for prior in fg.pose_priors])
+    poses_to_keep = pose_priors_set | range_measures_set | loop_closures_set
+
+    # also keep the first and last pose in each chain
+    pose_indices_to_keep: List[List[int]] = [[] for _ in range(fg.num_robots)]
+    for pose_chain_idx, pose_chain in enumerate(fg.pose_variables):
+        poses_to_keep.add(pose_chain[0].name)
+        poses_to_keep.add(pose_chain[-1].name)
+        for pose_idx, pose in enumerate(pose_chain):
+            if pose.name in poses_to_keep:
+                pose_indices_to_keep[pose_chain_idx].append(pose_idx)
+                new_fg.add_pose_variable(copy.deepcopy(pose))
+
+    for robot_idx, pose_indices in enumerate(pose_indices_to_keep):
+        for pose_idx in range(len(pose_indices) - 1):
+            start_pose_idx = pose_indices[pose_idx]
+            end_pose_idx = pose_indices[pose_idx + 1]
+            odom_measure = _get_composed_odom(
+                fg, robot_idx, start_pose_idx, end_pose_idx
+            )
+            new_fg.add_odom_measurement(robot_idx, odom_measure)
+
+    return new_fg
+
+
+def compose_odom_for_every_nth_pose(fg: FactorGraphData, n: int) -> FactorGraphData:
+    # like compose odom between ranges or loop closures, but only for every nth pose (so
+    # we retain more odometry measurements)
+    new_fg = copy.deepcopy(fg)
+
+    # erase all of the pose variables and odometry measurements
+    new_fg.pose_variables = [[] for _ in range(fg.num_robots)]
+    new_fg.odom_measurements = [[] for _ in range(fg.num_robots)]
+
+    # iterate over the pose chains and select the variables that we want to keep
+    range_measures_set = set(fg.both_poses_to_range_measures_dict.keys())
+    loop_closures_set = set(fg.loop_closure_dict.keys())
+    pose_priors_set = set([prior.name for prior in fg.pose_priors])
+    poses_to_keep = pose_priors_set | range_measures_set | loop_closures_set
+
+    # also keep the first and last pose in each chain
+    pose_indices_to_keep: List[List[int]] = [[] for _ in range(fg.num_robots)]
+    for pose_chain_idx, pose_chain in enumerate(fg.pose_variables):
+        poses_to_keep.add(pose_chain[0].name)
+        poses_to_keep.add(pose_chain[-1].name)
+        for pose_idx, pose in enumerate(pose_chain):
+            if pose_idx % n == 0 or pose.name in poses_to_keep:
+                pose_indices_to_keep[pose_chain_idx].append(pose_idx)
+                new_fg.add_pose_variable(copy.deepcopy(pose))
+
+    for robot_idx, pose_indices in enumerate(pose_indices_to_keep):
+        for pose_idx in range(len(pose_indices) - 1):
+            start_pose_idx = pose_indices[pose_idx]
+            end_pose_idx = pose_indices[pose_idx + 1]
+            odom_measure = _get_composed_odom(
+                fg, robot_idx, start_pose_idx, end_pose_idx
+            )
+            new_fg.add_odom_measurement(robot_idx, odom_measure)
+
+    return new_fg
+
+
+def rename_variables_to_be_sequential(
+    pyfg: FactorGraphData, rename_poses=True, rename_landmarks=True
+) -> FactorGraphData:
+    name_mapping = {}
+    for pose_chain in pyfg.pose_variables:
+        for pose_idx, pose in enumerate(pose_chain):
+            if rename_poses:
+                name_mapping[pose.name] = pose.name[0] + str(pose_idx)
+            else:
+                name_mapping[pose.name] = pose.name
+
+    for landmark_idx, landmark in enumerate(pyfg.landmark_variables):
+        if rename_landmarks:
+            name_mapping[landmark.name] = landmark.name[0] + str(landmark_idx)
+        else:
+            name_mapping[landmark.name] = landmark.name
+
+    new_fg = FactorGraphData(dimension=pyfg.dimension)
+
+    # add the pose variables
+    for pose_chain in pyfg.pose_variables:
+        for pose in pose_chain:
+            if isinstance(pose, PoseVariable2D):
+                new_fg.add_pose_variable(
+                    PoseVariable2D(
+                        name_mapping[pose.name],
+                        pose.true_position,
+                        pose.true_theta,
+                        pose.timestamp,
+                    )
+                )
+            elif isinstance(pose, PoseVariable3D):
+                new_fg.add_pose_variable(
+                    PoseVariable3D(
+                        name_mapping[pose.name],
+                        pose.true_position,
+                        pose.true_rotation,
+                        pose.timestamp,
+                    )
+                )
+
+    # add the landmark variables
+    for landmark in pyfg.landmark_variables:
+        if isinstance(landmark, LandmarkVariable2D):
+            new_fg.add_landmark_variable(
+                LandmarkVariable2D(name_mapping[landmark.name], landmark.true_position)
+            )
+        elif isinstance(landmark, LandmarkVariable3D):
+            new_fg.add_landmark_variable(
+                LandmarkVariable3D(name_mapping[landmark.name], landmark.true_position)
+            )
+
+    # add odometry measurements
+    for robot_idx, odom_chain in enumerate(pyfg.odom_measurements):
+        for odom in odom_chain:
+            if isinstance(odom, PoseMeasurement2D):
+                new_fg.add_odom_measurement(
+                    robot_idx,
+                    PoseMeasurement2D(
+                        name_mapping[odom.base_pose],
+                        name_mapping[odom.to_pose],
+                        odom.x,
+                        odom.y,
+                        odom.theta,
+                        odom.translation_precision,
+                        odom.rotation_precision,
+                        odom.timestamp,
+                    ),
+                )
+            elif isinstance(odom, PoseMeasurement3D):
+                new_fg.add_odom_measurement(
+                    robot_idx,
+                    PoseMeasurement3D(
+                        name_mapping[odom.base_pose],
+                        name_mapping[odom.to_pose],
+                        odom.translation,
+                        odom.rotation,
+                        odom.translation_precision,
+                        odom.rotation_precision,
+                        odom.timestamp,
+                    ),
+                )
+
+    # add range measurements
+    for range_meas in pyfg.range_measurements:
+        name1, name2 = range_meas.association
+        if not name1 in name_mapping:
+            raise ValueError(
+                f"Variable {name1} not found in name mapping: association {range_meas.association}"
+            )
+        if not name2 in name_mapping:
+            raise ValueError(
+                f"Variable {name2} not found in name mapping: association {range_meas.association}"
+            )
+
+        new_fg.add_range_measurement(
+            FGRangeMeasurement(
+                (name_mapping[name1], name_mapping[name2]),
+                range_meas.dist,
+                range_meas.stddev,
+            )
+        )
+
+    # add loop closures
+    for loop_closure in pyfg.loop_closure_measurements:
+        if isinstance(loop_closure, PoseMeasurement2D):
+            new_fg.add_loop_closure(
+                PoseMeasurement2D(
+                    name_mapping[loop_closure.base_pose],
+                    name_mapping[loop_closure.to_pose],
+                    loop_closure.x,
+                    loop_closure.y,
+                    loop_closure.theta,
+                    loop_closure.translation_precision,
+                    loop_closure.rotation_precision,
+                    loop_closure.timestamp,
+                )
+            )
+        elif isinstance(loop_closure, PoseMeasurement3D):
+            new_fg.add_loop_closure(
+                PoseMeasurement3D(
+                    name_mapping[loop_closure.base_pose],
+                    name_mapping[loop_closure.to_pose],
+                    loop_closure.translation,
+                    loop_closure.rotation,
+                    loop_closure.translation_precision,
+                    loop_closure.rotation_precision,
+                    loop_closure.timestamp,
+                )
+            )
+
+    # add pose priors
+    for pose_prior in pyfg.pose_priors:
+        if isinstance(pose_prior, PosePrior2D):
+            new_fg.add_pose_prior(
+                PosePrior2D(
+                    name_mapping[pose_prior.name],
+                    pose_prior.position,
+                    pose_prior.theta,
+                    pose_prior.translation_precision,
+                    pose_prior.rotation_precision,
+                    pose_prior.timestamp,
+                )
+            )
+        elif isinstance(pose_prior, PosePrior3D):
+            new_fg.add_pose_prior(
+                PosePrior3D(
+                    name_mapping[pose_prior.name],
+                    pose_prior.position,
+                    pose_prior.rotation,
+                    pose_prior.translation_precision,
+                    pose_prior.rotation_precision,
+                    pose_prior.timestamp,
+                )
+            )
+
+    # add landmark priors
+    for landmark_prior in pyfg.landmark_priors:
+        if isinstance(landmark_prior, LandmarkPrior2D):
+            new_fg.add_landmark_prior(
+                LandmarkPrior2D(
+                    name_mapping[landmark_prior.name],
+                    landmark_prior.position,
+                    landmark_prior.translation_precision,
+                    landmark_prior.timestamp,
+                )
+            )
+        elif isinstance(landmark_prior, LandmarkPrior3D):
+            new_fg.add_landmark_prior(
+                LandmarkPrior3D(
+                    name_mapping[landmark_prior.name],
+                    landmark_prior.position,
+                    landmark_prior.translation_precision,
+                    landmark_prior.timestamp,
+                )
+            )
+
+    return new_fg
+
+
+def trim_pyfg_by_percentage(
+    pyfg: FactorGraphData, start_percent: float, end_percent: float
+) -> FactorGraphData:
+    assert start_percent >= 0.0 and start_percent <= 1.0, "Invalid start percentage"
+    assert end_percent >= 0.0 and end_percent <= 1.0, "Invalid end percentage"
+    assert (
+        start_percent < end_percent
+    ), "Start percentage must be less than end percentage"
+
+    earliest_time = pyfg.pose_variables[0][0].timestamp
+    latest_time = pyfg.pose_variables[0][-1].timestamp
+    assert earliest_time is not None, "First pose has no timestamp"
+    assert latest_time is not None, "Last pose has no timestamp"
+    duration_sec = (latest_time - earliest_time) / 1e9
+
+    start_time_sec = start_percent * duration_sec
+    end_time_sec = end_percent * duration_sec
+
+    return keep_data_between_time_relative_to_first_pose(
+        pyfg, start_time_sec, end_time_sec
+    )
+
+
+def keep_data_between_time_relative_to_first_pose(
+    pyfg: FactorGraphData,
+    start_time_sec: float,
+    end_time_sec: float,
+) -> FactorGraphData:
+    assert not (start_time_sec is None and end_time_sec is None), "No time bounds given"
+    logger.warning("Assuming that timestamps are in nanoseconds")
+    new_fg = FactorGraphData(dimension=pyfg.dimension)
+    pose_variables = pyfg.pose_variables_dict
+    landmark_variables = pyfg.landmark_variables_dict
+
+    # get the first pose's timestamp
+    first_pose = list(pose_variables.values())[0]
+    first_pose_timestamp = first_pose.timestamp
+
+    assert first_pose_timestamp is not None, "First pose has no timestamp"
+
+    # get the start and end times relative to the first pose
+    if start_time_sec < 0.0:
+        start_time_sec = 0.0
+    else:
+        start_time = first_pose_timestamp + start_time_sec * 1e9
+
+    if end_time_sec < 0.0:
+        end_time = np.inf
+    else:
+        end_time = first_pose_timestamp + end_time_sec * 1e9
+
+    # add the poses
+    for pose_chain in pyfg.pose_variables:
+        for pose in pose_chain:
+            if pose.timestamp >= start_time and pose.timestamp <= end_time:  # type: ignore
+                new_fg.add_pose_variable(copy.deepcopy(pose))
+
+    # add all landmarks that have measurements to them
+    for landmark in landmark_variables.values():
+        new_fg.add_landmark_variable(copy.deepcopy(landmark))
+
+    existing_variables = new_fg.variable_true_positions_dict
+
+    # add the odometry measurements
+    for robot_idx, odom_chain in enumerate(pyfg.odom_measurements):
+        for odom in odom_chain:
+            var1, var2 = odom.base_pose, odom.to_pose
+            if var1 in existing_variables and var2 in existing_variables:
+                new_fg.add_odom_measurement(robot_idx, copy.deepcopy(odom))
+
+    # add the loop closures
+    for loop_closure in pyfg.loop_closure_measurements:
+        var1, var2 = loop_closure.base_pose, loop_closure.to_pose
+        if var1 in existing_variables and var2 in existing_variables:
+            new_fg.add_loop_closure(copy.deepcopy(loop_closure))
+
+    # add the range measurements and landmarks
+    for range_meas in pyfg.range_measurements:
+        var1, var2 = range_meas.association
+        if var1 in existing_variables and var2 in existing_variables:
+            new_fg.add_range_measurement(copy.deepcopy(range_meas))
+
+    # add the priors
+    for pose_prior in pyfg.pose_priors:
+        if pose_prior.name in existing_variables:
+            new_fg.add_pose_prior(copy.deepcopy(pose_prior))
+
+    for landmark_prior in pyfg.landmark_priors:
+        if landmark_prior.name in existing_variables:
+            new_fg.add_landmark_prior(copy.deepcopy(landmark_prior))
+
+    unconnected_variables = new_fg.unconnected_variable_names
+    print(f"Unconnected variables: {unconnected_variables}")
+    new_fg.landmark_variables = [
+        landmark
+        for landmark in new_fg.landmark_variables
+        if landmark.name not in unconnected_variables
+    ]
+
+    return new_fg
+
+
+def convert_to_2d(fg: FactorGraphData, height_offset: float) -> FactorGraphData:
+    """Converts a 3D factor graph to 2D
+
+    Args:
+        fg: 3D factor graph
+        height_offset: height difference between odometry and landmarks. Used to adjust range measurements
+
+    Returns:
+        2D factor graph
+    """
+    assert fg.dimension == 3, "Factor graph must be 3D"
+    new_fg = FactorGraphData(dimension=2)
+
+    for pose_chain in fg.pose_variables:
+        for pose in pose_chain:
+            assert isinstance(pose, PoseVariable3D), "All poses must be 3D"
+            heading = pose.yaw
+            new_fg.add_pose_variable(
+                PoseVariable2D(
+                    pose.name,
+                    (pose.true_x, pose.true_y),
+                    heading,
+                    pose.timestamp,
+                )
+            )
+
+    for robot_idx, odom_chain in enumerate(fg.odom_measurements):
+        for odom in odom_chain:
+            assert isinstance(odom, PoseMeasurement3D), "All odometry must be 3D"
+            new_fg.add_odom_measurement(
+                robot_idx,
+                PoseMeasurement2D(
+                    odom.base_pose,
+                    odom.to_pose,
+                    odom.x,
+                    odom.y,
+                    odom.yaw,
+                    odom.translation_precision,
+                    odom.rotation_precision,
+                    odom.timestamp,
+                ),
+            )
+
+    for landmark in fg.landmark_variables:
+        assert isinstance(landmark, LandmarkVariable3D), "All landmarks must be 3D"
+        new_fg.add_landmark_variable(
+            LandmarkVariable2D(
+                landmark.name,
+                (landmark.true_x, landmark.true_y),
+            )
+        )
+
+    for range_meas in fg.range_measurements:
+        # for measurements to landmarks project onto the xy plane at z = height_offset
+        # original range = sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+        # new range = sqrt((x2 - x1)^2 + (y2 - y1)^2 )
+        # new range = sqrt((original range)^2 - (height_offset)^2)
+        association = range_meas.association
+        if association[0].startswith("L") or association[1].startswith("L"):
+            dist = np.sqrt(range_meas.dist**2 - height_offset**2)
+        else:
+            dist = range_meas.dist
+
+        new_fg.add_range_measurement(
+            FGRangeMeasurement(
+                range_meas.association,
+                dist,
+                range_meas.stddev,
+            )
+        )
+
+    for loop_closure in fg.loop_closure_measurements:
+        assert isinstance(
+            loop_closure, PoseMeasurement3D
+        ), "All loop closures must be 3D"
+        new_fg.add_loop_closure(
+            PoseMeasurement2D(
+                loop_closure.base_pose,
+                loop_closure.to_pose,
+                loop_closure.x,
+                loop_closure.y,
+                loop_closure.yaw,
+                loop_closure.translation_precision,
+                loop_closure.rotation_precision,
+                loop_closure.timestamp,
+            )
+        )
+
+    for pose_prior in fg.pose_priors:
+        assert isinstance(pose_prior, PosePrior3D), "All pose priors must be 3D"
+        new_fg.add_pose_prior(
+            PosePrior2D(
+                pose_prior.name,
+                (pose_prior.x, pose_prior.y),
+                pose_prior.yaw,
+                pose_prior.translation_precision,
+                pose_prior.rotation_precision,
+                pose_prior.timestamp,
+            )
+        )
+
+    for landmark_prior in fg.landmark_priors:
+        assert isinstance(
+            landmark_prior, LandmarkPrior3D
+        ), "All landmark priors must be 3D"
+        new_fg.add_landmark_prior(
+            LandmarkPrior2D(
+                landmark_prior.name,
+                (landmark_prior.x, landmark_prior.y),
+                landmark_prior.translation_precision,
+                landmark_prior.timestamp,
+            )
+        )
+
+    return new_fg
+
+
+def merge_pyfgs(
+    fgs: List[FactorGraphData], landmark_names_match: bool
+) -> FactorGraphData:
+    """Take a list of PyFGs and merge them into a single PyFG.
+
+    Assume that timestamps are correct and exist
+
+    Args:
+        List (FactorGraphData): List of PyFGs to merge
+        landmark_names_match (bool): If True, then landmark names are assumed to be the same across all PyFGs
+
+    Returns:
+        FactorGraphData: the merged PyFG
+    """
+    assert len(fgs) > 1, "Must have at least two PyFGs to merge"
+    assert all(
+        fg.dimension == fgs[0].dimension for fg in fgs
+    ), "All PyFGs must have the same dimension"
+    new_fg = FactorGraphData(dimension=fgs[0].dimension)
+
+    variable_renaming_map: List[Dict[str, str]] = [{} for _ in range(len(fgs))]
+
+    ### add all the pose variables
+
+    pose_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    def _get_renamed_pose_var(
+        pose: POSE_VARIABLE_TYPES, name: str
+    ) -> POSE_VARIABLE_TYPES:
+        if isinstance(pose, PoseVariable2D):
+            return PoseVariable2D(
+                name=name,
+                true_position=pose.true_position,
+                true_theta=pose.true_theta,
+                timestamp=pose.timestamp,
+            )
+        elif isinstance(pose, PoseVariable3D):
+            return PoseVariable3D(
+                name=name,
+                true_position=pose.true_position,
+                true_rotation=pose.true_rotation,
+                timestamp=pose.timestamp,
+            )
+        else:
+            raise ValueError(f"Invalid pose type: {type(pose)}")
+
+    pose_char_idx = 0
+    for fg_idx, fg in enumerate(fgs):
+        for pose_chain in fg.pose_variables:
+            for pose_idx, pose in enumerate(pose_chain):
+                new_pose_name = f"{pose_chars[pose_char_idx]}{pose_idx}"
+                variable_renaming_map[fg_idx][pose.name] = new_pose_name
+                new_fg.add_pose_variable(_get_renamed_pose_var(pose, new_pose_name))
+
+        pose_char_idx += 1
+
+    ### add all the landmark variables
+    def _get_renamed_landmark_var(
+        landmark: LANDMARK_VARIABLE_TYPES, name: str
+    ) -> LANDMARK_VARIABLE_TYPES:
+        if isinstance(landmark, LandmarkVariable2D):
+            return LandmarkVariable2D(
+                name=name,
+                true_position=landmark.true_position,
+            )
+        elif isinstance(landmark, LandmarkVariable3D):
+            return LandmarkVariable3D(
+                name=name,
+                true_position=landmark.true_position,
+            )
+        else:
+            raise ValueError(f"Invalid landmark type: {type(landmark)}")
+
+    # if landmark names match across all PyFGs, then we just preload the names
+    if landmark_names_match:
+        landmark_names = set()
+        for fg in fgs:
+            for landmark in fg.landmark_variables:
+                landmark_names.add(landmark.name)
+        for landmark_name in landmark_names:
+            for fg_idx in range(len(fgs)):
+                variable_renaming_map[fg_idx][landmark_name] = landmark_name
+    else:
+        landmark_idx = 0
+        for fg_idx, fg in enumerate(fgs):
+            for landmark in fg.landmark_variables:
+                new_landmark_name = f"L{landmark_idx}"
+                variable_renaming_map[fg_idx][landmark.name] = new_landmark_name
+                landmark_idx += 1
+
+    for fg_idx, fg in enumerate(fgs):
+        for landmark in fg.landmark_variables:
+            new_landmark_name = variable_renaming_map[fg_idx][landmark.name]
+
+            # if the variable already exists (by name) then skip
+            if new_landmark_name in new_fg.existing_landmark_variables:
+                continue
+
+            new_fg.add_landmark_variable(
+                _get_renamed_landmark_var(landmark, new_landmark_name)
+            )
+
+    ### add all the odometry measurements
+    odom_chain_idx = 0
+    for fg_idx, fg in enumerate(fgs):
+        for odom_chain in fg.odom_measurements:
+            for odom_measure in odom_chain:
+                new_odom = copy.deepcopy(odom_measure)
+                new_odom.base_pose = variable_renaming_map[fg_idx][
+                    odom_measure.base_pose
+                ]
+                new_odom.to_pose = variable_renaming_map[fg_idx][odom_measure.to_pose]
+                new_fg.add_odom_measurement(odom_chain_idx, new_odom)
+
+            odom_chain_idx += 1
+
+    ### add all the range measurements
+    for fg_idx, fg in enumerate(fgs):
+        for range_meas in fg.range_measurements:
+            new_range_meas = copy.deepcopy(range_meas)
+            new_range_meas.association = (
+                variable_renaming_map[fg_idx][range_meas.association[0]],
+                variable_renaming_map[fg_idx][range_meas.association[1]],
+            )
+            new_fg.add_range_measurement(new_range_meas)
+
+    ### add all the loop closures
+    for fg_idx, fg in enumerate(fgs):
+        for loop_closure in fg.loop_closure_measurements:
+            new_loop_closure = copy.deepcopy(loop_closure)
+            new_loop_closure.base_pose = variable_renaming_map[fg_idx][
+                loop_closure.base_pose
+            ]
+            new_loop_closure.to_pose = variable_renaming_map[fg_idx][
+                loop_closure.to_pose
+            ]
+            new_fg.add_loop_closure(new_loop_closure)
+
+    ### add all the pose priors
+    for fg_idx, fg in enumerate(fgs):
+        for pose_prior in fg.pose_priors:
+            new_pose_prior = copy.deepcopy(pose_prior)
+            new_pose_prior.name = variable_renaming_map[fg_idx][pose_prior.name]
+            new_fg.add_pose_prior(new_pose_prior)
+
+    ### add all the landmark priors
+    for fg_idx, fg in enumerate(fgs):
+        for landmark_prior in fg.landmark_priors:
+            new_landmark_prior = copy.deepcopy(landmark_prior)
+            new_landmark_prior.name = variable_renaming_map[fg_idx][landmark_prior.name]
+            new_fg.add_landmark_prior(new_landmark_prior)
+
+    ### add all pose-landmark measurements
+    for fg_idx, fg in enumerate(fgs):
+        for pose_landmark_meas in fg.pose_landmark_measurements:
+            new_pose_landmark_meas = copy.deepcopy(pose_landmark_meas)
+            new_pose_landmark_meas.pose_name = variable_renaming_map[fg_idx][
+                pose_landmark_meas.pose_name
+            ]
+            new_pose_landmark_meas.landmark_name = variable_renaming_map[fg_idx][
+                pose_landmark_meas.landmark_name
+            ]
+            new_fg.add_pose_landmark_measurement(new_pose_landmark_meas)
 
     return new_fg
 

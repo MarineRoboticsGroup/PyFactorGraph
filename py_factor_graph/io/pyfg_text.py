@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import math
 from py_factor_graph.factor_graph import FactorGraphData
 from py_factor_graph.utils.name_utils import (
@@ -139,7 +140,9 @@ def _get_pyfg_types(dim: int) -> tuple:
     )
 
 
-def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
+def save_to_pyfg_text(
+    fg: FactorGraphData, fpath: str, use_gt_measurements: bool = False
+) -> None:
     """Save factor graph to PyFG file format.
 
     Args:
@@ -258,6 +261,10 @@ def save_to_pyfg_text(fg: FactorGraphData, fpath: str) -> None:
         else:
             timestamp = range_measure.timestamp
         return f"{range_measure_type} {timestamp:.{time_fprec}f} {range_measure.first_key} {range_measure.second_key} {range_measure.dist:.{translation_fprec}f} {range_measure.variance:.{covariance_fprec}f}"
+
+    # if base dir does not exist, create it
+    if not os.path.exists(os.path.dirname(fpath)):
+        os.makedirs(os.path.dirname(fpath))
 
     with open(fpath, "w") as f:
         for pose_chain in fg.pose_variables:

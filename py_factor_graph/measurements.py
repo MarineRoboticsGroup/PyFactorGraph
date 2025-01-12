@@ -11,6 +11,7 @@ from py_factor_graph.utils.matrix_utils import (
     get_covariance_matrix_from_measurement_precisions,
     get_quat_from_rotation_matrix,
 )
+import scipy.spatial as spatial
 
 
 @attr.s(frozen=False)
@@ -161,7 +162,9 @@ class PoseMeasurement3D:
 
     def __attrs_post_init__(self):
         if self.base_pose == self.to_pose:
-            raise ValueError(f"base_pose and to_pose cannot be the same: base: {self.base_pose}, to: {self.to_pose}")
+            raise ValueError(
+                f"base_pose and to_pose cannot be the same: base: {self.base_pose}, to: {self.to_pose}"
+            )
 
     @property
     def rotation_matrix(self) -> np.ndarray:
@@ -235,6 +238,17 @@ class PoseMeasurement3D:
             np.ndarray: the 4x1 quaternion
         """
         return get_quat_from_rotation_matrix(self.rotation)
+
+    @property
+    def yaw(self) -> float:
+        """
+        Get the yaw angle
+
+        Returns:
+            float: the yaw angle
+        """
+        rot = spatial.transform.Rotation.from_matrix(self.rotation)
+        return rot.as_euler("zyx")[0]
 
     @property
     def covariance(self):
@@ -357,17 +371,21 @@ class FGRangeMeasurement:
         if value[0] == value[1]:
             raise ValueError(f"Range measurements must have unique variables: {value}")
 
-        association_1_is_uppercase_letter = value[0][0].isalpha() and value[0][0].isupper()
+        association_1_is_uppercase_letter = (
+            value[0][0].isalpha() and value[0][0].isupper()
+        )
         association_1_ends_in_number = value[0][1:].isnumeric()
-        if (
-            (not association_1_is_uppercase_letter) or (not association_1_ends_in_number)
+        if (not association_1_is_uppercase_letter) or (
+            not association_1_ends_in_number
         ):
             raise ValueError(f"First association is not a valid variable: {value[0]}")
 
-        association_2_is_uppercase_letter = value[1][0].isalpha() and value[1][0].isupper()
+        association_2_is_uppercase_letter = (
+            value[1][0].isalpha() and value[1][0].isupper()
+        )
         association_2_ends_in_number = value[1][1:].isnumeric()
-        if (
-            (not association_2_is_uppercase_letter) or (not association_2_ends_in_number)
+        if (not association_2_is_uppercase_letter) or (
+            not association_2_ends_in_number
         ):
             raise ValueError(f"Second association is not a valid variable: {value[1]}")
 
