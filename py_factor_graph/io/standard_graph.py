@@ -104,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "input_graph",
         type=str,
-        help="Path to the input .pyfg file containing the factor graph.",
+        help="Path to the input file containing the factor graph. Currently supports .g2o and .pyfg formats.",
     )
     parser.add_argument(
         "output_edge_list",
@@ -115,9 +115,30 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     from py_factor_graph.io.pyfg_text import read_from_pyfg_text
+    from py_factor_graph.io.g2o_file import parse_2d_g2o_file, parse_3d_g2o_file
 
     # Load the factor graph
-    fg = read_from_pyfg_text(args.input_graph)
+    if not os.path.exists(args.input_graph):
+        raise FileNotFoundError(f"Input graph file {args.input_graph} does not exist.")
+
+    fg = FactorGraphData(dimension=2)  # Default to 2D, will be overwritten if needed
+    if args.input_graph.endswith(".g2o"):
+        # Attempt to parse as a g2o file
+        try:
+            fg = parse_2d_g2o_file(args.input_graph)
+            logger.info("Parsed input graph as 2D g2o file.")
+        except Exception as e_2d:
+            try:
+                fg = parse_3d_g2o_file(args.input_graph)
+                logger.info("Parsed input graph as 3D g2o file.")
+            except Exception as e_3d:
+                raise ValueError(
+                    f"Failed to parse g2o file as 2D or 3D: {e_2d}, {e_3d}"
+                )
+    elif args.input_graph.endswith(".pyfg"):
+        fg = read_from_pyfg_text(args.input_graph)
+    else:
+        raise ValueError("Input graph file must be either .g2o or .pyfg format.")
 
     # Write the edge list
     write_edge_list(fg, args.output_edge_list)
