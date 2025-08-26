@@ -1555,6 +1555,27 @@ class FactorGraphData:
 
         plt.show(block=True)
 
+    def update_min_max_for_viewing(self) -> None:
+        """Runs through all of the variables to update the minimum and maximum
+        values for visualization. This may be useful if the factor graph
+        has been modified after the initial creation.
+
+        Returns:
+            _type_: _description_
+        """
+        for pose_chain in self.pose_variables:
+            for pose in pose_chain:
+                assert isinstance(pose, PoseVariable2D) or isinstance(
+                    pose, PoseVariable3D
+                )
+                self._update_max_min_xyz(pose)
+
+        for landmark in self.landmark_variables:
+            assert isinstance(landmark, LandmarkVariable2D) or isinstance(
+                landmark, LandmarkVariable3D
+            )
+            self._update_max_min_xyz(landmark)
+
     # TODO: move to io
     def animate_odometry(
         self,
