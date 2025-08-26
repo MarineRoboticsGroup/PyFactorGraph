@@ -16,8 +16,7 @@ Also potentially useful, auto-documentation of this code can be found in the
 Installing this package is quick and easy!
 
 ```bash
-cd ~/PyFactorGraph
-pip install .
+pip install git+https://github.com/MarineRoboticsGroup/PyFactorGraph
 ```
 
 Ta-da you should be ready to go!
