@@ -310,9 +310,9 @@ def read_from_pyfg_text(fpath: str) -> FactorGraphData:
     f_temp = open(fpath, "r")
 
     def _get_dim_from_first_line(line: str) -> int:
-        if line.startswith(POSE_TYPE_2D):
+        if line.startswith(POSE_TYPE_2D) or line.startswith(LANDMARK_TYPE_2D):
             return 2
-        elif line.startswith(POSE_TYPE_3D):
+        elif line.startswith(POSE_TYPE_3D) or line.startswith(LANDMARK_TYPE_3D):
             return 3
         else:
             raise ValueError(f"Unknown pose type {line}")
